@@ -1,8 +1,8 @@
 // One line kernal for multitasking
 // https://www.embedded.com/a-multitasking-kernel-in-one-line-of-code-almost/
-// Designed for speed, provides a 200kHz 1/n duty cycle signal
-// With three functions, 200kHz 33% duty cycle signal
-// With six functions, 103kHz 16% duty cycle signal
+// Designed to demonstrate the 13A performing different tasks
+// with different delays, using a single function pointer array.
+
 #include <avr/io.h>
 #include "delay.h"
 

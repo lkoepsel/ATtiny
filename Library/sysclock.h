@@ -16,6 +16,6 @@
 
 uint16_t ticks(void);
 
-void init_sysclock_0 (void);
+void init_sysclock_1k (void);
 
 #endif

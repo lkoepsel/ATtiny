@@ -1,4 +1,4 @@
-// One line kernal for multitasking
+// One line kernal for multitasking w/o delay
 // https://www.embedded.com/a-multitasking-kernel-in-one-line-of-code-almost/
 // Designed to demonstrate the 13A performing different tasks
 // with different delays, using a single function pointer array.

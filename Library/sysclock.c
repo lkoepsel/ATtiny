@@ -17,7 +17,7 @@ ISR (TIM0_COMPA_vect)
 
 // ****Defined Timer Setup Functions****
 
-void init_sysclock_0 (void)          
+void init_sysclock_1k (void)          
 {
     // Initialize timer 0 to CTC Mode using OCR0A, with a chip clock of 1.2Mhz
     // The values below will result in a 1kHz counter (1000 ticks = 1 second)

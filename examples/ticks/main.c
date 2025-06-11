@@ -12,7 +12,10 @@
 int main (void)
 {
     // init_sysclock_2 is required to initialize the counter for millis()
-    init_sysclock_0 ();
+    init_sysclock_1k ();
+
+    /* set pin to output*/
+    DDRB |= (_BV(PORTB4));
 
     for (;;)
     {

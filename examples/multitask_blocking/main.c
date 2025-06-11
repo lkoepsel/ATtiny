@@ -4,7 +4,7 @@
 // with different delays, using a single function pointer array.
 
 #include <avr/io.h>
-#include "delay.h"
+#include <util/delay.h>
 
 #define NTASKS 5
 
@@ -20,35 +20,35 @@ volatile uint8_t MS4=250;
 void zero (void) {
     /* toggle led on and off */
     PINB |= _BV(LED0);
-    delay(MS0);
+    _delay_ms(255);
     return;
 } 
 
 void one (void) {
     /* toggle led on and off */
     PINB |= _BV(LED1);
-    delay(MS1);
+    _delay_ms(100);
     return;
 } 
 
 void two (void) {
     /* toggle led on and off */
     PINB |= _BV(LED2);
-    delay(MS2);
+    _delay_ms(150);
     return;
 } 
 
 void three (void) {
     /* toggle led on and off */
     PINB |= _BV(LED3);
-    delay(MS3);
+    _delay_ms(200);
     return;
 } 
 
 void four (void) {
     /* toggle led on and off */
     PINB |= _BV(LED4);
-    delay(MS4);
+    _delay_ms(50);
     return;
 } 
 

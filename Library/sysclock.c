@@ -2,7 +2,7 @@
 #include <util/atomic.h>
 #include <avr/interrupt.h>
 
-volatile uint16_t ticks_ro_ctr = 0;
+volatile uint16_t ticks_ctr = 0;
 
 // ****Defined Interrupt Service Routines****
 
@@ -10,7 +10,7 @@ volatile uint16_t ticks_ro_ctr = 0;
 // Enabled by init_sysclock_1() in sysclock.c
 ISR (TIM0_COMPA_vect)      
 {
-    ticks_ro_ctr++;
+    ticks_ctr++;
 }
 
 // ****End of Defined Interrupt Service Routines****
@@ -39,10 +39,10 @@ void init_sysclock_0 (void)
 
 // ****End of Defined Timer Setup Functions****
 
-uint16_t ticks_ro(void) {
+uint16_t ticks(void) {
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
-        return(ticks_ro_ctr);
+        return(ticks_ctr);
     }
     return 0;   
 }

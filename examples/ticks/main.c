@@ -6,7 +6,7 @@
 // Requires init_sysclock()
 // Runs once. When finished, use gdb disp to check delta_ticks
 #include <avr/io.h>
-#include "delay.h"
+#include <util/delay.h>
 #include "sysclock.h"
 
 int main (void)
@@ -16,9 +16,9 @@ int main (void)
 
     for (;;)
     {
-    uint16_t prior_ticks = ticks_ro();
+    uint16_t prior_ticks = ticks();
     _delay_ms(1000);
-    volatile uint16_t delta_ticks = ticks_ro() - prior_ticks;
+    volatile uint16_t delta_ticks = ticks() - prior_ticks;
     // At the end of your function, before return
     asm volatile("" : : "r" (delta_ticks) : "memory");
     }

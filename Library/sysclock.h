@@ -14,7 +14,7 @@
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 
-uint16_t ticks_ro(void);
+uint16_t ticks(void);
 
 void init_sysclock_0 (void);
 

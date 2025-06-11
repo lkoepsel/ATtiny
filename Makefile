@@ -121,7 +121,7 @@ $(TARGET).elf: $(OBJECTS)
 .PHONY: all disassemble disasm eeprom size clean squeaky_clean flash fuses
 
 
-complete: all_clean compile
+complete: all_clean compile size
 
 compile: $(TARGET).hex 
 
@@ -151,7 +151,7 @@ help:
 	@echo "make compile - compile only (Arduino verify)"
 	@echo "make flash - show program size and flash to board (Arduino upload)"
 	@echo "make clean - delete all non-source files in folder"
-	@echo "make complete - delete all .o files in folder & Library then verbose flash, for complete rebuild/upload"
+	@echo "make complete - delete all .o files in folder & Library then compile, for complete rebuild/upload"
 	@echo "make verbose - make flash with more programming information for debugging upload"
 	@echo "make env - print active env.make variables"
 	@echo "make size - print size information of elf file"

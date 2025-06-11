@@ -1,7 +1,11 @@
 # Programming the ATtiny13A in Standard C
 
 ## Under Construction, being re-written to focus on ATtiny13A or other ATtiny chips
-
+## Important Links
+* [GDB Online Manual](https://sourceware.org/gdb/current/onlinedocs/gdb.html/index.html#Top)
+* [ATtiny13A Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny13A-Data-Sheet-DS40002307A.pdf)
+* [Bloom Documentation](https://bloom.oscillate.io/docs/getting-started)
+* 
 # docs Table of Contents
 
 ## [env_make.md](env_make.md)

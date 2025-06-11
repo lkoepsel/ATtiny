@@ -4,6 +4,7 @@
 // to determine delta between a delay
 // There can be a lag of 1-2 milliseconds at times
 // Requires init_sysclock()
+// Runs once. When finished, use gdb disp to check delta_ticks
 #include <avr/io.h>
 #include "delay.h"
 #include "sysclock.h"
@@ -11,14 +12,14 @@
 int main (void)
 {
     // init_sysclock_2 is required to initialize the counter for millis()
-    init_sysclock ();
-    uint16_t delay_time = 1000;
+    init_sysclock_0 ();
 
-    printf("Testing millis()\n");
-
-    for (;;)  {         
-        uint32_t prior_ticks = millis();
-        delay(delay_time);
-        uint32_t delta_ticks = millis() - prior_ticks;
+    for (;;)
+    {
+    uint16_t prior_ticks = ticks_ro();
+    _delay_ms(1000);
+    volatile uint16_t delta_ticks = ticks_ro() - prior_ticks;
+    // At the end of your function, before return
+    asm volatile("" : : "r" (delta_ticks) : "memory");
     }
 }

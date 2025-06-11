@@ -121,7 +121,7 @@ $(TARGET).elf: $(OBJECTS)
 .PHONY: all disassemble disasm eeprom size clean squeaky_clean flash fuses
 
 
-complete: all_clean verbose
+complete: all_clean compile
 
 compile: $(TARGET).hex 
 

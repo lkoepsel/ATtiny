@@ -735,20 +735,18 @@ digitalWrite(ADC_PIN, HIGH);    // LED on
 
 ## env.make (ATtiny13A only)
 ```make
-# ATtiny13A, be sure to set LIBRARY = no_lib as many AVR_C library functions are not compatible
+# Environmental variables for ATtiny13A
 MCU = attiny13a
 SERIAL = /dev/ttyACM0
 F_CPU = 1200000UL
 USB_BAUD = 250000UL
-SOFT_RESET = 0
-LIBDIR = $(DEPTH)ATtiny13A
+LIBDIR = $(DEPTH)Library
 LIBRARY = 
 PROGRAMMER_TYPE = atmelice_isp
 PROGRAMMER_ARGS = -F -V -P usb -b 115200
 TOOLCHAIN =
 OS =
-TC3_RESET = 0
-SOFT_BAUD = 28800UL
+TICKS = 1000
 ```
 
 ## Bloom.yaml 

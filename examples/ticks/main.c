@@ -11,18 +11,22 @@
 
 int main (void)
 {
-    // init_sysclock_2 is required to initialize the counter for millis()
-    init_sysclock_1k ();
+    // init_sysclock_1k is required to initialize the counter for 1Khz ticks
+    // init_sysclock_100 is required to initialize the counter for 100hz ticks
+    // pick 1
+    init_sysclock_100 ();
+    // init_sysclock_100 ();
 
     /* set pin to output*/
     DDRB |= (_BV(PORTB4));
 
     for (;;)
     {
-    uint16_t prior_ticks = ticks();
+    uint8_t prior_ticks = ticks();
     _delay_ms(1000);
-    volatile uint16_t delta_ticks = ticks() - prior_ticks;
-    // At the end of your function, before return
+    volatile uint8_t delta_ticks = ticks() - prior_ticks;
+    // The statement below ensures delta_ticks isn't optimized away
+    // and a breakpoint opportunity for gdb
     asm volatile("" : : "r" (delta_ticks) : "memory");
     }
 }

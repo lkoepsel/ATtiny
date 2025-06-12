@@ -54,13 +54,12 @@ TARGET = main
 
 ifeq ($(LIBRARY),no_lib)
 	SOURCES=$(wildcard *.c )
-	CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD)  -DSOFT_BAUD=$(SOFT_BAUD)  \
-	-DSOFT_RESET=$(SOFT_RESET) -DTC3_RESET=$(TC3_RESET)
+	CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DTICKS=$(TICKS)
 
 else
     SOURCES=$(wildcard *.c $(LIBDIR)/*.c)
-    CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD)   -DSOFT_BAUD=$(SOFT_BAUD) -I. \
-	-I$(LIBDIR) -DSOFT_RESET=$(SOFT_RESET) -DTC3_RESET=$(TC3_RESET)
+    CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD)   -I. \
+	-I$(LIBDIR) -DTICKS=$(TICKS)
 endif
 
 # TODO: Confirm then delete, this appears to be deprecated with the addition of the LIBRARY ['' | no_lib] parameter
@@ -133,7 +132,6 @@ env:
 	@echo "SERIAL:"  $(SERIAL)
 	@echo "F_CPU:" $(F_CPU)
 	@echo "USB_BAUD:"  $(USB_BAUD)
-	@echo "SOFT_RESET:"  $(SOFT_RESET)
 	@echo "LIB_DIR:"  $(LIBDIR)
 	@echo "LIBRARY:"  $(LIBRARY)
 	@echo "PROGRAMMER_TYPE:"  $(PROGRAMMER_TYPE)
@@ -141,8 +139,6 @@ env:
 	@echo "TOOLCHAIN:"  $(TOOLCHAIN)
 	@echo "OS:"  $(OS)
 	@echo "BIN:"  $(BIN)
-	@echo "TC3_RESET:"  $(TC3_RESET)
-	@echo "SOFT_BAUD:"  $(SOFT_BAUD)
 	@echo
 	@echo "Source files:"   $(SOURCES)
 	@echo	

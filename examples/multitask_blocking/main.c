@@ -6,48 +6,34 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-#define NTASKS 5
+#define NTASKS 3
 
 void zero (void) {
     /* toggle led on and off */
     PINB |= _BV(PINB0);
-    _delay_ms(255);
+    _delay_ms(750);
     return;
 } 
 
 void one (void) {
     /* toggle led on and off */
     PINB |= _BV(PINB1);
-    _delay_ms(100);
-    return;
-} 
-
-void two (void) {
-    /* toggle led on and off */
-    PINB |= _BV(PINB2);
-    _delay_ms(150);
-    return;
-} 
-
-void three (void) {
-    /* toggle led on and off */
-    PINB |= _BV(PINB3);
-    _delay_ms(200);
+    _delay_ms(500);
     return;
 } 
 
 void four (void) {
     /* toggle led on and off */
     PINB |= _BV(PINB4);
-    _delay_ms(50);
+    _delay_ms(250);
     return;
 } 
 
-void (*tasklist[NTASKS])() = {zero, one, two, three, four};
+void (*tasklist[NTASKS])() = {zero, one, four};
 
 int main(void)
 {
-    DDRB |= (_BV(PINB0) | _BV(PINB1) | _BV(PINB2) | _BV(PINB3) | _BV(PINB4));
+    DDRB |= (_BV(PINB0) | _BV(PINB1) | _BV(PINB4));
 
     while (1)
     {

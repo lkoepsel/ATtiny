@@ -6,7 +6,7 @@
 
 #include "sysclock.h"
 
-#define interval 500
+#define interval 100
 
 int main (void)
 {
@@ -16,7 +16,9 @@ int main (void)
   init_sysclock_1k ();
 
     /* set pin to output*/
-    DDRB |= (_BV(PORTB4));
+    DDRB |= (_BV(PINB0) | _BV(PINB1) | _BV(PINB4));
+    PORTB |= (_BV(PORTB4));
+    PORTB &= ~(_BV(PORTB1));
 
     while(1)
     {
@@ -25,14 +27,16 @@ int main (void)
         // the LED is bigger than the interval at which you want to 
         // blink the LED.
         uint16_t current_ticks = ticks();
-
-        if(current_ticks - previous_ticks > interval
-           || previous_ticks > current_ticks) 
+        if (current_ticks < previous_ticks)
+        {
+          PINB &= ~(_BV(PORTB4));
+        }
+        if(current_ticks - previous_ticks > interval ) 
         {
         // save the last time you blinked the LED 
         previous_ticks = current_ticks;   
         // toggle the state of the LED
-          PINB |= (_BV(PORTB4));
+          PINB |= (_BV(PORTB0));
         }
     }
 }

@@ -54,12 +54,12 @@ TARGET = main
 
 ifeq ($(LIBRARY),no_lib)
 	SOURCES=$(wildcard *.c )
-	CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DTICKS=$(TICKS)
+	CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) 
 
 else
     SOURCES=$(wildcard *.c $(LIBDIR)/*.c)
     CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD)   -I. \
-	-I$(LIBDIR) -DTICKS=$(TICKS)
+	-I$(LIBDIR) 
 endif
 
 # TODO: Confirm then delete, this appears to be deprecated with the addition of the LIBRARY ['' | no_lib] parameter

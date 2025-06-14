@@ -27,18 +27,18 @@ int main(void)
         // blink the LED.
         uint32_t current_ticks = ticks();
 
-        if(current_ticks - yellow_ticks> yellow_interval) 
+        if(current_ticks - yellow_ticks > yellow_interval) 
         {
         // save the last time you blinked the LED 
-        yellow_ticks= current_ticks;   
+        yellow_ticks = current_ticks;   
         // toggle the state of the LED
           PINB |= (_BV(PORTB0));
         }
 
-        if(current_ticks - white_ticks> white_interval) 
+        if(current_ticks - white_ticks > white_interval) 
         {
         // save the last time you blinked the LED 
-        white_ticks= current_ticks;   
+        white_ticks = current_ticks;   
         // toggle the state of the LED
           PINB |= (_BV(PORTB1));
         }

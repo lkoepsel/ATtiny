@@ -11,14 +11,14 @@
 void zero (void) {
     /* toggle led on and off */
     PINB |= _BV(PINB0);
-    _delay_ms(750);
+    _delay_ms(125);
     return;
 } 
 
 void one (void) {
     /* toggle led on and off */
     PINB |= _BV(PINB1);
-    _delay_ms(500);
+    _delay_ms(125);
     return;
 } 
 

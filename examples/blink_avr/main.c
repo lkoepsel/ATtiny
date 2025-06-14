@@ -19,9 +19,9 @@ int main(void)
     {
         /* turn led on and off */
         PINB |= (_BV(PORTB4));
-        _delay_ms(1000);
+        _delay_ms(100);
         PINB |= (_BV(PORTB4));
-        _delay_ms(1000);
+        _delay_ms(100);
     }
     return 0; 
 }

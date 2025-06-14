@@ -65,7 +65,7 @@ void init_sysclock_100 (void)
 
 // ****End of Defined Timer Setup Functions****
 
-uint16_t ticks(void) {
+uint32_t ticks(void) {
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         return(ticks_ctr);

@@ -3,10 +3,17 @@
 // http://www.arduino.cc/en/Tutorial/BlinkWithoutDelay
 // And the Adafruit tutorial:
 // https://learn.adafruit.com/multi-tasking-the-arduino-part-1?view=all
+// Uses asm commands, instead of C, as C doesn't use SBI in _BV
 
 #include "sysclock.h"
 
 #define interval 100
+#define YELLOW 0        // yellow LED to pin 0
+#define WHITE 3         // white LED to pin 3
+#define RED 4           // red LED to pin 4
+
+volatile uint16_t total_toggles = 0;
+volatile uint16_t total_ro = 0;
 
 int main (void)
 {
@@ -16,9 +23,9 @@ int main (void)
   init_sysclock_1k ();
 
     /* set pin to output*/
-    DDRB |= (_BV(PINB0) | _BV(PINB1) | _BV(PINB4));
-    PORTB |= (_BV(PORTB4));
-    PORTB &= ~(_BV(PORTB1));
+    DDRB |= (_BV(YELLOW) | _BV(WHITE) | _BV(RED));
+    PORTB |= (_BV(RED));
+    PORTB |= (_BV(WHITE));
 
     while(1)
     {
@@ -29,14 +36,17 @@ int main (void)
         uint16_t current_ticks = ticks();
         if (current_ticks < previous_ticks)
         {
-          PINB &= ~(_BV(PORTB4));
+            asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (RED));
+            total_toggles++;
         }
         if(current_ticks - previous_ticks > interval ) 
         {
-        // save the last time you blinked the LED 
-        previous_ticks = current_ticks;   
-        // toggle the state of the LED
-          PINB |= (_BV(PORTB0));
+            // save the last time you blinked the LED 
+            previous_ticks = current_ticks;   
+            // toggle the state of the LED
+            // PINB |= (_BV(YELLOW));
+            asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (YELLOW));
+            total_ro++;
         }
     }
 }

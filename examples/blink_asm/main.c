@@ -1,27 +1,24 @@
-; does not compile, more work to do
-.org 0x0000
-rjmp start
-start:
-    ldi r16, 0 ; reset system status
-    out SREG, r16 ; init stack pointer
-    ldi r16, low(RAMEND)
-    out SPL, r16
-    ldi r16, high(RAMEND)
-    out SPH, r16
-    sbi DDRB, DDB5 ;pinMode(13, OUTPUT);
-_loop:
-    sbi PORTB, PORTB5 ;turn LED on
-    rcall _delay
-    cbi PORTB, PORTB5 ;turn LED off
-    rcall _delay
-    rjmp _loop
-_delay:
-    ldi r24, 0x00 ;one second delay iteration
-    ldi r23, 0xd4
-    ldi r22, 0x30
-_d1: 
-    subi r24, 1
-    sbci r23, 0
-    sbci r22, 0
-    brcc _d1
-    ret
+//  blink_asm - uses bit setting by asm commands
+//  For smallest code size, set LIBRARY = no_lib in env.make 
+//  Using the asm commands, ensures the specific method desired is used
+//  In this case, sbi is used to set the bit in PINB, toggling its value
+//  Testing has confirmed _BV doesn't always use SBI
+
+#include <avr/io.h>
+#include <util/delay.h>
+ 
+int main(void)
+{
+    /* set pin to output*/
+    // DDRB |= (_BV(PINB4));
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(DDRB)), "I" (DDB4));
+
+    while(1) 
+    {
+        /* turn led on and off */
+        // PINB |= (_BV(PORTB0));
+        asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (PINB4));
+        _delay_ms(1000);
+    }
+    return 0; 
+}

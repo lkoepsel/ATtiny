@@ -13,13 +13,13 @@
 int main(void)
 {
     /* set pin to output*/
-    DDRB |= (_BV(PORTB4));
+    DDRB |= (_BV(PORTB0));
 
     while(1) 
     {
         /* turn led on and off */
-        PINB |= (_BV(PORTB4));
-        _delay_ms(100);
+        PINB |= (_BV(PORTB0));
+        _delay_ms(1000);
     }
     return 0; 
 }

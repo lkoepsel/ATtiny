@@ -10,30 +10,30 @@
 
 void zero (void) {
     /* toggle led on and off */
-    PINB |= _BV(PINB0);
-    _delay_ms(125);
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (PINB0));
+    _delay_ms(2000);
     return;
 } 
 
-void one (void) {
+void three (void) {
     /* toggle led on and off */
-    PINB |= _BV(PINB1);
-    _delay_ms(125);
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (PINB3));
+    _delay_ms(1000);
     return;
 } 
 
 void four (void) {
     /* toggle led on and off */
-    PINB |= _BV(PINB4);
-    _delay_ms(250);
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (PINB4));
+    _delay_ms(500);
     return;
 } 
 
-void (*tasklist[NTASKS])() = {zero, one, four};
+void (*tasklist[NTASKS])() = {zero, three, four};
 
 int main(void)
 {
-    DDRB |= (_BV(PINB0) | _BV(PINB1) | _BV(PINB4));
+    DDRB |= (_BV(PINB0) | _BV(PINB3) | _BV(PINB4));
 
     while (1)
     {

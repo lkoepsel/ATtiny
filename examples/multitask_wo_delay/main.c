@@ -4,20 +4,25 @@
 #include "sysclock.h"
 
 
-#define yellow_interval 500
-#define white_interval 500
-#define red_interval 500
+#define YELLOW_INTERVAL 2000
+#define WHITE_INTERVAL 1000
+#define RED_INTERVAL 500
+
+#define YELLOW 0        // yellow LED to pin 0
+#define WHITE 3         // white LED to pin 3
+#define RED 4           // red LED to pin 4
+
 
 int main(void)
 {
-  uint32_t yellow_ticks= 0;        // will store last time LED was updated
-  uint32_t white_ticks= 0;        // will store last time LED was updated
-  // uint32_t red_ticks= 0;        // will store last time LED was updated
+  uint16_t yellow_ticks= 0;        // will store last time LED was updated
+  uint16_t white_ticks= 0;        // will store last time LED was updated
+  uint32_t red_ticks= 0;        // will store last time LED was updated
 
   // Set up a system tick of 1 millisec (1kHz)
   init_sysclock_1k ();
 
-  DDRB |= (_BV(PINB0) | _BV(PINB1) | _BV(PINB4));
+  DDRB |= (_BV(YELLOW) | _BV(WHITE) | _BV(RED));
 
     while(1)
     {
@@ -27,29 +32,30 @@ int main(void)
         // blink the LED.
         uint32_t current_ticks = ticks();
 
-        if(current_ticks - yellow_ticks > yellow_interval) 
+        if(current_ticks - yellow_ticks > YELLOW_INTERVAL) 
         {
         // save the last time you blinked the LED 
         yellow_ticks = current_ticks;   
         // toggle the state of the LED
-          PINB |= (_BV(PORTB0));
+          asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (YELLOW));
+
         }
 
-        if(current_ticks - white_ticks > white_interval) 
+        if(current_ticks - white_ticks > WHITE_INTERVAL) 
         {
         // save the last time you blinked the LED 
         white_ticks = current_ticks;   
         // toggle the state of the LED
-          PINB |= (_BV(PORTB1));
+        asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (WHITE));
         }
 
-        // if(current_ticks - red_ticks> red_interval) 
-        // {
-        // // save the last time you blinked the LED 
-        // red_ticks= current_ticks;   
-        // // toggle the state of the LED
-        //   PINB |= (_BV(PORTB4));
-        // }
+        if(current_ticks - red_ticks> RED_INTERVAL) 
+        {
+        // save the last time you blinked the LED 
+        red_ticks= current_ticks;   
+        // toggle the state of the LED
+        asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (RED));
+        }
 
     }
 

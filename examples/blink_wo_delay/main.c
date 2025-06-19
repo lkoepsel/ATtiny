@@ -7,13 +7,13 @@
 
 #include "sysclock.h"
 
-#define interval 100
+#define interval 1000
 #define YELLOW 0        // yellow LED to pin 0
 #define WHITE 3         // white LED to pin 3
 #define RED 4           // red LED to pin 4
 
-volatile uint16_t total_toggles = 0;
-volatile uint16_t total_ro = 0;
+volatile uint16_t total_YELLOW = 0;
+volatile uint16_t total_RED = 0;
 
 int main (void)
 {
@@ -36,8 +36,8 @@ int main (void)
         uint16_t current_ticks = ticks();
         if (current_ticks < previous_ticks)
         {
+            total_RED++;
             asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (RED));
-            total_toggles++;
         }
         if(current_ticks - previous_ticks > interval ) 
         {
@@ -45,8 +45,8 @@ int main (void)
             previous_ticks = current_ticks;   
             // toggle the state of the LED
             // PINB |= (_BV(YELLOW));
+            total_YELLOW++;
             asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (YELLOW));
-            total_ro++;
         }
     }
 }

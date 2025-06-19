@@ -19,18 +19,22 @@ void init_sysclock_1k (void)
 {
     // Initialize timer 0 to CTC Mode using OCR0A, with a chip clock of 1.2Mhz
     // The values below will result in a 1kHz counter (1000 ticks = 1 second)
+    // CTC mode (WGM0[2:0] = 2)
+    // Set clock select to /8 CS => 010
+    // Bit 2 – OCIE0A: Timer/Counter0 Output Compare Match A Interrupt Enable
+    // OCR0A = x9c or ~150
 
     // TCCR0A [ COM0A1 COM0A0 COM0B1 COM0B0 0 0 WGM01 WGM00 ] = 0b00000010
-    // TCCR0B [ FOC0A FOC0B 0 0 WGM02 CS02 CS01 CS00 ] = 0b00001010
+    // TCCR0B [ FOC0A FOC0B 0 0 WGM02 CS02 CS01 CS00 ] = 0b00000010
     // TIMSK0 [ 0 0 0 0  OCIE0B  OCIE0A  TOIE0 0 ] = 0b00000100
     // OCR0A = 0x9a
     // tick = 1/1000 second
-    // Test using example/millis _delay_ms(1000); = 1000 ticks
+    // Test using example/ticks w/ _delay_ms(1000); = 1000 ticks
 
     TCCR0A = ( _BV(WGM01) ) ; 
-    TCCR0B |= ( _BV(WGM02) | _BV(CS01) ) ;
+    TCCR0B |= ( _BV(CS01) ) ;
     TIMSK0 |= _BV(OCIE0A);
-    OCR0A = 0x9c;
+    OCR0A = 0x9b;
     sei();
 }
 

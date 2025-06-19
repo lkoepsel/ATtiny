@@ -34,7 +34,7 @@ void init_sysclock_1k (void)
     TCCR0A = ( _BV(WGM01) ) ; 
     TCCR0B |= ( _BV(CS01) ) ;
     TIMSK0 |= _BV(OCIE0A);
-    OCR0A = 0x9b;
+    OCR0A = 0x9a;
     sei();
 }
 

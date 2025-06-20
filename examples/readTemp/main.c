@@ -9,16 +9,19 @@
  
 int main(void)
 {
-    /* set pin to output*/
-    // DDRB |= (_BV(PINB4));
-    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(DDRB)), "I" (DDB4));
+    ADMUX = ( _BV(MUX1) ) ; 
+    ADCSRA |= ( _BV(ADEN) | _BV(ADSC) | _BV(ADATE) | _BV(ADPS2)) ;
 
-    while(1) 
+
+    /* set pin to output*/
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(DDRB)), "I" (DDB4));
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB4));
+
+    for (;;)
     {
-        /* turn led on and off */
-        // PINB |= (_BV(PORTB0));
-        asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (PINB4));
-        _delay_ms(500);
+        volatile uint16_t __attribute__ ((unused)) result = ADCL;
+        result  |= (ADCH <<8);
+        _delay_ms(100);
+        asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (PINB3));
     }
-    return 0; 
 }

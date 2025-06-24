@@ -5,6 +5,10 @@
 #include <avr/interrupt.h>
 
 #define DELAY 10
+#define END_DELAY 1000
+#define GREEN PB0
+#define YELLOW PB1
+#define BLUE PB2
 
 volatile uint8_t brightnessA;
 volatile uint8_t brightnessB;
@@ -21,23 +25,23 @@ static inline void initTimer0(void)
 
 ISR(TIM0_OVF_vect) 
 {
-    PORTB |= (_BV(PORTB1));
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
     OCR0A = brightnessA;
     OCR0B = brightnessB;
 }
 ISR(TIM0_COMPA_vect) 
 {
-    PORTB |= (_BV(PORTB1));
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
 }
 ISR(TIM0_COMPB_vect) 
 {
-    PORTB &= ~(_BV(PORTB1));
+    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
 }
 
 int main(void) {
 
     uint8_t i;
-    DDRB |= (_BV(PORTB1));
+    DDRB |= (_BV(YELLOW));
     initTimer0();
 
     while (1) 
@@ -47,15 +51,18 @@ int main(void) {
             _delay_ms(DELAY);
             brightnessA = i;
         }
-        _delay_ms(500);
+        cli();
+        _delay_ms(END_DELAY);
+        sei();
 
         for (i = TOP; i > 0; i--) {
           _delay_ms(DELAY);
           brightnessA = i;
-          // brightnessB = BOT - i;
+        //   brightnessB = TOP - i;
         }
-        _delay_ms(500);
-
+        cli();
+        _delay_ms(END_DELAY);
+        sei();
   }                                                  // End event loop 
   return 0;                            // This line is never reached 
 }

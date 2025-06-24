@@ -120,6 +120,8 @@ int main(void)
     
     // Set LED pins as outputs
     DDRB |= _BV(GREEN_LED) | _BV(YELLOW_LED) | _BV(BLUE_LED);
+    PORTB |= _BV(GREEN_LED) | _BV(YELLOW_LED) | _BV(BLUE_LED);
+    _delay_ms(500);
     
     // Ensure PB2 (potentiometer) is input
     DDRB &= ~_BV(PB2);

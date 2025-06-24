@@ -19,7 +19,7 @@ int main(void)
     {
         /* turn led on and off */
         PINB |= (_BV(PORTB0));
-        _delay_ms(1000);
+        _delay_ms(500);
     }
     return 0; 
 }

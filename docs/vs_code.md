@@ -109,7 +109,7 @@ The location of libraries will be different based on how gcc was installed. If y
                 },
                 {   
                     "value": "complete",
-                    "label": "complete re-compile with verbose upload"
+                    "label": "complete re-compile without upload"
                 },
                 {   
                     "value": "verbose",

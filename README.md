@@ -7,31 +7,27 @@
 * [Bloom Documentation](https://bloom.oscillate.io/docs/getting-started)
 * 
 
-## Docs
+## docs
 
-# docs Table of Contents
+### Table of Contents
 
-## [env_make.md](env_make.md)
+#### [env_make.md](./docs/env_make.md)
 The file env_make is used to customize the *make* process for *AVR_C* development. It is **required** in order for make to properly identify the parameters needed for compiling/linking/uploading executable code to an AVR microcontroller. **This file is not tracked by *git* and needs to be installed manually.** 
 
-## [vs_code.md](vs_code.md)
+#### [vs_code.md](./docs/vs_code.md)
 This page contains the files needed to be more efficient with *VS Code*. Install them inot the *.vscode* folder of *AVR_C*. They are not tracked by *git*.
 
-## [git.md](git.md)
+#### [git.md](./docs/git.md)
 Notes on using *git*. I am neither an expert on *git* nor proficient in *git*. This page is primarily for myself, however, it has helped a few people.
 
-## [RPI_build.md](RPi_build.md)
+#### [RPI_build.md](./docs/RPi_build.md)
 If you want to use a Raspberry Pi (3/4/5) as a C development platform, this page is for you! Highly detailed, it will show every step required to build the latest software for developing C on an AVR microcontroller. Have fun! 
 
-## [RPi_10C.md](RPi_10C.md)
+#### [Bloom and gdb.md](./docs/bloomandgdb.md)
 These are the steps to create a complete and up-to-date Standard C development platform on a Raspberry Pi for the CSIS10C class. 
 
-## [Bloom and gdb.md](bloomandgdb.md)
+#### [PWM and ADC.md](./docs/PWMandADC.md)
 These are the steps to create a complete and up-to-date Standard C development platform on a Raspberry Pi for the CSIS10C class. 
-
-## [PWM and ADC.md](PWMandADC.md)
-These are the steps to create a complete and up-to-date Standard C development platform on a Raspberry Pi for the CSIS10C class. 
-
 
 ## Introduction
 This repository provides a framework in  [*C* (ANSI C99)](http://avr-libc.nongnu.org) which supports programming the ATtiny13A.
@@ -755,7 +751,7 @@ TOOLCHAIN =
 OS =
 ```
 
-## Bloom.yaml 
+## bloom.yaml 
 ```yaml
 environments:
   default:

@@ -17,9 +17,9 @@ int main(void)
     {
         /* turn led on and off */
         asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (GREEN));
-        _delay_ms(500);
+        _delay_ms(50);
         asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (GREEN));
-        _delay_ms(500);
+        _delay_ms(50);
     }
     return 0; 
 }

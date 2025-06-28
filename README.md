@@ -814,3 +814,75 @@ define te
 tui enable
 end
 ```
+
+## tasks.json
+
+```json
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "make",
+            "detail": "Run make",
+            "type": "shell",
+            "command": "/usr/bin/make ${input:makeTarget}",
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+
+              },        
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ],
+    "inputs": [
+        {
+            "type": "pickString",
+            "id": "makeTarget",
+            "description": "Select a make target",
+            "options": [
+                {   
+                    "value": "flash",
+                    "label": "compile and upload code (upload)"
+                },
+                {   
+                    "value": "compile",
+                    "label": "only compile code (verify)"
+                },
+                {   
+                    "value": "clean",
+                    "label": "remove non-source files"
+                },
+                {   
+                    "value": "complete",
+                    "label": "complete re-compile without upload"
+                },
+                {   
+                    "value": "verbose",
+                    "label": "verbose upload to debug serial connection"
+                },
+                {   
+                    "value": "env",
+                    "label": "print env variables being used"
+                },
+                {   
+                    "value": "size",
+                    "label": "print code sizes"
+                },
+                {   
+                    "value": "help",
+                    "label": "print make commands"
+                }
+            ],
+            "default": " flash"
+        }
+    ]
+}
+```

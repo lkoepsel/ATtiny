@@ -1,52 +1,56 @@
 //  blink_spwm - uses bit setting by asm commands, and creates a soft PWM
+//  based on Mike Williams Brute Force PWM routine 10.1
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
+// ------- Preamble -------- //
+#include <avr/io.h>                        /* Defines pins, ports, etc */
+#include <util/delay.h>                     /* Functions to waste time */
 
-volatile uint8_t TOP = 255;
-volatile uint8_t pulse = 255;
-#define GREEN PB0
-#define YELLOW PB1
-#define BLUE PB2
+#define LED_DELAY 2
+#define PEAK_DELAY 1000
+#define GREEN 0
+#define BRIGHT 100
+#define DIM 0
 
+int main(void) {
 
-ISR (TIM0_COMPA_vect)      
-{
-    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (GREEN));
+  uint8_t brightness = 0;
+  int8_t direction = 1;
+  uint8_t i;
+
+  // -------- Inits --------- //
+
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(DDRB)), "I" (GREEN));
+
+  // ------ Event loop ------ //
+  while (1) 
+  {
+    // PWM
+    for (i = DIM; i < BRIGHT; i++) 
+    {
+      if (i < brightness) 
+      {
+        asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (GREEN));                                    /* turn on */
+      }
+      else 
+      {
+        asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (GREEN));                                      /* turn off */
+      }
+      _delay_us(LED_DELAY);
+    }
+
+    // Brighten and dim
+    if (brightness == DIM) 
+    {
+        direction = 1;
+        _delay_ms(PEAK_DELAY);
+    }
+    if (brightness == BRIGHT) 
+    {
+        direction = -1;
+        _delay_ms(PEAK_DELAY);
+
+    }
+    brightness += direction;
+  }                                                  /* End event loop */
+  return 0;                            /* This line is never reached */
 }
-
-// ****Defined Timer Setup Functions****
-void init_pulse (void)          
-{
-    // Initialize timer 0 to CTC Mode using OCR0A, with a chip clock of 1.2Mhz
-    // The values below will result in a 1kHz counter (1000 ticks = 1 second)
-    // CTC mode (WGM0[2:0] = 2)
-    // Set clock select to /8 CS => 010
-    // Bit 2 – OCIE0A: Timer/Counter0 Output Compare Match A Interrupt Enable
-    // OCR0A = x9c or ~150
-
-    // TCCR0A [ COM0A1 COM0A0 COM0B1 COM0B0 0 0 WGM01 WGM00 ] = 0b00000010
-    // TCCR0B [ FOC0A FOC0B 0 0 WGM02 CS02 CS01 CS00 ] = 0b00000010
-    // TIMSK0 [ 0 0 0 0  OCIE0B  OCIE0A  TOIE0 0 ] = 0b00000100
-    // OCR0A = 0x9a
-    // tick = 1/1000 second
-    // Test using example/ticks w/ _delay_ms(1000); = 1000 ticks
-
-    TCCR0A = ( _BV(WGM01) ) ; 
-    TCCR0B |= ( _BV(CS01) ) ;
-    TIMSK0 |= _BV(OCIE0A);
-    OCR0A = pulse;
-    sei();
-}
-
-int main(void)
-{
-    /* set pin to output*/
-    DDRB |= (_BV(GREEN));
-    DDRB &= ~(_BV(BLUE)) & ~(_BV(YELLOW));
-    init_pulse();
-    while (1){}
-    return 0; 
-}
-
-

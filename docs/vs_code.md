@@ -35,30 +35,6 @@ The location of libraries will be different based on how gcc was installed. If y
 }
 ```
 
-## Bookworm Installed C (gcc 5.4)
-### c_cpp_properties.json
-```json
-{
-    "configurations": [
-        {
-            "name": "AVR",
-            "includePath": [
-                "/usr/lib/avr/",
-                "/usr/lib/avr/include/**",
-                "${workspaceFolder}/**"
-            ],
-            "defines": ["__AVR_ATmega328P__"],
-            "compilerPath": "/usr/bin/avr-gcc", 
-            "compilerArgs": [ ],
-            "cStandard": "c99",
-            "cppStandard": "c++98",
-            "intelliSenseMode": "${default}"
-        }
-    ],
-    "version": 4
-}
-```
-
 ## Default Task Installation
 **If you are on Windows, use Ctrl, instead of CMD.**
 
@@ -118,6 +94,10 @@ The location of libraries will be different based on how gcc was installed. If y
                 {   
                     "value": "env",
                     "label": "print env variables being used"
+                },
+                {   
+                    "value": "size",
+                    "label": "print code sizes"
                 },
                 {   
                     "value": "help",

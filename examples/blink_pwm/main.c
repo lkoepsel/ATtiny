@@ -3,15 +3,13 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
+#include <avr/cpufunc.h>
 
-#define DELAY 10
-#define END_DELAY 1000
 #define GREEN PB0
 #define YELLOW PB1
-#define BLUE PB2
 
-volatile uint8_t YELLOW_bright;
-volatile uint8_t GREEN_bright;
+volatile uint8_t A_pulse = 32;
+volatile uint8_t B_pulse = 63;
 
 // -------- Functions --------- //
 static inline void initTimer0(void) 
@@ -24,18 +22,18 @@ static inline void initTimer0(void)
 
 ISR(TIM0_OVF_vect) 
 {
-    OCR0A = YELLOW_bright;
-    OCR0B = GREEN_bright;
-    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
+    OCR0A = A_pulse;
+    OCR0B = B_pulse;
     asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (GREEN));
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
 }
 ISR(TIM0_COMPA_vect) 
 {
-    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
+    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (GREEN));
 }
 ISR(TIM0_COMPB_vect) 
 {
-    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (GREEN));
+    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
 }
 
 int main(void) {
@@ -45,8 +43,7 @@ int main(void) {
 
     while (1) 
     {
-        YELLOW_bright = 127;
-        GREEN_bright = 255;
-    }                                                  // End event loop 
+        _NOP();
+    }                                         
   return 0;                            // This line is never reached 
 }

@@ -10,9 +10,8 @@
 #define YELLOW PB1
 #define BLUE PB2
 
-volatile uint8_t brightnessA;
-volatile uint8_t brightnessB;
-volatile uint8_t TOP = 255;
+volatile uint8_t YELLOW_bright;
+volatile uint8_t GREEN_bright;
 
 // -------- Functions --------- //
 static inline void initTimer0(void) 
@@ -25,44 +24,29 @@ static inline void initTimer0(void)
 
 ISR(TIM0_OVF_vect) 
 {
+    OCR0A = YELLOW_bright;
+    OCR0B = GREEN_bright;
     asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
-    OCR0A = brightnessA;
-    OCR0B = brightnessB;
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (GREEN));
 }
 ISR(TIM0_COMPA_vect) 
 {
-    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
+    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
 }
 ISR(TIM0_COMPB_vect) 
 {
-    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
+    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (GREEN));
 }
 
 int main(void) {
 
-    uint8_t i;
-    DDRB |= (_BV(YELLOW));
+    DDRB |= (_BV(YELLOW) | _BV(GREEN));
     initTimer0();
 
     while (1) 
     {
-        for (i = 0; i < TOP; i++) 
-        {
-            _delay_ms(DELAY);
-            brightnessA = i;
-        }
-        cli();
-        _delay_ms(END_DELAY);
-        sei();
-
-        for (i = TOP; i > 0; i--) {
-          _delay_ms(DELAY);
-          brightnessA = i;
-        //   brightnessB = TOP - i;
-        }
-        cli();
-        _delay_ms(END_DELAY);
-        sei();
-  }                                                  // End event loop 
+        YELLOW_bright = 127;
+        GREEN_bright = 255;
+    }                                                  // End event loop 
   return 0;                            // This line is never reached 
 }

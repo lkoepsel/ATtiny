@@ -35,7 +35,7 @@ void init_sysclock_1k (void)
     TCCR0A = ( _BV(COM0A0) | _BV(WGM01) ) ; 
     TCCR0B |= ( _BV(CS01) ) ;
     TIMSK0 |= _BV(OCIE0A);
-    OCR0A = 0x96;
+    OCR0A = 0x9a;
     sei();
  
     /* set pin to output to view OC0A*/

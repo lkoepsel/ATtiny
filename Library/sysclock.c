@@ -22,20 +22,24 @@ void init_sysclock_1k (void)
     // CTC mode (WGM0[2:0] = 2)
     // Set clock select to /8 CS => 010
     // Bit 2 – OCIE0A: Timer/Counter0 Output Compare Match A Interrupt Enable
+    // COM0A0 - set to view OC0A on PB0 with scope
     // OCR0A = x9c or ~150
 
-    // TCCR0A [ COM0A1 COM0A0 COM0B1 COM0B0 0 0 WGM01 WGM00 ] = 0b00000010
+    // TCCR0A [ COM0A1 COM0A0 COM0B1 COM0B0 0 0 WGM01 WGM00 ] = 0b01000010
     // TCCR0B [ FOC0A FOC0B 0 0 WGM02 CS02 CS01 CS00 ] = 0b00000010
     // TIMSK0 [ 0 0 0 0  OCIE0B  OCIE0A  TOIE0 0 ] = 0b00000100
     // OCR0A = 0x9a
     // tick = 1/1000 second
     // Test using example/ticks w/ _delay_ms(1000); = 1000 ticks
 
-    TCCR0A = ( _BV(WGM01) ) ; 
+    TCCR0A = ( _BV(COM0A0) | _BV(WGM01) ) ; 
     TCCR0B |= ( _BV(CS01) ) ;
     TIMSK0 |= _BV(OCIE0A);
-    OCR0A = 0x9a;
+    OCR0A = 0x96;
     sei();
+ 
+    /* set pin to output to view OC0A*/
+    DDRB |= (_BV(PORTB0));
 }
 
 // ****End of Defined Timer Setup Functions****

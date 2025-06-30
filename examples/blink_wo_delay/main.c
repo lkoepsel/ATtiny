@@ -1,4 +1,4 @@
-// Blink without Delay C version
+// blink_wo_delay - C version
 // Based on Arduino tutorial:
 // http://www.arduino.cc/en/Tutorial/BlinkWithoutDelay
 // And the Adafruit tutorial:

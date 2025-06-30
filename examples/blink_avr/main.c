@@ -1,4 +1,4 @@
-//  blink_avr - uses bit setting by registers instead of digitalWrite()
+//  blink_avr - uses bit toggling bits as compared to Arduino digitalWrite()
 //  For smallest code size, set LIBRARY = no_lib in env.make 
 //  Smallest code size allows you to use a scope to confirm delay 
 //      is exactly 1 millisecond or other timing exercises.

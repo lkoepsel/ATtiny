@@ -1,6 +1,6 @@
-// blink demo of how to get PWM on any pin with interrupts
+// blink_pwm - blinks by setting up a PWM via interrupts
 // based on code by Mike Williams, Make AVR book
-// uses asm commmands where possible to save memory
+// uses asm commands where possible to save memory
 
 #include <avr/io.h>
 #include <util/delay.h>

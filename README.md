@@ -5,7 +5,7 @@
 * [GDB Online Manual](https://sourceware.org/gdb/current/onlinedocs/gdb.html/index.html#Top)
 * [ATtiny13A Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny13A-Data-Sheet-DS40002307A.pdf)
 * [Bloom Documentation](https://bloom.oscillate.io/docs/getting-started)
-* 
+* [Arduino Sensors](https://arduinomodules.info) 
 
 ## docs
 

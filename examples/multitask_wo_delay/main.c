@@ -1,4 +1,4 @@
-// One line kernal for multitasking w/o delay
+// multitasking_wo_delay - one line kernal for multitasking w/o delay
 
 #include <avr/io.h>
 #include "sysclock.h"

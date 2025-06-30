@@ -1,4 +1,4 @@
-// read_POTADC
+// DEPRECATED - delete after reviewing read_POTADC
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>

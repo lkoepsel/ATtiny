@@ -1,3 +1,5 @@
+// readPOT - blocking program to read POT and light led based on value
+// waits for conversion
 #include <avr/io.h>
 #include <util/delay.h>
 
@@ -35,7 +37,7 @@ int main(void)
     {
         ADCSRA |= _BV(ADSC);                    // start ADC conversion
         loop_until_bit_is_clear(ADCSRA, ADSC);  // wait until done
-        volatile uint16_t result = ADC;                  // read ADC value
+        volatile uint16_t result = ADC;         // read ADC value
 
         // For debugging: toggle LED based on threshold
         if (result > TOP) 
@@ -54,6 +56,5 @@ int main(void)
             PORTB &= ~_BV(YELLOW) & ~_BV(BLUE);
         }
 
-        // _delay_ms(100);  // Add delay between readings
     }
 }

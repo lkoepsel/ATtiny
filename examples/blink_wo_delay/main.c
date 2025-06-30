@@ -9,8 +9,6 @@
 
 #define interval 1000
 #define YELLOW 0        // yellow LED to pin 0
-#define WHITE 3         // white LED to pin 3
-#define RED 4           // red LED to pin 4
 
 volatile uint16_t total_blinks = 0;
 volatile uint16_t total_rollover = 0;

@@ -10,7 +10,7 @@
 #define POT PB4
 #define MID_3_ADC 642
 #define BOT_3_ADC 341
-#define INTENSITY 180
+#define INTENSITY 127
 #define set_PIN(x) (1 << (x))
 #define clr_PIN(x) (~(1 << (x)))
 
@@ -23,7 +23,6 @@ volatile uint8_t LED_pin = 0;
 ISR(TIM0_OVF_vect) 
 {
     PORTB |= set_PIN(LED_pin);
-    OCR0A = INTENSITY;
 }
 
 // ISR to set the pin low, thus the duty cycle of the A_pulse
@@ -60,8 +59,9 @@ static inline void initTC(void)
 {
     // setup clock for hybrid PWM operation
     TCCR0A = 0 ;                            // Normal operation 
-    TCCR0B |= ( _BV(CS00) ) ;               // /8 prescalar (72Hz)
+    TCCR0B |= ( _BV(CS00) ) ;               // /1 prescalar (4.5kHz)
     TIMSK0 |= ( _BV(OCIE0A) | _BV(TOIE0));  // turn on interrupts
+    OCR0A = INTENSITY;
     sei();
 }
 

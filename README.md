@@ -738,17 +738,30 @@ digitalWrite(ADC_PIN, HIGH);    // LED on
 
 ## env.make (ATtiny13A only)
 ```make
-# Environmental variables for ATtiny13A
+# Environmental variables for ATtiny13A with ATMEL-ICE
 MCU = attiny13a
 SERIAL = /dev/ttyACM0
 F_CPU = 1200000UL
 USB_BAUD = 250000UL
 LIBDIR = $(DEPTH)Library
-LIBRARY = 
+LIBRARY = no_lib
 PROGRAMMER_TYPE = atmelice_isp
 PROGRAMMER_ARGS = -F -V -P usb -b 115200
 TOOLCHAIN =
 OS =
+
+# Environmental variables for ATtiny13A with SNAP
+MCU = attiny13a
+SERIAL = /dev/ttyACM0
+F_CPU = 1200000UL
+USB_BAUD = 250000UL
+LIBDIR = $(DEPTH)Library
+LIBRARY = no_lib
+PROGRAMMER_TYPE = snap_isp
+PROGRAMMER_ARGS = -F -V -P usb -b 115200
+TOOLCHAIN =
+OS =
+
 ```
 
 ## bloom.yaml 

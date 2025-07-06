@@ -8,11 +8,11 @@
 #define GREEN PB1
 #define WHITE PB2
 #define POT PB4
-#define TOP 642
-#define MID 341
-#define HIGH 250
-#define MOD 60
-#define DIM 8
+#define MID_3_ADC 642
+#define BOT_3_ADC 341
+#define HIGH_INTSN 250
+#define MOD_INTSN 60
+#define DIM_INTSN 8
 #define set_PIN(x) (1 << (x))
 #define clr_PIN(x) (~(1 << (x)))
 
@@ -22,7 +22,7 @@ volatile uint8_t LED_pin = 0;
 
 
 // -------- Functions --------- //
-// ISR to set the pin high and the PWM frequency
+// ISR to set the pin HIGH_INTSN and the PWM frequency
 ISR(TIM0_OVF_vect) 
 {
     OCR0A = LED_intensity;
@@ -77,7 +77,7 @@ int main(void)
     DDRB |=( _BV(BLUE) | _BV(GREEN) | _BV(WHITE)); 
     // Make sure PB4 is an input (it should be by default)
     DDRB &= ~_BV(POT);
-    PORTB |=( _BV(BLUE) | _BV(GREEN) | _BV(WHITE));  // set all high
+    PORTB |=( _BV(BLUE) | _BV(GREEN) | _BV(WHITE));  // set all HIGH_INTSN
     _delay_ms(500);
 
     PORTB &= ~( _BV(BLUE) | _BV(GREEN) | _BV(WHITE));  // set all low
@@ -91,40 +91,40 @@ int main(void)
         while (prev_result == curr_result)
         {
             curr_result = read_ADC();
-            if (curr_result > TOP) 
+            if (curr_result > MID_3_ADC) 
             {
                 // 642 - 1023 ADC
                 PORTB &= ~_BV(GREEN) & ~_BV(WHITE);
                 LED_pin = BLUE;
-                if (curr_result > (TOP + 220))
+                if (curr_result > (MID_3_ADC + 220))
                 {
-                    LED_intensity = HIGH;  
+                    LED_intensity = HIGH_INTSN;  
                 }
-                else if (curr_result > (TOP + 110))
+                else if (curr_result > (MID_3_ADC + 110))
                 {
-                    LED_intensity = MOD;  
+                    LED_intensity = MOD_INTSN;  
                 }
                 else
                 {
-                    LED_intensity = DIM;
+                    LED_intensity = DIM_INTSN;
                 }
             }
-            else if (curr_result > MID)
+            else if (curr_result > BOT_3_ADC)
             {
                 // 341 - 641 ADC
                 PORTB &= ~_BV(BLUE) & ~_BV(WHITE);
                 LED_pin = GREEN;  
-                if (curr_result > (MID + 220))
+                if (curr_result > (BOT_3_ADC+ 220))
                 {
-                    LED_intensity = HIGH;  
+                    LED_intensity = HIGH_INTSN;  
                 }
-                else if (curr_result > (MID + 110))
+                else if (curr_result > (BOT_3_ADC+ 110))
                 {
-                    LED_intensity = MOD;  
+                    LED_intensity = MOD_INTSN;  
                 }
                 else
                 {
-                    LED_intensity = DIM;
+                    LED_intensity = DIM_INTSN;
                 }
             }
             else
@@ -134,15 +134,15 @@ int main(void)
                 LED_pin = WHITE;  
                 if (curr_result > (220))
                 {
-                    LED_intensity = HIGH;  
+                    LED_intensity = HIGH_INTSN;  
                 }
                 else if (curr_result > (110))
                 {
-                    LED_intensity = MOD;  
+                    LED_intensity = MOD_INTSN;  
                 }
                 else
                 {
-                    LED_intensity = DIM;
+                    LED_intensity = DIM_INTSN;
                 }
             }
         }

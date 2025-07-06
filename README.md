@@ -780,6 +780,24 @@ environments:
     target:
       name: "attiny13a"
       physical_interface: "debug_wire"
+      hardware_breakpoints: true
+      manage_dwen_fuse_bit: true
+
+    server:
+      name: "avr_gdb_rsp"
+      ip_address: "127.0.0.1"
+      port: 1442
+
+  snap:
+    shutdown_post_debug_session: true
+
+    tool:
+      name: "snap"
+ 
+    target:
+      name: "attiny13a"
+      physical_interface: "debug_wire"
+      hardware_breakpoints: true
       manage_dwen_fuse_bit: true
 
     server:

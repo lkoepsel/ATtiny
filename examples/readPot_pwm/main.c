@@ -11,8 +11,8 @@
 #define TOP 642
 #define MID 341
 #define HIGH 250
-#define MOD 127
-#define DIM 32
+#define MOD 60
+#define DIM 8
 #define set_PIN(x) (1 << (x))
 #define clr_PIN(x) (~(1 << (x)))
 

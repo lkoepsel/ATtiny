@@ -8,6 +8,7 @@
 #include <util/delay.h>
 
 #define GREEN 0
+#define delay 1000
 int main(void)
 {
     /* set pin to output*/
@@ -17,9 +18,9 @@ int main(void)
     {
         /* turn led on and off */
         asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (GREEN));
-        _delay_ms(500);
+        _delay_ms(delay);
         asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (GREEN));
-        _delay_ms(500);
+        _delay_ms(delay);
     }
     return 0; 
 }

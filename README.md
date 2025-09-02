@@ -20,7 +20,7 @@ This page contains the files needed to be more efficient with *VS Code*. Install
 #### [git.md](./docs/git.md)
 Notes on using *git*. I am neither an expert on *git* nor proficient in *git*. This page is primarily for myself, however, it has helped a few people.
 
-#### RPI_build.md - see this page in the AVR_C repository
+#### RPI_build.md - see this [page](https://github.com/lkoepsel/AVR_C/blob/main/docs/RPi_build.md) in the AVR_C repository
 If you want to use a Raspberry Pi (3/4/5) as a C development platform, this page is for you! Highly detailed, it will show every step required to build the latest software for developing C on an AVR microcontroller. Have fun! 
 
 #### [Bloom and gdb.md](./docs/bloomandgdb.md)
@@ -60,7 +60,7 @@ Notes as to developing C code on the Microchip ATtiny13A. Much of this content w
 1. PB0-PB4 are available using debugWire
 1. Connect via ISP then use debugWire for debugging and loading programs. Bloom requires specific functionality of the ISP interface.
    From Bloom: "*The debugWIRE interface does not support fuse programming. Fuses can only be changed via the ISP interface (for debugWIRE AVR targets). In order for Bloom to manage the DWEN fuse bit, the debug tool must be connected to the target via the ISP interface.*"
-1. Therefore, it's best to use *load* and *mon reset* within *avr-gdb* instead of using AVRDUDE, when connected using the ATMEL ICE. 
+1. **Therefore, it's best to use *load* and *mon reset* within *avr-gdb* instead of using AVRDUDE, when connected using the ATMEL ICE or Microchip SNAP.** 
 1. The arrow on the ATMEL ICE ISP connector is incorrect. Pin 3 (middle pin) is at the notch.
 
 ### ATtiny13A Pinout
@@ -204,9 +204,10 @@ When using DebugWire, you need:
    - You must **enable the DWEN (DebugWire Enable) fuse bit**
    - Once enabled, the RESET pin loses its reset functionality and becomes a DebugWire interface
    - ISP programming is disabled when DebugWire is active
+   - **Bloom does this quite well, leave it to Bloom**
 
 2. **Debugger Requirements**
-   - Use a compatible debugger like **Atmel-ICE**, **JTAGICE mkII**, or **AVR Dragon**
+   - Use a compatible debugger like **Atmel-ICE**, **Microchip SNAP**, or **AVR Dragon**
    - The debugger must support DebugWire protocol
 
 3. **Power Cycling**
@@ -400,6 +401,11 @@ The Atmel-ICE supports multiple programming modes:
 
 ## Microchip SNAP Programmer
 
+### Basic Terminal Command
+```bash
+avrdude -c snap_isp -p attiny13a -t
+```
+
 ### Basic Flash Command
 ```bash
 avrdude -c snap_isp -p attiny13a -U flash:w:blink.hex:i
@@ -495,6 +501,7 @@ However, there's a crucial detail: the **CLKDIV8 fuse is programmed by default**
 avrdude -c snap_isp -p attiny13a -U lfuse:w:0x7A:m -U hfuse:w:0xF7:m
 # read the fuses back
 avrdude -c snap_isp -p attiny13a -U lfuse:r:-:h -U hfuse:r:-:h
+# be sure to set CPU speed in env.make to 9600000UL
 ```
 
 **Low Fuse (0x7A) breakdown: CONFIRMED**

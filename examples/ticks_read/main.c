@@ -1,15 +1,21 @@
-#include "sysclock.h"
+// ticks_read - demonstrate time counter w/ system clock
+// Sets up a system tick of 1 millisec (1kHz)
+// To test, view DMM frequency measurement of 501Hz
+// to determine delta between a delay
+ 
+#include <avr/io.h>
+#include <avr/eeprom.h>
+#include <util/delay.h>
 #include <util/atomic.h>
 #include <avr/interrupt.h>
 
 // ****Defined Interrupt Service Routines****
 volatile uint16_t ticks_ctr = 0;
 
-// Required for ticks timing, see examples/ticks
 // Enabled by init_sysclock_1() in sysclock.c
 ISR (TIM0_COMPA_vect)      
 {
-    // ticks_ctr++;
+    // toggle pin every interrupt
     asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (0));
 
 }
@@ -19,7 +25,8 @@ ISR (TIM0_COMPA_vect)
 // ****Defined Timer Setup Functions****
 void init_sysclock_1k (void)          
 {
-    // Initialize timer 0 to CTC Mode using OCR0A, with a chip clock of 1.2Mhz
+    // Initialize timer 0 to CTC Mode using OCR0A, with a chip clock of 9.6Mhz
+    // This will require the Low Fuse bit 4 CKDIV8 to be set to 1
     // The values below will result in a 1kHz counter (1000 ticks = 1 second)
     // CTC mode (WGM0[2:0] = 2)
     // Set clock select to /8 CS => 010
@@ -30,27 +37,21 @@ void init_sysclock_1k (void)
     // TCCR0A [ COM0A1 COM0A0 COM0B1 COM0B0 0 0 WGM01 WGM00 ] = 0b01000010
     // TCCR0B [ FOC0A FOC0B 0 0 WGM02 CS02 CS01 CS00 ] = 0b00000010
     // TIMSK0 [ 0 0 0 0  OCIE0B  OCIE0A  TOIE0 0 ] = 0b00000100
-    // OCR0A = 0x9a
-    // tick = 1/1000 second
-    // Test using example/ticks w/ _delay_ms(1000); = 1000 ticks
+    // OCR0A = 0x96
 
     TCCR0A = ( _BV(COM0A0) | _BV(WGM01) ) ; 
-    TCCR0B |= ( _BV(CS01) ) ;
+    TCCR0B |= ( _BV(CS01) | _BV(CS00)) ;
     TIMSK0 |= _BV(OCIE0A);
-    OCR0A = 0x79;
-    sei();
- 
+    OCR0A = 0x96;
     /* set pin to output to view OC0A*/
     DDRB |= (_BV(PORTB0));
+    sei();
 }
 
-// ****End of Defined Timer Setup Functions****
+int main (void)
+{
+    // init_sysclock_1k is required to initialize the counter for 1Khz ticks
+    init_sysclock_1k ();
 
-uint16_t ticks(void) {
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-    {
-        return(ticks_ctr);
-    }
-    return 0;   
+    for (;;) {};
 }
-

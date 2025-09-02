@@ -473,32 +473,42 @@ To run at 9.6MHz, you need to:
 
 ## ATtiny13A Clock System Explanation
 
+### Once again, AI has been proven wrong. 
+**NOTE: There are bits in this explanation which are incorrect, based on the datasheet. Specifically the CKDIV8 bit is bit 4. See page 110 in datasheet. DOUBLE CHECK EVERYTHING BELOW** 
+
 The **ATtiny13A** has an internal RC oscillator that runs at either:
 - **9.6MHz** (default oscillator setting)
 - **4.8MHz** (alternative setting)
 
-However, there's a crucial detail: the **CLKDIV8 fuse is programmed by default** from the factory, which divides the clock by 8. This means:
+However, there's a crucial detail: the **CLKDIV8 fuse is programmed by default** from the factory, which divides the clock by 8.
 
 - **Default from factory**: 9.6MHz ÷ 8 = **1.2MHz system clock**
-- This is why I mentioned 1.2MHz - it's the actual system clock frequency with default fuses
 
 ## Fuse Settings for Different Frequencies
 
 ### To Run at 9.6MHz System Clock
 
-You need to **disable CLKDIV8** (unprogram the fuse bit):
+**This command is correct. Performed as shown below and it works. You need to **disable CLKDIV8** (unprogram the fuse bit):**
 
 ```bash
-avrdude -c atmelice_isp -p attiny13a -U lfuse:w:0x7A:m -U hfuse:w:0xFF:m
+## write CLKDIV8 (bit 4) a 1 meaning unprogrammed, in this case DWEN (bit 3 H fuse) was already programmed
+avrdude -c snap_isp -p attiny13a -U lfuse:w:0x7A:m -U hfuse:w:0xF7:m
+# read the fuses back
+avrdude -c snap_isp -p attiny13a -U lfuse:r:-:h -U hfuse:r:-:h
 ```
 
-**Low Fuse (0x7A) breakdown:**
-- Bits 7:6 = 01 (CKDIV8 unprogrammed - no clock division)
-- Bits 5:4 = 11 (Start-up time)
-- Bits 3:2 = 10 (Reserved)
-- Bits 1:0 = 10 (9.6MHz internal oscillator)
+**Low Fuse (0x7A) breakdown: CONFIRMED**
+- Bits 7 = 0 SPIEN (programmed - SPI prog. enabled)
+- Bits 6 = 1 EESAVE (Preserve EEPROM memory through
+Chip Erase)
+- Bits 5 = 1 WDTON (Watchdog Timer always on)
+- Bits 4 = 0 CKDIV8 (Divide clock by 8)
+- Bits 3 = 1 SUT1 (Start-up time)
+- Bits 2 = 0 SUT0 (Start-up time)
+- Bits 1 = 1 CKSEL1 (Select clock source)
+- Bits 0 = 0 CKSEL0 (Select clock source)
 
-### To Run at 4.8MHz System Clock
+### To Run at 4.8MHz System Clock UNCONFIRMED
 
 ```bash
 avrdude -c atmel- -p attiny13a -U lfuse:w:0x79:m -U hfuse:w:0xFF:m

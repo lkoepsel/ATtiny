@@ -1,10 +1,15 @@
 # Programming the ATtiny13A in Standard C
 
-## Under Construction, being re-written to focus on ATtiny13A or other ATtiny chips
-## Important Links
+## This repository is an off-shoot of AVR_C, and is being re-written to focus on ATtiny13A or other ATtiny chips
+
+## Datasheets and Information
+
+* [Microchip ATtiny13A](https://www.microchip.com/en-us/product/attiny13a)
+* [ATtiny13A-Data-Sheet-DS40002307A](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny13A-Data-Sheet-DS40002307A.pdf)
+* [Efficient C Coding for 8-bit AVR Processors](https://www.microchip.com/en-us/application-notes/an1497)
 * [GDB Online Manual](https://sourceware.org/gdb/current/onlinedocs/gdb.html/index.html#Top)
-* [ATtiny13A Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny13A-Data-Sheet-DS40002307A.pdf)
 * [Bloom Documentation](https://bloom.oscillate.io/docs/getting-started)
+* [Bloom Target Information](https://bloom.oscillate.io/docs/target/attiny13a)
 * [Arduino Sensors](https://arduinomodules.info) 
 
 ## docs
@@ -12,10 +17,10 @@
 ### Table of Contents
 
 #### [env_make.md](./docs/env_make.md)
-The file env_make is used to customize the *make* process for *AVR_C* development. It is **required** in order for make to properly identify the parameters needed for compiling/linking/uploading executable code to an AVR microcontroller. **This file is not tracked by *git* and needs to be installed manually.** 
+The file env_make is used to customize the *make* process for *ATtiny* development. It is **required** in order for make to properly identify the parameters needed for compiling/linking/uploading executable code to an AVR microcontroller. **This file is not tracked by *git* and needs to be installed manually.** 
 
 #### [vs_code.md](./docs/vs_code.md)
-This page contains the files needed to be more efficient with *VS Code*. Install them inot the *.vscode* folder of *AVR_C*. They are not tracked by *git*.
+This page contains the files needed to be more efficient with *VS Code*. Install them inot the *.vscode* folder of *ATtiny*. They are not tracked by *git*.
 
 #### [git.md](./docs/git.md)
 Notes on using *git*. I am neither an expert on *git* nor proficient in *git*. This page is primarily for myself, however, it has helped a few people.
@@ -39,7 +44,7 @@ For a robust debugging approach on *Linux*, I recommend using [Bloom](https://bl
 ## Steps to Use
 1. Install toolchain. [Details here](https://www.wellys.com/posts/avr_c_setup/). The **best** method is to use a [Raspberry Pi as your development platform.](./docs/RPi_build.md)
 2. Obtain this repository, either via download using zip file or preferably, [use git and clone to your system](https://www.wellys.com/posts/avr_c_step5/).
-3. Open the *AVR_C* folder and add an *env.make* file (*see below*) based on your board and system.
+3. Open the *ATtiny* folder and add an *env.make* file (*see below*) based on your board and system.
 4. Navigate to *examples/blink* in your CLI and run:
 	* *make* to compile, link and create an executable file
 	* *make flash* to upload executable file to your board.
@@ -105,12 +110,6 @@ RESET/BROWN --| 5  ●     ●  6 |--- GND/BLACK
                   +-------- Notch/Key (orientation)
 ```
 
-## Datasheets and Information
-
-* [Microchip ATtiny13A](https://www.microchip.com/en-us/product/attiny13a)
-* [ATtiny13A-Data-Sheet-DS40002307A](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny13A-Data-Sheet-DS40002307A.pdf)
-* [Bloom Target Information](https://bloom.oscillate.io/docs/target/attiny13a)
-* [Efficient C Coding for 8-bit AVR Processors](https://www.microchip.com/en-us/application-notes/an1497)
 
 ## Links to ATtiny13/A Projects
 * [Enable PWM on an ATtiny by programming its registers](https://www.hackster.io/bearislive/enable-pwm-on-an-attiny-by-programming-its-registers-565948)

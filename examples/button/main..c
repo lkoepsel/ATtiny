@@ -5,6 +5,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdbool.h>
+#include "ATtiny.h"
 
 #define LED PB0
 #define BUTTON PB4
@@ -12,17 +13,17 @@
 int main()
 {
     // set LED pin to OUTPUT
-    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(DDRB)), "I" (LED));
+    SBI(DDRB, LED);
 
     // set BUTTON to INPUT PULLUP (set to DDRD to INPUT then set PORTB)
-    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(DDRB)), "I" (BUTTON));
-    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (BUTTON));
-    
+    CBI(DDRB, BUTTON);
+    SBI(PORTB, BUTTON);
+
     for (;;) 
     {
         static uint8_t button_state = 0;
         bool PRESSED = false;
-        asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (LED));
+        CBI (PORTB, LED);
 
         while (!PRESSED)
         {
@@ -32,7 +33,7 @@ int main()
             if (button_state == 0xF0) 
             {
                 PRESSED = true;
-                asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (LED));
+                SBI(PORTB, LED);
 
                 // delay to show LED
                 _delay_ms(10);

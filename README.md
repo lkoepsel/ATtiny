@@ -7,6 +7,7 @@
 * [Microchip ATtiny13A](https://www.microchip.com/en-us/product/attiny13a)
 * [ATtiny13A-Data-Sheet-DS40002307A](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny13A-Data-Sheet-DS40002307A.pdf)
 * [Efficient C Coding for 8-bit AVR Processors](https://www.microchip.com/en-us/application-notes/an1497)
+* [*C* (ANSI C99) AVR-LibC](https://github.com/avrdudes/avr-libc)
 * [GDB Online Manual](https://sourceware.org/gdb/current/onlinedocs/gdb.html/index.html#Top)
 * [Bloom Documentation](https://bloom.oscillate.io/docs/getting-started)
 * [Bloom Target Information](https://bloom.oscillate.io/docs/target/attiny13a)

@@ -6,10 +6,10 @@
 #include <util/delay.h>
 #include <stdbool.h>
 
-#define LED PB1
-#define BUTTON PB0
+#define LED PB0
+#define BUTTON PB4
 
-void main()
+int main()
 {
     // set LED pin to OUTPUT
     asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(DDRB)), "I" (LED));
@@ -24,7 +24,7 @@ void main()
         bool PRESSED = false;
         asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (LED));
 
-        while (~PRESSED)
+        while (!PRESSED)
         {
             // Shift previous states left and add current state
             button_state = (button_state << 1) | (!(PINB & (1 << BUTTON))) | 0xE0;
@@ -33,7 +33,9 @@ void main()
             {
                 PRESSED = true;
                 asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (LED));
-                _delay_ms(50);
+
+                // delay to show LED
+                _delay_ms(10);
             }
         }
     }

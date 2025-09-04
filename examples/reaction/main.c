@@ -23,6 +23,7 @@
 #include <util/atomic.h>
 #include <avr/interrupt.h>
 #include <stdbool.h>
+#include "ATtiny.h"
 
 // Define hardware, YELLOW/BLUE/YELLOW/BUTTON
 #define YELLOW PB0
@@ -88,66 +89,80 @@ int main (void)
 
     // Blink all three LEDs to indicate game will start
     /* set pins to output */
-    DDRB |=( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));  // PB0, PB1 and PB2 as outputs
+    // DDRB |=( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));  // PB0, PB1 and PB2 as outputs
+    SBI(DDRB, BLUE);
+    SBI(DDRB, WHITE);
+    SBI(DDRB, YELLOW);
 
     // set BUTTON to INPUT PULLUP (set to DDRD to INPUT then set PORTB)
-    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(DDRB)), "I" (BUTTON));
-    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (BUTTON));
+    // asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(DDRB)), "I" (BUTTON));
+    CBI(DDRB, BUTTON);
+
+    // asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (BUTTON));
+    SBI(PORTB, BUTTON);
 
     // blink all LEDs to indicate start
-    PORTB |=( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));
+    // PORTB |=( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));
+    SBI(PORTB, BLUE);
+    SBI(PORTB, WHITE);
+    SBI(PORTB, YELLOW);
     _delay_ms(250);
-    PORTB &= ~( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));  // set all low
+    // PORTB &= ~( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));  // set all low
+    CBI(PORTB, BLUE);
+    CBI(PORTB, WHITE);
+    CBI(PORTB, YELLOW);
 
     for (;;) 
     {
         uint8_t i = 5;
         do 
         {
-                // Light YELLOW a LED_TIME between .5 and 2.5 seconds
-                asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
-                volatile uint8_t LED_TIME = 0;
-                uint8_t j = i;
-                do
+            // Light YELLOW a LED_TIME between .5 and 2.5 seconds
+            // asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
+            SBI(PORTB, YELLOW);
+            volatile uint8_t LED_TIME = 0;
+            uint8_t j = i;
+            do
+            {
+                _delay_ms(LED_05);
+                LED_TIME += LED_05;
+            } while (--j);
+
+            // asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
+            CBI(PORTB, YELLOW);
+            _delay_ms(500);
+        }
+
+            // Start timer
+            // uint8_t start = ticks();
+            
+            // When button is pressed, determine PRESS_TIME
+            static uint8_t button_state = 0;
+            bool PRESSED = false;
+            asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (WHITE));
+
+            while (!PRESSED)
+            {
+                // Shift previous states left and add current state
+                button_state = (button_state << 1) | (!(PINB & (1 << BUTTON))) | 0xE0;
+                // Button is pressed when last 5 readings are all low (pressed)
+                if (button_state == 0xF0) 
                 {
-                    _delay_ms(LED_05);
-                    LED_TIME += LED_05;
-                } while (j--);
-
-                asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (YELLOW));
-                _delay_ms(500);
-
-                // Start timer
-                // uint8_t start = ticks();
-                
-                // When button is pressed, determine PRESS_TIME
-                static uint8_t button_state = 0;
-                bool PRESSED = false;
-                asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (WHITE));
-
-                while (!PRESSED)
-                {
-                    // Shift previous states left and add current state
-                    button_state = (button_state << 1) | (!(PINB & (1 << BUTTON))) | 0xE0;
-                    // Button is pressed when last 5 readings are all low (pressed)
-                    if (button_state == 0xF0) 
-                    {
-                        PRESSED = true;
-                        asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (WHITE));
-                        _delay_ms(50);
-                    }
+                    PRESSED = true;
+                    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (WHITE));
+                    _delay_ms(50);
                 }
+            
+            
+            // Compare PRESS_TIME to LED_TIME
+            
+            
+            // If CLOSE, blink BLUE else, blink YELLOW
+            
+            
+            // Repeat 4 more times, with variable LED_TIME
                 
-                
-                // Compare PRESS_TIME to LED_TIME
-                
-                
-                // If CLOSE, blink BLUE else, blink YELLOW
-                
-                
-                // Repeat 4 more times, with variable LED_TIME
-                
-        } while (--i);
+            } while (--i);
         _delay_ms(1000);
 
         // Blink BLUE for every success

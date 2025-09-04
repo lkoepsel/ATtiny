@@ -1,4 +1,7 @@
-// readPin - program to read a pin to demo button presses
+// button - program to read a pin to demo button presses
+// Uses blocking and 5 consecutive reads to confirm a button press
+// Lights an LED to indicate a pressed button
+
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdbool.h>
@@ -11,8 +14,8 @@ void main()
     // set LED pin to OUTPUT
     asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(DDRB)), "I" (LED));
 
-    // set BUTTON to INPUT PULLUP (set to DDRD to INPUT then set PORTB bit)
-    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(DDRB)), "I" (BUTTON));
+    // set BUTTON to INPUT PULLUP (set to DDRD to INPUT then set PORTB)
+    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(DDRB)), "I" (BUTTON));
     asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (BUTTON));
     
     for (;;) 

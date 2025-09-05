@@ -88,6 +88,8 @@ CFLAGS += -ffunction-sections -fdata-sections
 # if attempting to use %S format specification (strings in progmem), uncomment next line
 CFLAGS += -Wno-format
 LDFLAGS = -Wl,-Map,$(TARGET).map 
+## Uncomment line to remove interrupt vectors for smallest code size
+## LDFLAGS += -nostartfiles
 ## Optional, but often ends up with smaller code
 LDFLAGS += -Wl,--gc-sections 
 # Uncomment line below to add timestamp wrapper to printf() OR

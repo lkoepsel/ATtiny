@@ -10,7 +10,7 @@
 #define LED PB0
 #define BUTTON PB4
 
-int main()
+int main(void)
 {
     // set LED pin to OUTPUT
     SBI(DDRB, LED);

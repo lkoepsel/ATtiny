@@ -836,33 +836,6 @@ environments:
       port: 1442
 ```
 
-## .gdbinit
-
-```
-set history save on
-set history size 10000
-set history filename ~/.gdb_history
-
-file main.elf
-target remote :1442
-set listsize 0
-set tui compact-source on
-tui focus cmd
-
-define ll
-load
-l main
-end
-
-define td
-tui disable
-end
-
-define te
-tui enable
-end
-```
-
 ## tasks.json
 
 ```json
@@ -934,3 +907,105 @@ end
     ]
 }
 ```
+
+## Using Bloom and avr-gdb
+
+[Bloom and ATtiny13A](https://bloom.oscillate.io/docs/target/attiny13a)
+
+### .gdbinit - place in home folder
+
+```
+set history save on
+set history size 10000
+set history filename ~/.gdb_history
+
+file main.elf
+target remote :1442
+set listsize 0
+set tui compact-source on
+tui focus cmd
+
+define ll
+load
+l main
+end
+
+define td
+tui disable
+end
+
+define te
+tui enable
+end
+```
+
+
+### Startup
+
+1. In first window:
+```bash
+cd ATtiny
+bloom snap
+# bloom will initialize then wait for gdb server
+```
+2. In second window (remain in this window):
+```
+cd ATtiny/examples/blink
+avr-gdb
+```
+
+### Typical gdb commands
+
+* Once gdb has started, hit enter to get the command window
+* `ll` to load main.elf and list contents
+* `c` to run
+* *Ctrl-c* to stop
+* `mon reset` to reset PC to 0x0000
+* to use register commands below, turn off *tui* using `td`
+* `mon lr` to list ALL registers
+* `mon rr portb` to show contents of *PORTB*, *DDRB* and *PINB*
+* `mon wr portb portb 07` to set lowest 3 bits to 1
+
+#### Example: Setting Pins
+```bash
+(gdb) mon wr portb portb 0
+Writing value 0x00 (8-bit) to "PORTB" register, at address 0x00000038, via `data` address space...
+Register written
+(gdb) mon lr portb
+---------- "PORTB" (`portb`) peripheral registers ----------
+
+`portb`, `pinb`, "PINB", 0x00000036, 8-bit, "Input Pins, Port B"
+`portb`, `ddrb`, "DDRB", 0x00000037, 8-bit, "Data Direction Register, Port B"
+`portb`, `portb`, "PORTB", 0x00000038, 8-bit, "Data Register, Port B"
+
+(gdb) mon rr portb
+Reading "PORTB" peripheral registers...
+
+`portb`, `pinb`, "PINB", 0x00000036, 8-bit | 0x20 (32, 0b00100000)
+`portb`, `ddrb`, "DDRB", 0x00000037, 8-bit | 0x07 (7, 0b00000111)
+`portb`, `portb`, "PORTB", 0x00000038, 8-bit | 0x00 (0, 0b00000000)
+
+(gdb) mon wr portb portb 07
+Writing value 0x07 (8-bit) to "PORTB" register, at address 0x00000038, via `data` address space...
+Register written
+```
+
+#### Example: Setting PWM frequency
+```bash
+(gdb) mon lr tc0
+---------- "TC0" (`tc0`) peripheral registers ----------
+
+`tc0`, `gtccr`, "GTCCR", 0x00000048, 8-bit, "General Timer Conuter Register"
+`tc0`, `ocr0b`, "OCR0B", 0x00000049, 8-bit, "Timer/Counter0 Output Compare Register"
+`tc0`, `tccr0a`, "TCCR0A", 0x0000004F, 8-bit, "Timer/Counter Control Register A"
+`tc0`, `tcnt0`, "TCNT0", 0x00000052, 8-bit, "Timer/Counter0"
+`tc0`, `tccr0b`, "TCCR0B", 0x00000053, 8-bit, "Timer/Counter Control Register B"
+`tc0`, `ocr0a`, "OCR0A", 0x00000056, 8-bit, "Timer/Counter0 Output Compare Register"
+`tc0`, `tifr0`, "TIFR0", 0x00000058, 8-bit, "Timer/Counter0 Interrupt Flag register"
+`tc0`, `timsk0`, "TIMSK0", 0x00000059, 8-bit, "Timer/Counter0 Interrupt Mask Register"
+
+(gdb) mon wr tc0 ocr0a 90
+Writing value 0x90 (8-bit) to "OCR0A" register, at address 0x00000056, via `data` address space...
+Register written
+```
+

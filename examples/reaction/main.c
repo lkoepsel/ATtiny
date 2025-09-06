@@ -35,6 +35,7 @@
 #define LED_x3 LED_DUR*3
 #define LED_x4 LED_DUR*4
 #define LED x5 LED_DUR*5
+#define ALLOW LED_DUR/4
 
 // ****Defined Interrupt Service Routines****
 volatile uint8_t ticks_ctr = 0;
@@ -43,8 +44,9 @@ volatile uint8_t ticks_ctr = 0;
 // Enabled by init_sysclock_1() in sysclock.c
 ISR (TIM0_COMPA_vect)      
 {
-    // ticks_ctr++;
-    SBI(PINB, PB3);
+    ticks_ctr++;
+    // Use to check frequency, currently 250Hz
+    // SBI(PINB, PB3);
 }
 
 // ****End of Defined Interrupt Service Routines****
@@ -84,7 +86,7 @@ int main (void)
     // Initialize timer to 255 ticks for 2.55 seconds (1 tick = 10ms)
     init_sysclock_100 ();
     // temp pin for determing freq
-    DDRB |= (_BV(PB3));
+    // DDRB |= (_BV(PB3));
 
     /* setup LEDs */
     DDRB |=( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));
@@ -103,6 +105,9 @@ int main (void)
     {
         // show duration of the 5 blinks, from longest to shortest
         uint8_t i = 5;
+        uint8_t start = 0;
+        uint8_t end = 0;
+        uint8_t delta = 0;
         do 
         {
             // Light BLUE a LED_TIME between .5 and 2.5 seconds
@@ -120,7 +125,7 @@ int main (void)
         } while (--i);
 
         // Start timer
-        // uint8_t start = ticks();
+        start = ticks();
         
         // When button is pressed, determine PRESS_TIME
         static uint8_t button_state = 0;
@@ -136,24 +141,39 @@ int main (void)
             {
                 PRESSED = true;
                 SBI(PORTB, WHITE);
+                end = ticks();
                 _delay_ms(50);
             }
+        }
             
-            
-            // Compare PRESS_TIME to LED_TIME
-            
-            
-            // If CLOSE, blink BLUE else, blink YELLOW
-            
-            
-            // Repeat 4 more times, with variable LED_TIME
-                
-            }
+        // Compare PRESS_TIME to LED_TIME
+        if (start > end)
+        {
+            delta = start - end;
+        }
+        else
+        {
+            delta = end - start;
+        }
 
-        // Blink BLUE for every success
-        
-        
+        // If CLOSE, blink BLUE else, blink YELLOW
+        if ((delta < (LED_DUR + ALLOW)) & (delta > (LED_DUR - ALLOW)))
+        {
+            SBI(PORTB, BLUE);
+            _delay_ms(500);
+            CBI(PORTB, BLUE);
+            _delay_ms(500);
+        }
         // Blink YELLOW for every failure
+        else
+        {
+            SBI(PORTB, YELLOW);
+            _delay_ms(500);
+            CBI(PORTB, YELLOW);
+            _delay_ms(500);
+        }       
+    
+        // Repeat 4 more times, with variable LED_TIME
 
     };
 }

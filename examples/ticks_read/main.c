@@ -20,8 +20,6 @@ ISR (TIM0_COMPA_vect)
 {
     // toggle pin every interrupt
     SBI(PINB, PINB0);
-    // asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (0));
-
 }
 
 // ****End of Defined Interrupt Service Routines****

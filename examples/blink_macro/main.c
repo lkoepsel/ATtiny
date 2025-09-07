@@ -8,8 +8,8 @@
 #include <util/delay.h>
 #include "ATtiny.h"
 
-#define GREEN 0
-#define delay 100
+#define GREEN 1
+#define delay 1000
 
 int main(void)
 {

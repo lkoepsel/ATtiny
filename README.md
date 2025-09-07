@@ -4,15 +4,15 @@ Notes as to developing C code for the Microchip ATtiny13A. *Some* of this conten
 
 ## Local Documentation
 
-* [ATTiny13A Datasheet](../documentation/ATtiny13A-Data-Sheet-DS40002307A.pdf)
-* [Getting Started Writing C for AVR](../documentation/AVR1000b-Getting-Started-Writing-C-Code-for-AVR-DS90003262B.pdf)
-* [AVR Instruction Set](../documentation/Atmel-0856-avr-instruction-set-manual.pdf)
-* [AVR Software User Guide](../documentation/Atmel-42787-AVR-Software-User-Guide.pdf)
-* [AVR Efficient C Coding](../documentation/Atmel-AVR035-Efficient%20C%20Coding%20for%20AVR.pdf)
-* [AVR_LibC User Manual](../documentation/avr-libc-user-manual-2.2.0.pdf)
-* [Avrdude User Manual](../documentation/avrdude.pdf)
-* [GCC User Manual](../documentation/gcc_15.pdf)
-* [GDB User Manual](../documentation/gdb_17.0.50.20250617-git.pdf)
+* [ATTiny13A Datasheet](./documentation/ATtiny13A-Data-Sheet-DS40002307A.pdf)
+* [Getting Started Writing C for AVR](./documentation/AVR1000b-Getting-Started-Writing-C-Code-for-AVR-DS90003262B.pdf)
+* [AVR Instruction Set](./documentation/Atmel-0856-avr-instruction-set-manual.pdf)
+* [AVR Software User Guide](./documentation/Atmel-42787-AVR-Software-User-Guide.pdf)
+* [AVR Efficient C Coding](./documentation/Atmel-AVR035-Efficient%20C%20Coding%20for%20AVR.pdf)
+* [AVR_LibC User Manual](./documentation/avr-libc-user-manual-2.2.0.pdf)
+* [Avrdude User Manual](./documentation/avrdude.pdf)
+* [GCC User Manual](./documentation/gcc_15.pdf)
+* [GDB User Manual](./documentation/gdb_17.0.50.20250617-git.pdf)
 
 ## Online Documentation
 

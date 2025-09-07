@@ -29,6 +29,7 @@ int main(void)
         {
             // Shift previous states left and add current state
             button_state = (button_state << 1) | (!(PINB & (1 << BUTTON))) | 0xE0;
+
             // Button is pressed when last 5 readings are all low (pressed)
             if (button_state == 0xF0) 
             {
@@ -36,7 +37,7 @@ int main(void)
                 SBI(PORTB, LED);
 
                 // delay to show LED
-                _delay_ms(10);
+                _delay_ms(5);
             }
         }
     }

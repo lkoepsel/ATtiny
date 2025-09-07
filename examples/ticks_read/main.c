@@ -1,6 +1,8 @@
 // ticks_read - demonstrate time counter w/ system clock
-// Sets up a system tick of 1 millisec (1kHz)
-// To test, view DMM frequency measurement of 501Hz
+// Sets up a system tick of 1 millisec (1kHz) using a CPU clock of 9.6MHz
+// CKDIV8 fuse needs to be set to 1
+// Use: avrdude -c snap_isp -p attiny13a -U lfuse:w:0x7A:m -U hfuse:w:0xF7:m
+// To test, view DMM frequency measurement of 498Hz
 // to determine delta between a delay
  
 #include <avr/io.h>
@@ -8,6 +10,7 @@
 #include <util/delay.h>
 #include <util/atomic.h>
 #include <avr/interrupt.h>
+#include "ATtiny.h"
 
 // ****Defined Interrupt Service Routines****
 volatile uint16_t ticks_ctr = 0;
@@ -16,7 +19,8 @@ volatile uint16_t ticks_ctr = 0;
 ISR (TIM0_COMPA_vect)      
 {
     // toggle pin every interrupt
-    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (0));
+    SBI(PINB, PINB0);
+    // asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (0));
 
 }
 
@@ -32,10 +36,10 @@ void init_sysclock_1k (void)
     // Set clock select to /8 CS => 010
     // Bit 2 – OCIE0A: Timer/Counter0 Output Compare Match A Interrupt Enable
     // COM0A0 - set to view OC0A on PB0 with scope
-    // OCR0A = x9c or ~150
+    // OCR0A = x96
 
     // TCCR0A [ COM0A1 COM0A0 COM0B1 COM0B0 0 0 WGM01 WGM00 ] = 0b01000010
-    // TCCR0B [ FOC0A FOC0B 0 0 WGM02 CS02 CS01 CS00 ] = 0b00000010
+    // TCCR0B [ FOC0A FOC0B 0 0 WGM02 CS02 CS01 CS00 ] = 0b00000011
     // TIMSK0 [ 0 0 0 0  OCIE0B  OCIE0A  TOIE0 0 ] = 0b00000100
     // OCR0A = 0x96
 
@@ -43,8 +47,6 @@ void init_sysclock_1k (void)
     TCCR0B |= ( _BV(CS01) | _BV(CS00)) ;
     TIMSK0 |= _BV(OCIE0A);
     OCR0A = 0x96;
-    /* set pin to output to view OC0A*/
-    DDRB |= (_BV(PORTB0));
     sei();
 }
 
@@ -52,6 +54,9 @@ int main (void)
 {
     // init_sysclock_1k is required to initialize the counter for 1Khz ticks
     init_sysclock_1k ();
+
+    /* set pin to output to view OC0A*/
+    DDRB |= (_BV(PORTB0));
 
     for (;;) {};
 }

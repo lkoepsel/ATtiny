@@ -18,7 +18,6 @@ Notes as to developing C code for the Microchip ATtiny13A. *Some* of this conten
 
 * [Microchip ATtiny13A](https://www.microchip.com/en-us/product/attiny13a)
 * [ATtiny13A-Data-Sheet-DS40002307A](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny13A-Data-Sheet-DS40002307A.pdf) 
-* [Efficient C Coding for 8-bit AVR Processors](https://www.microchip.com/en-us/application-notes/an1497) 
 * [*C* (ANSI C99) AVR-LibC](https://github.com/avrdudes/avr-libc)
 * [GDB Online Manual](https://sourceware.org/gdb/current/onlinedocs/gdb.html/index.html#Top) 
 * [Bloom Documentation](https://bloom.oscillate.io/docs/getting-started)
@@ -503,8 +502,10 @@ The confusion often arises because Atmel/Microchip ships the chips with **CLKDIV
 The **SNAP programmer doesn't provide target power**, so you must power the ATtiny13A externally. The Atmel-ICE can provide power, but it's often better to use external power.
 
 ## Multiplex ATtiny13A pin
+### Context Provided
 I wish to multiplex an AVR ATtiny13A pin. Provide a circuit example where the microcontroller has a pin being used as both input and output. For example, I want to measure temperature with a thermistor then light an LED based on the thermistor value, with both the thermistor and led will be on the same pin.  Explain via a circuit analysis, that the thermistor won’t be affected when the LED is lit and the LED won’t light when the thermistor is being measured via the ADC of the ATtiny13A pin.
 
+### Claude 4 Response
 To multiplex a pin on the ATtiny13A for both input (thermistor measurement) and output (LED control), you can use a clever circuit design that ensures the thermistor and LED do not interfere with each other. Below is an example circuit and explanation of how it works.
 
 ---
@@ -653,36 +654,9 @@ digitalWrite(ADC_PIN, HIGH);    // LED on
 * [Overview | Sipping Power With NeoPixels | Adafruit Learning System](https://learn.adafruit.com/sipping-power-with-neopixels)
 * [NeoPixel RGBW Mini Button PCB - Pack of 10 : ID 4776 : Adafruit Industries, Unique & fun DIY electronics and kits](https://www.adafruit.com/product/4776)
 
+## Helpful Files
 
-## env.make (ATtiny13A only)
-```make
-# Environmental variables for ATtiny13A with ATMEL-ICE
-MCU = attiny13a
-SERIAL = /dev/ttyACM0
-F_CPU = 1200000UL
-USB_BAUD = 250000UL
-LIBDIR = $(DEPTH)Library
-LIBRARY = no_lib
-PROGRAMMER_TYPE = atmelice_isp
-PROGRAMMER_ARGS = -F -V -P usb -b 115200
-TOOLCHAIN =
-OS =
-
-# Environmental variables for ATtiny13A with SNAP
-MCU = attiny13a
-SERIAL = /dev/ttyACM0
-F_CPU = 1200000UL
-USB_BAUD = 250000UL
-LIBDIR = $(DEPTH)Library
-LIBRARY = no_lib
-PROGRAMMER_TYPE = snap_isp
-PROGRAMMER_ARGS = -F -V -P usb -b 115200
-TOOLCHAIN =
-OS =
-
-```
-
-## tasks.json
+### tasks.json for VS Code
 
 ```json
 {

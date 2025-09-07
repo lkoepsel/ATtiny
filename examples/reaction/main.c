@@ -30,11 +30,7 @@
 #define BLUE PB1
 #define WHITE PB2
 #define BUTTON PB4
-#define LED_DUR 250
-#define LED_x2 LED_DUR*2
-#define LED_x3 LED_DUR*3
-#define LED_x4 LED_DUR*4
-#define LED x5 LED_DUR*5
+#define LED_DUR 150
 #define ALLOW LED_DUR/2
 
 // ****Defined Interrupt Service Routines****
@@ -107,75 +103,92 @@ int main (void)
     PORTB &= ~( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));
     _delay_ms(1000);
 
-    for (;;) 
+    for (;;)
     {
-        // show duration of the 5 blinks, from longest to shortest
-        uint16_t start = 0;
-        uint16_t end = 0;
-        uint16_t delta = 0;
-
-        // Light BLUE a LED_TIME between .5 and 2.5 seconds
-        SBI(PORTB, BLUE);
-        volatile uint16_t LED_TIME = 0;
-        uint8_t j = 4;
+        uint8_t i = 3;
+        uint8_t good = 0;
         do
         {
-            _delay_ms(LED_DUR);
-            LED_TIME += LED_DUR;
-        } while (--j);
+            // show duration of the 5 blinks, from longest to shortest
+            uint16_t start = 0;
+            uint16_t end = 0;
+            uint16_t delta = 0;
+            uint8_t j = i*4;
 
-        CBI(PORTB, BLUE);
-        _delay_ms(1000);
-
-        // Start timer
-        start = ticks();
-        
-        // When button is pressed, determine PRESS_TIME
-        static uint8_t button_state = 0;
-        bool PRESSED = false;
-        CBI (PORTB, WHITE);
-
-        while (!PRESSED)
-        {
-            // Shift previous states left and add current state
-            button_state = (button_state << 1) | (!(PINB & (1 << BUTTON))) | 0xE0;
-            // Button is pressed when last 5 readings are all low (pressed)
-            if (button_state == 0xF0) 
+            // Light BLUE a LED_TIME between .5 and 2.5 seconds
+            SBI(PORTB, BLUE);
+            volatile uint16_t LED_TIME = 0;
+            do
             {
-                PRESSED = true;
-                end = ticks();
-            }
-        }
+                _delay_ms(LED_DUR);
+                LED_TIME += LED_DUR;
+            } while (--j);
+
+            CBI(PORTB, BLUE);
+            _delay_ms(1000);
+
+            // Start timer
+            start = ticks();
             
-        // Compare PRESS_TIME to LED_TIME
-        if (start > end)
-        {
-            delta = (65535 - start) + end;
-        }
-        else
-        {
-            delta = end - start;
-        }
+            // When button is pressed, determine PRESS_TIME
+            static uint8_t button_state = 0;
+            bool PRESSED = false;
+            CBI (PORTB, WHITE);
 
-        _delay_ms(1000);
-        // If CLOSE, blink BLUE else, blink YELLOW
-        if ((delta < (LED_DUR + ALLOW)) & (delta > (LED_DUR - ALLOW)))
-        {
-            SBI(PORTB, WHITE);
-            _delay_ms(500);
-            CBI(PORTB, WHITE);
-            _delay_ms(500);
-        }
-        // Blink YELLOW for every failure
-        else
-        {
-            SBI(PORTB, YELLOW);
-            _delay_ms(500);
-            CBI(PORTB, YELLOW);
-            _delay_ms(500);
-        }       
-    
-        // Repeat 4 more times, with variable LED_TIME
+            while (!PRESSED)
+            {
+                // Shift previous states left and add current state
+                button_state = (button_state << 1) | (!(PINB & (1 << BUTTON))) | 0xE0;
+                // Button is pressed when last 5 readings are all low (pressed)
+                if (button_state == 0xF0) 
+                {
+                    PRESSED = true;
+                    end = ticks();
+                }
+            }
+                
+            // Compare PRESS_TIME to LED_TIME
+            if (start > end)
+            {
+                delta = (65535 - start) + end;
+            }
+            else
+            {
+                delta = end - start;
+            }
 
+            _delay_ms(1000);
+            // If CLOSE, blink BLUE else, blink YELLOW
+            if ((delta < (LED_DUR + ALLOW)) & (delta > (LED_DUR - ALLOW)))
+            {
+                SBI(PORTB, WHITE);
+                _delay_ms(500);
+                CBI(PORTB, WHITE);
+                ++good;
+                _delay_ms(500);
+            }
+            // Blink YELLOW for every failure
+            else
+            {
+                SBI(PORTB, YELLOW);
+                _delay_ms(500);
+                CBI(PORTB, YELLOW);
+                _delay_ms(500);
+            }       
+        
+            // Repeat 4 more times, with variable LED_TIME
+        } while (--i);
+
+        if (good >=2)
+        {
+            uint8_t i = 5;
+            do
+            {
+                PORTB |= ( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));
+                _delay_ms(500);
+                PORTB &= ~( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));
+                _delay_ms(1000);
+            } while ( --i);
+        }
     };
 }

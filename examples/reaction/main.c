@@ -1,6 +1,6 @@
 // reaction - simple reaction time game
 // Game Rules
-// 1. Light YELLOW between .5 and 2 seconds
+// 1. Light BLUE between .5 and 2 seconds
 // 2. Blink GREEN to start.
 // 3. User must press button to match the time of the YELLOW  
 // 4. GREEN if acceptable
@@ -25,20 +25,20 @@
 #include <stdbool.h>
 #include "ATtiny.h"
 
-// Define hardware, YELLOW/BLUE/YELLOW/BUTTON
+// Define hardware, YELLOW/BLUE/WHITE/BUTTON
 #define YELLOW PB0
 #define BLUE PB1
 #define WHITE PB2
 #define BUTTON PB4
-#define LED_DUR 100
+#define LED_DUR 250
 #define LED_x2 LED_DUR*2
 #define LED_x3 LED_DUR*3
 #define LED_x4 LED_DUR*4
 #define LED x5 LED_DUR*5
-#define ALLOW LED_DUR/4
+#define ALLOW LED_DUR/2
 
 // ****Defined Interrupt Service Routines****
-volatile uint8_t ticks_ctr = 0;
+volatile uint16_t ticks_ctr = 0;
 
 // Required for ticks timing, see examples/ticks
 // Enabled by init_sysclock_1() in sysclock.c
@@ -68,7 +68,9 @@ void init_sysclock_100 (void)
     // `tc0`, `tifr0`, "TIFR0", 0x00000058, 8-bit | 0x08 (8, 0b00001000), TOV0: 0b0, OCF0A: 0b0, OCF0B: 0b1
     // `tc0`, `timsk0`, "TIMSK0", 0x00000059, 8-bit | 0x04 (4, 0b00000100), TOIE0: 0b0, OCIE0A: 0b1, OCIE0B: 0b0
 
-    TCCR0A = ( _BV(COM0A0) | _BV(WGM01) ) ; 
+    // Use to check frequency, enables toggling of pin on compare
+    // TCCR0A = ( _BV(COM0A0) | _BV(WGM01) ) ; 
+    TCCR0A = ( _BV(WGM01) ) ; 
     TCCR0B |= ( _BV(CS01) | _BV(CS00) ) ;
     TIMSK0 |= _BV(OCIE0A);
     OCR0A = 0x23;
@@ -77,8 +79,12 @@ void init_sysclock_100 (void)
 
 // ****End of Defined Timer Setup Functions****
 
-uint8_t ticks(void) {
-    return(ticks_ctr);
+uint16_t ticks(void) {
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    {
+        return(ticks_ctr);
+    }
+    return 0;   
 }
 
 int main (void)
@@ -104,25 +110,22 @@ int main (void)
     for (;;) 
     {
         // show duration of the 5 blinks, from longest to shortest
-        uint8_t i = 5;
-        uint8_t start = 0;
-        uint8_t end = 0;
-        uint8_t delta = 0;
-        do 
-        {
-            // Light BLUE a LED_TIME between .5 and 2.5 seconds
-            SBI(PORTB, BLUE);
-            volatile uint8_t LED_TIME = 0;
-            uint8_t j = i;
-            do
-            {
-                _delay_ms(LED_DUR);
-                LED_TIME += LED_DUR;
-            } while (--j);
+        uint16_t start = 0;
+        uint16_t end = 0;
+        uint16_t delta = 0;
 
-            CBI(PORTB, BLUE);
-            _delay_ms(1000);
-        } while (--i);
+        // Light BLUE a LED_TIME between .5 and 2.5 seconds
+        SBI(PORTB, BLUE);
+        volatile uint16_t LED_TIME = 0;
+        uint8_t j = 4;
+        do
+        {
+            _delay_ms(LED_DUR);
+            LED_TIME += LED_DUR;
+        } while (--j);
+
+        CBI(PORTB, BLUE);
+        _delay_ms(1000);
 
         // Start timer
         start = ticks();
@@ -140,28 +143,27 @@ int main (void)
             if (button_state == 0xF0) 
             {
                 PRESSED = true;
-                SBI(PORTB, WHITE);
                 end = ticks();
-                _delay_ms(50);
             }
         }
             
         // Compare PRESS_TIME to LED_TIME
         if (start > end)
         {
-            delta = start - end;
+            delta = (65535 - start) + end;
         }
         else
         {
             delta = end - start;
         }
 
+        _delay_ms(1000);
         // If CLOSE, blink BLUE else, blink YELLOW
         if ((delta < (LED_DUR + ALLOW)) & (delta > (LED_DUR - ALLOW)))
         {
-            SBI(PORTB, BLUE);
+            SBI(PORTB, WHITE);
             _delay_ms(500);
-            CBI(PORTB, BLUE);
+            CBI(PORTB, WHITE);
             _delay_ms(500);
         }
         // Blink YELLOW for every failure

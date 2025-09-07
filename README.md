@@ -423,17 +423,6 @@ However, there's a crucial detail: the **CLKDIV8 fuse is programmed by default**
 
 ## Fuse Settings for Different Frequencies
 
-### To Run at 9.6MHz System Clock
-
-**This command is correct. Performed as shown below and it works. You need to **disable CLKDIV8** (unprogram the fuse bit):**
-
-```bash
-## write CLKDIV8 (bit 4) a 1 meaning unprogrammed, in this case DWEN (bit 3 H fuse) was already programmed
-avrdude -c snap_isp -p attiny13a -U lfuse:w:0x7A:m -U hfuse:w:0xF7:m
-# read the fuses back
-avrdude -c snap_isp -p attiny13a -U lfuse:r:-:h -U hfuse:r:-:h
-# be sure to set CPU speed in env.make to 9600000UL
-```
 ### Low Fuse (Default: 0x6A)
 | Bit | Default | Name | Description |
 |-----|---------|------|-------------|
@@ -446,15 +435,26 @@ avrdude -c snap_isp -p attiny13a -U lfuse:r:-:h -U hfuse:r:-:h
 | 1 | 1 | CKSEL1 | Select clock source |
 | 0 | 0 | CKSEL0 | Select clock source |
 
+### To Run at 9.6MHz System Clock
+
+```bash
+## write CLKDIV8 (bit 4) a 1 meaning unprogrammed, in this case DWEN (bit 3 H fuse) was already programmed
+avrdude -c snap_isp -p attiny13a -U lfuse:w:0x7A:m -U hfuse:w:0xF7:m
+```
+
 ### To Run at 1.2MHz System Clock (Factory Default)
 
 ```bash
-avrdude -c atmelice_isp -p attiny13a -U lfuse:w:0x6A:m -U hfuse:w:0xFF:m
+avrdude -c snap_isp -p attiny13a -U lfuse:w:0x6A:m -U hfuse:w:0xFF:m
+```
+### To Confirm or See Fuse Values
+
+```bash
+# read the fuses back
+avrdude -c snap_isp -p attiny13a -U lfuse:r:-:h -U hfuse:r:-:h
+# be sure to set CPU speed in env.make to 9600000UL
 ```
 
-**Low Fuse (0x6A) breakdown:**
-- Bits 7:6 = 00 (CKDIV8 programmed - clock divided by 8)
-- Bits 1:0 = 10 (9.6MHz ÷ 8 = 1.2MHz)
 
 ### Compile for 9.6MHz
 

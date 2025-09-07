@@ -423,27 +423,17 @@ avrdude -c snap_isp -p attiny13a -U lfuse:w:0x7A:m -U hfuse:w:0xF7:m
 avrdude -c snap_isp -p attiny13a -U lfuse:r:-:h -U hfuse:r:-:h
 # be sure to set CPU speed in env.make to 9600000UL
 ```
-
-**Low Fuse (0x7A) breakdown: CONFIRMED**
-- Bits 7 = 0 SPIEN (programmed - SPI prog. enabled)
-- Bits 6 = 1 EESAVE (Preserve EEPROM memory through
-Chip Erase)
-- Bits 5 = 1 WDTON (Watchdog Timer always on)
-- Bits 4 = 0 CKDIV8 (Divide clock by 8)
-- Bits 3 = 1 SUT1 (Start-up time)
-- Bits 2 = 0 SUT0 (Start-up time)
-- Bits 1 = 1 CKSEL1 (Select clock source)
-- Bits 0 = 0 CKSEL0 (Select clock source)
-
-### To Run at 4.8MHz System Clock UNCONFIRMED
-
-```bash
-avrdude -c atmel- -p attiny13a -U lfuse:w:0x79:m -U hfuse:w:0xFF:m
-```
-
-**Low Fuse (0x79) breakdown:**
-- Bits 7:6 = 01 (CKDIV8 unprogrammed)
-- Bits 1:0 = 01 (4.8MHz internal oscillator)
+### Low Fuse (Default: 0x6A)
+| Bit | Default | Name | Description |
+|-----|---------|------|-------------|
+| 7 | 0 | SPIEN | SPI programming enabled (programmed) |
+| 6 | 1 | EESAVE | Preserve EEPROM memory through Chip Erase |
+| 5 | 1 | WDTON | Watchdog Timer always on |
+| 4 | 0 | CKDIV8 | Divide clock by 8 |
+| 3 | 1 | SUT1 | Start-up time |
+| 2 | 0 | SUT0 | Start-up time |
+| 1 | 1 | CKSEL1 | Select clock source |
+| 0 | 0 | CKSEL0 | Select clock source |
 
 ### To Run at 1.2MHz System Clock (Factory Default)
 
@@ -496,27 +486,6 @@ avrdude -c atmelice_isp -p attiny13a -U lfuse:r:-:h -U hfuse:r:-:h
 The confusion often arises because Atmel/Microchip ships the chips with **CLKDIV8 enabled by default** for compatibility and lower power consumption, even though the oscillator itself runs at 9.6MHz.
 
 ## Important Considerations
-
-### AVRDUDE Version Requirements
-- **Atmel-ICE**: Requires AVRDUDE version **6.3 or later**
-- **Microchip SNAP**: Requires AVRDUDE version **6.4 or later** (better support in **7.0+**)
-
-Check your version:
-```bash
-avrdude -v
-```
-
-### Connection Speed
-Both programmers may benefit from specifying a bit clock rate, especially for targets with slow clocks:
-```bash
-# For Atmel-ICE
-avrdude -c atmelice_isp -p attiny13a -B 10 -U flash:w:blink.hex:i
-
-# For SNAP
-avrdude -c snap_isp -p attiny13a -B 10 -U flash:w:blink.hex:i
-```
-
-The ```-B``` parameter sets the ISP clock period in microseconds.
 
 ### Voltage Settings
 The **SNAP programmer doesn't provide target power**, so you must power the ATtiny13A externally. The Atmel-ICE can provide power, but it's often better to use external power.
@@ -701,61 +670,6 @@ OS =
 
 ```
 
-## bloom.yaml 
-```yaml
-environments:
-  default:
-    shutdown_post_debug_session: true
-
-    tool:
-      name: "xplained_mini"
- 
-    target:
-      name: "atmega328pb"
-      physical_interface: "debug_wire"
-      hardware_breakpoints: true
-      manage_dwen_fuse_bit: true
-
-    server:
-      name: "avr_gdb_rsp"
-      ip_address: "127.0.0.1"
-      port: 1442
-
-  attiny13a:
-    shutdown_post_debug_session: true
-
-    tool:
-      name: "atmel_ice"
- 
-    target:
-      name: "attiny13a"
-      physical_interface: "debug_wire"
-      hardware_breakpoints: true
-      manage_dwen_fuse_bit: true
-
-    server:
-      name: "avr_gdb_rsp"
-      ip_address: "127.0.0.1"
-      port: 1442
-
-  snap:
-    shutdown_post_debug_session: true
-
-    tool:
-      name: "snap"
- 
-    target:
-      name: "attiny13a"
-      physical_interface: "debug_wire"
-      hardware_breakpoints: true
-      manage_dwen_fuse_bit: true
-
-    server:
-      name: "avr_gdb_rsp"
-      ip_address: "127.0.0.1"
-      port: 1442
-```
-
 ## tasks.json
 
 ```json
@@ -859,6 +773,60 @@ tui enable
 end
 ```
 
+## bloom.yaml 
+```yaml
+environments:
+  default:
+    shutdown_post_debug_session: true
+
+    tool:
+      name: "xplained_mini"
+ 
+    target:
+      name: "atmega328pb"
+      physical_interface: "debug_wire"
+      hardware_breakpoints: true
+      manage_dwen_fuse_bit: true
+
+    server:
+      name: "avr_gdb_rsp"
+      ip_address: "127.0.0.1"
+      port: 1442
+
+  atmel_ice_13a:
+    shutdown_post_debug_session: true
+
+    tool:
+      name: "atmel_ice"
+ 
+    target:
+      name: "attiny13a"
+      physical_interface: "debug_wire"
+      hardware_breakpoints: true
+      manage_dwen_fuse_bit: true
+
+    server:
+      name: "avr_gdb_rsp"
+      ip_address: "127.0.0.1"
+      port: 1442
+
+  snap_13a:
+    shutdown_post_debug_session: true
+
+    tool:
+      name: "snap"
+ 
+    target:
+      name: "attiny13a"
+      physical_interface: "debug_wire"
+      hardware_breakpoints: true
+      manage_dwen_fuse_bit: true
+
+    server:
+      name: "avr_gdb_rsp"
+      ip_address: "127.0.0.1"
+      port: 1442
+```
 
 ### Startup
 

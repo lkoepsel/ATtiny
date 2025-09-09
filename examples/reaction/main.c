@@ -126,7 +126,7 @@ int main (void)
             }
 
             CBI(PORTB, BLUE);
-            // _delay_ms(1000);
+            _delay_ms(500);
 
             // button_start timer
             button_start = ticks_ctr;
@@ -147,19 +147,6 @@ int main (void)
                     button_end = ticks_ctr;
                 }
             }
-
-            // TEST ROUTINE - to confirm n ticks = x seconds
-            // while (!PRESSED)
-            // {
-
-            //     _delay_ms(6300);
-            //     button_state = 0xF0;
-            //     if (button_state == 0xF0) 
-            //     {
-            //         PRESSED = true;
-            //         button_end = ticks_ctr;
-            //     }
-            // }
                 
             // Compare PRESS_TIME to led_start
             if (button_start > button_end)

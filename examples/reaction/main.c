@@ -30,65 +30,57 @@
 #define BLUE PB1
 #define WHITE PB2
 #define BUTTON PB4
-#define LED_DUR 150
-#define ALLOW LED_DUR/2
+#define LED_DUR 250     // increment LED time by 1/4 of a second
+#define ALLOW 10        // allow for a variance of 10 ticks or .25s
 
 // ****Defined Interrupt Service Routines****
-volatile uint16_t ticks_ctr = 0;
+volatile uint8_t ticks_ctr = 0;
 
 // Required for ticks timing, see examples/ticks
 // Enabled by init_sysclock_1() in sysclock.c
 ISR (TIM0_COMPA_vect)      
 {
     ticks_ctr++;
+
     // Use to check frequency, currently 250Hz
     // SBI(PINB, PB3);
 }
 
 // ****End of Defined Interrupt Service Routines****
 
-// Initialize timer to 250 ticks for ~5 seconds (1 tick = 20ms)
+// Initialize timer to ~40 ticks for 1 seconds (1 tick = 25ms or max = ~6.5)
 void init_sysclock_100 (void)          
 {
     // Initialize timer 0 to CTC Mode using OCR0A, with a chip clock of 1.2Mhz
-    // The values below will result in a 1kHz counter (500 ticks = 1 second)
+    // The values below will result in a ~62.5Hz counter (40 ticks = 1 second)
     // CTC mode (WGM0[2:0] = 2)
-    // Set clock select to /64 CS => 011
+    // Set clock select to /256 CS => 100
     // Bit 2 – OCIE0A: Timer/Counter0 Output Compare Match A Interrupt Enable
     // OCR0A = x23
     // TC0 Register Values
-    // `tc0`, `tccr0a`, "TCCR0A", 0x0000004F, 8-bit | 0x42 (66, 0b01000010), WGM0: 0b10, COM0B: 0b00, COM0A: 0b01
-    // `tc0`, `tcnt0`, "TCNT0", 0x00000052, 8-bit | 0x09 (9, 0b00001001)
-    // `tc0`, `tccr0b`, "TCCR0B", 0x00000053, 8-bit | 0x03 (3, 0b00000011), CS0: 0b011, WGM02: 0b0, FOC0B: 0b0, FOC0A: 0b0
-    // `tc0`, `ocr0a`, "OCR0A", 0x00000056, 8-bit | 0x23 (35, 0b00100011)
-    // `tc0`, `tifr0`, "TIFR0", 0x00000058, 8-bit | 0x08 (8, 0b00001000), TOV0: 0b0, OCF0A: 0b0, OCF0B: 0b1
-    // `tc0`, `timsk0`, "TIMSK0", 0x00000059, 8-bit | 0x04 (4, 0b00000100), TOIE0: 0b0, OCIE0A: 0b1, OCIE0B: 0b0
-
-    // Use to check frequency, enables toggling of pin on compare
-    // TCCR0A = ( _BV(COM0A0) | _BV(WGM01) ) ; 
+    // "GTCCR", 0x00000048, 0x00 (0, 0b00000000), PSR10: 0b0, TSM: 0b0
+    // "OCR0B", 0x00000049, 0x00 (0, 0b00000000)
+    // "TCCR0A", 0x0000004F, 0x02 (2, 0b00000010), WGM0: 0b10, COM0B: 0b00, COM0A: 0b00
+    // "TCNT0", 0x00000052, 0x12 (18, 0b00010010)
+    // "TCCR0B", 0x00000053, 0x04 (4, 0b00000100), CS0: 0b100, WGM02: 0b0, FOC0B: 0b0, FOC0A: 0b0
+    // "OCR0A", 0x00000056, 0x23 (35, 0b00100011)
+    // "TIFR0", 0x00000058, 0x08 (8, 0b00001000), TOV0: 0b0, OCF0A: 0b0, OCF0B: 0b1
+    // "TIMSK0", 0x00000059, 0x04 (4, 0b00000100), TOIE0: 0b0, OCIE0A: 0b1, OCIE0B: 0b0
     TCCR0A = ( _BV(WGM01) ) ; 
-    TCCR0B |= ( _BV(CS01) | _BV(CS00) ) ;
+    TCCR0B |= ( _BV(CS02) ) ;
     TIMSK0 |= _BV(OCIE0A);
-    OCR0A = 0x23;
+    OCR0A = 0x74;
     sei();
  }
 
 // ****End of Defined Timer Setup Functions****
-
-uint16_t ticks(void) {
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-    {
-        return(ticks_ctr);
-    }
-    return 0;   
-}
 
 int main (void)
 {
     // Initialize timer to 255 ticks for 2.55 seconds (1 tick = 10ms)
     init_sysclock_100 ();
     // temp pin for determing freq
-    // DDRB |= (_BV(PB3));
+    DDRB |= (_BV(PB3));
 
     /* setup LEDs */
     DDRB |=( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));
@@ -110,25 +102,34 @@ int main (void)
         do
         {
             // show duration of the 5 blinks, from longest to shortest
-            uint16_t start = 0;
-            uint16_t end = 0;
-            uint16_t delta = 0;
+            uint8_t button_start = 0;
+            uint8_t button_end = 0;
+            uint8_t button_delta = 0;
+            volatile uint8_t led_delta = 0;
             uint8_t j = i*4;
 
-            // Light BLUE a LED_TIME between .5 and 2.5 seconds
+            // Light BLUE a led_start between .5 and 2.5 seconds
             SBI(PORTB, BLUE);
-            volatile uint16_t LED_TIME = 0;
+            uint8_t led_start = ticks_ctr;
             do
             {
                 _delay_ms(LED_DUR);
-                LED_TIME += LED_DUR;
             } while (--j);
+            uint8_t led_end = ticks_ctr;
+            if (led_start > led_end)
+            {
+                led_delta = (255 - led_start) + led_end;
+            }
+            else
+            {
+                led_delta = led_end - led_start;
+            }
 
             CBI(PORTB, BLUE);
-            _delay_ms(1000);
+            // _delay_ms(1000);
 
-            // Start timer
-            start = ticks();
+            // button_start timer
+            button_start = ticks_ctr;
             
             // When button is pressed, determine PRESS_TIME
             static uint8_t button_state = 0;
@@ -143,23 +144,36 @@ int main (void)
                 if (button_state == 0xF0) 
                 {
                     PRESSED = true;
-                    end = ticks();
+                    button_end = ticks_ctr;
                 }
             }
+
+            // TEST ROUTINE - to confirm n ticks = x seconds
+            // while (!PRESSED)
+            // {
+
+            //     _delay_ms(6300);
+            //     button_state = 0xF0;
+            //     if (button_state == 0xF0) 
+            //     {
+            //         PRESSED = true;
+            //         button_end = ticks_ctr;
+            //     }
+            // }
                 
-            // Compare PRESS_TIME to LED_TIME
-            if (start > end)
+            // Compare PRESS_TIME to led_start
+            if (button_start > button_end)
             {
-                delta = (65535 - start) + end;
+                button_delta = (255 - button_start) + button_end;
             }
             else
             {
-                delta = end - start;
+                button_delta = button_end - button_start;
             }
 
-            _delay_ms(1000);
+            _delay_ms(500);
             // If CLOSE, blink BLUE else, blink YELLOW
-            if ((delta < (LED_DUR + ALLOW)) & (delta > (LED_DUR - ALLOW)))
+            if ((button_delta < (led_delta + ALLOW)) & (button_delta > (led_delta - ALLOW)))
             {
                 SBI(PORTB, WHITE);
                 _delay_ms(500);
@@ -176,12 +190,12 @@ int main (void)
                 _delay_ms(500);
             }       
         
-            // Repeat 4 more times, with variable LED_TIME
+            // Repeat 4 more times, with variable led_start
         } while (--i);
 
-        if (good >=2)
+        if (good == 3)
         {
-            uint8_t i = 5;
+            uint8_t i = 3;
             do
             {
                 PORTB |= ( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));

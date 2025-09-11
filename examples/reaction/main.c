@@ -23,6 +23,7 @@
 #include <util/atomic.h>
 #include <avr/interrupt.h>
 #include <stdbool.h>
+#include <inttypes.h>
 #include "ATtiny.h"
 
 // Define hardware, YELLOW/BLUE/WHITE/BUTTON
@@ -69,7 +70,7 @@ void init_sysclock_100 (void)
     TCCR0A = ( _BV(WGM01) ) ; 
     TCCR0B |= ( _BV(CS02) ) ;
     TIMSK0 |= _BV(OCIE0A);
-    OCR0A = 0x74;
+    OCR0A = 0x75;
     sei();
  }
 
@@ -77,6 +78,9 @@ void init_sysclock_100 (void)
 
 int main (void)
 {
+    // initialize the pseudorandom number generator
+    volatile uint8_t state = 0xE1;
+
     // Initialize timer to 255 ticks for 2.55 seconds (1 tick = 10ms)
     init_sysclock_100 ();
     // temp pin for determing freq
@@ -106,15 +110,23 @@ int main (void)
             uint8_t button_end = 0;
             uint8_t button_delta = 0;
             volatile uint8_t led_delta = 0;
-            uint8_t j = i*4;
+            // uint8_t j = i*4;
 
             // Light BLUE a led_start between .5 and 2.5 seconds
             SBI(PORTB, BLUE);
             uint8_t led_start = ticks_ctr;
+            state ^= state << 1;
+            state ^= state >> 1;
+            state ^= state << 2;
+            uint16_t i = state;
             do
             {
-                _delay_ms(LED_DUR);
-            } while (--j);
+            _delay_ms(25);
+            } while(--i);
+            // do
+            // {
+            //     _delay_ms(LED_DUR);
+            // } while (--j);
             uint8_t led_end = ticks_ctr;
             if (led_start > led_end)
             {

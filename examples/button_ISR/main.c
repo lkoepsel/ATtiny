@@ -23,15 +23,10 @@
 
 #define BOUNCE_DIVIDER 32 // divides millis by this number for checking reset button
 #define BOUNCE_MASK 0b11000111
-#define BUTTON PB3
-
-volatile uint32_t sys_ctr_2 = 0;
-volatile uint8_t button = PB3;
-volatile uint8_t bounce_delay = BOUNCE_DIVIDER;
-volatile bool pressed = false;    
-volatile uint8_t count = 0;
+#define BUTTON PB4
 
  bool is_button_pressed(void);
+ volatile uint8_t *button_history;
 
 // ****End of Defined Interrupt Service Routines****
 
@@ -43,14 +38,9 @@ volatile uint8_t ticks_ctr = 0;
 ISR (TIM0_COMPA_vect)      
 {
     ticks_ctr++;
+    *button_history = *button_history << 1;
+    *button_history |= ( (PORTB & (1<<BUTTON)) == 0 );
 
-    //  X times divider for millis() otherwise buttons checked too often
-    bounce_delay--;
-    if (bounce_delay == 0) 
-    {
-        pressed = is_button_pressed();
-        bounce_delay = BOUNCE_DIVIDER;
-    }
     // DEBUG: Use to check frequency, currently 200Hz (1/(25ms * 2))
     // SBI(PINB, PB3);
 }
@@ -74,45 +64,63 @@ ISR (TIM0_COMPA_vect)
 void init_sysclock (void)          
 {
     TCCR0A = ( _BV(WGM01) ) ; 
-    TCCR0B |= ( _BV(CS02) ) ;
+    TCCR0B |= ( _BV(CS01) ) ;
     TIMSK0 |= _BV(OCIE0A);
     OCR0A = 0x75;
     sei();
  }
 
- bool is_button_pressed(void){
-
-    static uint8_t button_history;
- 
-    button_history = button_history << 1;
-    button_history |= ((PINB & (1 << button)) == 0);
-
-    if ((button_history & BOUNCE_MASK) == 0b00000111){ 
+ bool is_button_pressed(){
+    volatile bool pressed = false;
+    if ((*button_history & BOUNCE_MASK) == 0b00000111){ 
         pressed = true;
-        button_history = 0b11111111;
+        *button_history = 0b11111111;
     }
     return pressed;
 }
 
+// bool is_released(){
+//         bool released = 0;   
+//         if (mask_bits(*button_history) == 0b11000000){ 
+//                 released = 1;
+//                 *button_history = 0b00000000;
+//         }
+//         return released;
+// }
 
-int main (void)
+bool is_button_down(){
+        return (*button_history == 0b11111111);
+}
+bool is_button_up(){
+        return (*button_history == 0b00000000);
+}
+
+int main(void) 
 {
+    volatile uint8_t press_count=0;
+    // uint8_t release_count=0;
+    volatile uint8_t count=0;
+
     // button => INPUT_PULLUP;
     CBI(DDRB, BUTTON);
     SBI(PORTB, BUTTON);
 
     init_sysclock ();
 
-    /* loop forever, the interrupts are doing the rest */
-    for (;;)  
+    while (1) 
     {
-        for (uint8_t i=0; i < 10; i++) 
+
+        if (is_button_pressed())
         {
-            if (pressed) 
-            {
-                count += 1;
-            }
+            press_count++;
+        }
+        // if (is_button_released())
+        // {
+        //                 release_count++;
+        // }
+        if (is_button_down())
+        {
+            count++;
         }
     }
 }
-

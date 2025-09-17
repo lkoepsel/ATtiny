@@ -27,9 +27,9 @@
 #include "ATtiny.h"
 
 // Define hardware, RED/BLUE/GREEN/BUTTON
-#define GREEN PB0
+#define GREEN PB2
 #define BLUE PB1
-#define RED PB2
+#define RED PB0
 #define BUTTON PB3
 #define TOLERANCE 4
 
@@ -74,14 +74,14 @@ void init_sysclock (void)
 {
     // button_start timer
     uint8_t delta;
-    uint8_t button_end;
+    volatile uint8_t button_end;
     
     // When button is pressed, determine PRESS_TIME
     static uint8_t button_state = 0;
     bool PRESSED = false;
     CBI (PORTB, GREEN);
 
-    uint8_t button_start = ticks_ctr;
+    volatile uint8_t button_start = ticks_ctr;
     while (!PRESSED)
     {
         // Shift previous states left and add current state
@@ -166,7 +166,7 @@ int main (void)
             {
                 rand = 20;
             }
-            uint8_t ALLOW = rand / TOLERANCE;
+            volatile uint8_t ALLOW = rand / TOLERANCE;
             uint16_t i = rand;
 
             // start led timer and turn on BLUE led
@@ -189,11 +189,11 @@ int main (void)
             }
             _delay_ms(500);
 
-            uint8_t button_delta = press_time();
+            volatile uint8_t button_delta = press_time();
 
             _delay_ms(500);
             // If CLOSE, blink BLUE else, blink RED
-            if ((button_delta < (led_delta + ALLOW)) | (button_delta > (led_delta - ALLOW)))
+            if ((button_delta < (led_delta + ALLOW)) & (button_delta > (led_delta - ALLOW)))
             {
                 SBI(PORTB, GREEN);
                 _delay_ms(250);

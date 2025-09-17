@@ -4,11 +4,12 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
+#include <avr/interrupt.h>
 #include <stdbool.h>
 #include "ATtiny.h"
 
 #define LED PB0
-#define BUTTON PB4
+#define BUTTON PB3
 
 volatile uint8_t ticks_ctr = 0;
 
@@ -52,13 +53,13 @@ void init_sysclock (void)
     // button_start timer
     uint8_t delta;
     uint8_t button_end;
-    uint8_t button_start = ticks_ctr;
     
     // When button is pressed, determine PRESS_TIME
     static uint8_t button_state = 0;
     bool PRESSED = false;
-    CBI (PORTB, WHITE);
+    CBI (PORTB, LED);
 
+    uint8_t button_start = ticks_ctr;
     while (!PRESSED)
     {
         // Shift previous states left and add current state
@@ -70,7 +71,19 @@ void init_sysclock (void)
             button_end = ticks_ctr;
         }
     }
+
+    // Compare PRESS_TIME to led_start
+    if (button_start > button_end)
+    {
+        delta = (255 - button_start) + button_end;
+    }
+    else
+    {
+        delta = button_end - button_start;
+    }
+    return delta;
 }
+
 
 int main(void)
 {
@@ -83,24 +96,12 @@ int main(void)
 
     for (;;) 
     {
-        static uint8_t button_state = 0;
-        bool PRESSED = false;
-        CBI (PORTB, LED);
+        volatile uint8_t delta = press_time();
 
-        while (!PRESSED)
+        do
         {
-            // Shift previous states left and add current state
-            button_state = (button_state << 1) | (!(PINB & (1 << BUTTON))) | 0xE0;
-
-            // Button is pressed when last 5 readings are all low (pressed)
-            if (button_state == 0xF0) 
-            {
-                PRESSED = true;
-                SBI(PORTB, LED);
-
-                // delay to show LED
-                _delay_ms(5);
-            }
-        }
+            SBI(PINB, LED);
+            _delay_ms(1);
+        } while(--delta);
     }
 }  

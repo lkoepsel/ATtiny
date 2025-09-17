@@ -2,7 +2,7 @@
 // Game Rules
 // 1. Light BLUE between .5 and 2 seconds
 // 2. Blink GREEN to start.
-// 3. User must press button to match the time of the YELLOW  
+// 3. User must press button to match the time of the RED  
 // 4. GREEN if acceptable
 // 5. RED if not acceptable
 // 6. Five chances, at the end, blink GREEN for successful turns and blink RED for unsuccessful
@@ -11,9 +11,9 @@
 //                     ATtiny13
 //                   ┌──────────┐
 //     RESET/PB5 ──1─┤          ├─8── VCC
-//           PB3 ──2─┤          ├─7── PB2/WHITE
+//           PB3 ──2─┤          ├─7── PB2/GREEN
 //    BUTTON/PB4 ──3─┤          ├─6── PB1/BLUE
-//           GND ──4─┤          ├─5── PB0/YELLOW
+//           GND ──4─┤          ├─5── PB0/RED
 //                   └──────────┘
 //
 
@@ -26,11 +26,11 @@
 #include <inttypes.h>
 #include "ATtiny.h"
 
-// Define hardware, YELLOW/BLUE/WHITE/BUTTON
-#define YELLOW PB0
+// Define hardware, RED/BLUE/GREEN/BUTTON
+#define GREEN PB0
 #define BLUE PB1
-#define WHITE PB2
-#define BUTTON PB4
+#define RED PB2
+#define BUTTON PB3
 #define TOLERANCE 4
 
 volatile uint8_t ticks_ctr = 0;
@@ -75,13 +75,13 @@ void init_sysclock (void)
     // button_start timer
     uint8_t delta;
     uint8_t button_end;
-    uint8_t button_start = ticks_ctr;
     
     // When button is pressed, determine PRESS_TIME
     static uint8_t button_state = 0;
     bool PRESSED = false;
-    CBI (PORTB, WHITE);
+    CBI (PORTB, GREEN);
 
+    uint8_t button_start = ticks_ctr;
     while (!PRESSED)
     {
         // Shift previous states left and add current state
@@ -105,38 +105,51 @@ void init_sysclock (void)
     }
     return delta;
 }
+void blink(uint8_t n)
+{
+    do
+    {
+        SBI(PORTB, RED);
+        _delay_ms(125);
+        CBI(PORTB, RED);
+        SBI(PORTB, BLUE);
+        _delay_ms(125);
+        CBI(PORTB, BLUE);
+        SBI(PORTB, GREEN);
+        _delay_ms(125);
+        CBI(PORTB, GREEN);
+    } while(--n);     
+}
 
 // main - infinite loop, doesn't exit
 int main (void)
 {
-    // Initialize timer for a max of ~6.5s (1 tick = 25ms)
-    init_sysclock ();
-
-    // DEBUG: temp pin for determing freq
-    // DDRB |= (_BV(PB3));
-
-    /* setup LEDs */
-    DDRB |=( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));
-
-    // setup BUTTON to INPUT PULLUP (set to DDRD to INPUT then set PORTB)
-    CBI(DDRB, BUTTON);
-    SBI(PORTB, BUTTON);
-
-    // Blink all three LEDs to indicate game will start
-    PORTB |= ( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));
-    _delay_ms(500);
-    PORTB &= ~( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));
-    _delay_ms(500);
-
-    // initialize the pseudorandom number generator using a button press time
-    volatile uint8_t state = press_time();
-
-    uint8_t rounds = 3;
-    _delay_ms(500);
-
-    do
+    for (;;)
     {
-        uint8_t tolerance = TOLERANCE;
+    // Initialize timer for a max of ~6.5s (1 tick = 25ms)
+        init_sysclock ();
+
+        // DEBUG: temp pin for determing freq
+        // DDRB |= (_BV(PB3));
+
+        /* setup LEDs */
+        DDRB |=( _BV(BLUE) | _BV(GREEN) | _BV(RED));
+
+        // setup BUTTON to INPUT PULLUP (set to DDRD to INPUT then set PORTB)
+        CBI(DDRB, BUTTON);
+        SBI(PORTB, BUTTON);
+
+        // Blink all three LEDs to indicate game will start
+        PORTB |= ( _BV(BLUE) | _BV(GREEN) | _BV(RED));
+        _delay_ms(500);
+        PORTB &= ~( _BV(BLUE) | _BV(GREEN) | _BV(RED));
+        _delay_ms(500);
+
+        // initialize the pseudorandom number generator using a button press time
+        volatile uint8_t rand = press_time();
+
+        _delay_ms(500);
+
         uint8_t good = 0;
         uint8_t try = 3;
         do
@@ -146,15 +159,15 @@ int main (void)
 
             // Light BLUE with a random delay
             // Use XOR pseudorandom generator
-            state ^= state << 1;
-            state ^= state >> 1;
-            state ^= state << 2;
-            if (state < 20)
+            rand ^= rand << 1;
+            rand ^= rand >> 1;
+            rand ^= rand << 2;
+            if (rand < 20)
             {
-                state = 20;
+                rand = 20;
             }
-            uint8_t ALLOW = state / tolerance;
-            uint16_t i = state;
+            uint8_t ALLOW = rand / TOLERANCE;
+            uint16_t i = rand;
 
             // start led timer and turn on BLUE led
             uint8_t led_start = ticks_ctr;
@@ -179,40 +192,33 @@ int main (void)
             uint8_t button_delta = press_time();
 
             _delay_ms(500);
-            // If CLOSE, blink BLUE else, blink YELLOW
-            if ((button_delta < (led_delta + ALLOW)) & (button_delta > (led_delta - ALLOW)))
+            // If CLOSE, blink BLUE else, blink RED
+            if ((button_delta < (led_delta + ALLOW)) | (button_delta > (led_delta - ALLOW)))
             {
-                SBI(PORTB, WHITE);
+                SBI(PORTB, GREEN);
                 _delay_ms(250);
-                CBI(PORTB, WHITE);
+                CBI(PORTB, GREEN);
                 ++good;
                 _delay_ms(250);
             }
-            // Blink YELLOW for every failure
+            // Blink RED for every failure
             else
             {
-                SBI(PORTB, YELLOW);
+                SBI(PORTB, RED);
                 _delay_ms(250);
-                CBI(PORTB, YELLOW);
+                CBI(PORTB, RED);
                 _delay_ms(250);
             }       
         
         } while (--try);
 
-        if (good == 3)
+        if (good > 0)
         {
-            uint8_t i = 3;
             do
             {
-                PORTB |= ( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));
-                _delay_ms(500);
-                PORTB &= ~( _BV(BLUE) | _BV(WHITE) | _BV(YELLOW));
-                _delay_ms(1000);
-            } while ( --i);
+                blink(4);
+            } while ( --good);
         }
-
-        // Repeat 2 more times, with a smaller tolerance
-        tolerance = tolerance << 1;
-    } while (--rounds);
-    for (;;) {}
+        _delay_ms(2000);
+    }
 }

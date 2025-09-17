@@ -653,7 +653,7 @@ digitalWrite(ADC_PIN, HIGH);    // LED on
 * [Lithium Ion Polymer Battery with Short Cable - 3.7V 420mAh : ID 4236 : Adafruit Industries, Unique & fun DIY electronics and kits](https://www.adafruit.com/product/4236)
 * [Overview | Sipping Power With NeoPixels | Adafruit Learning System](https://learn.adafruit.com/sipping-power-with-neopixels)
 * [NeoPixel RGBW Mini Button PCB - Pack of 10 : ID 4776 : Adafruit Industries, Unique & fun DIY electronics and kits](https://www.adafruit.com/product/4776)
-
+* [Using the RESET pin on Startup](https://sites.google.com/site/wayneholder/using-the-avr-reset-pin-as-an-input)
 ## Helpful Files
 
 ### tasks.json for VS Code

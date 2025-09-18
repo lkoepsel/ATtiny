@@ -443,6 +443,7 @@ avrdude -c snap_isp -p attiny13a -U lfuse:w:0x7A:m -U hfuse:w:0xF7:m
 ```
 
 ### To Run at 1.2MHz System Clock (Factory Default)
+This command will also "deprogram" or "set" the DWEN (*Hfuse: Bit 3*) nfuse, which will allow the RESET pin to operate properly. Bloom will clear the bit, which puts the ATtiny into DEBUG mode.
 
 ```bash
 avrdude -c snap_isp -p attiny13a -U lfuse:w:0x6A:m -U hfuse:w:0xFF:m
@@ -461,14 +462,6 @@ avrdude -c snap_isp -p attiny13a -U lfuse:r:-:h -U hfuse:r:-:h
 Update the Makefile:
 ```makefile
 F_CPU = 9600000UL  # 9.6MHz instead of 1200000UL
-```
-
-## Reading Current Fuse Settings
-
-To check your current fuse configuration:
-
-```bash
-avrdude -c atmelice_isp -p attiny13a -U lfuse:r:-:h -U hfuse:r:-:h
 ```
 
 **Default factory values:**

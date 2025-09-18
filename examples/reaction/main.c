@@ -163,14 +163,10 @@ int main (void)
             rand ^= rand << 1;
             rand ^= rand >> 1;
             rand ^= rand << 2;
-            if (rand < 20)
-            {
-                rand = 20;
-            }
-            if (rand > 200)
-            {
-                rand = 180;
-            }
+
+            // create a range between 20 and 200
+            rand = (rand % 128) + 16;
+
             volatile uint8_t ALLOW = rand / TOLERANCE;
             uint16_t i = rand;
 

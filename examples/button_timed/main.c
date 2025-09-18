@@ -5,6 +5,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
+#include <avr/cpufunc.h>
 #include <stdbool.h>
 #include "ATtiny.h"
 
@@ -51,42 +52,49 @@ void init_sysclock (void)
  uint8_t press_time(void)
 {
     // button_start timer
-    uint8_t delta;
     uint8_t button_end;
     
     // When button is pressed, determine PRESS_TIME
     static uint8_t button_state = 0;
     bool PRESSED = false;
+    bool DOWN = false;
     CBI (PORTB, LED);
 
-    uint8_t button_start = ticks_ctr;
     while (!PRESSED)
     {
         // Shift previous states left and add current state
         button_state = (button_state << 1) | (!(PINB & (1 << BUTTON))) | 0xE0;
         // Button is pressed when last 5 readings are all low (pressed)
-        if (button_state == 0xF0) 
+        if (button_state == 0xff) 
         {
-            PRESSED = true;
-            button_end = ticks_ctr;
+            DOWN = true;
+            cli();
+            ticks_ctr = 0;
+            sei();
+        }
+        while (DOWN)
+        {
+            button_state = (button_state << 1) | (!(PINB & (1 << BUTTON)));
+            if (button_state == 0xF0) 
+            {
+                PRESSED = true;
+                button_end = ticks_ctr;
+                DOWN = false;
+            }        
         }
     }
-
-    // Compare PRESS_TIME to led_start
-    if (button_start > button_end)
-    {
-        delta = (255 - button_start) + button_end;
-    }
-    else
-    {
-        delta = button_end - button_start;
-    }
-    return delta;
+    return button_end;
 }
 
 
 int main(void)
 {
+    // Initialize timer for a max of ~6.5s (1 tick = 25ms)
+        init_sysclock ();
+
+        // DEBUG: temp pin for determing freq
+        // DDRB |= (_BV(PB3));
+
     // set LED pin to OUTPUT
     SBI(DDRB, LED);
 
@@ -97,7 +105,7 @@ int main(void)
     for (;;) 
     {
         volatile uint8_t delta = press_time();
-
+        _NOP();
         do
         {
             SBI(PINB, LED);

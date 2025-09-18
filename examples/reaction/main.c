@@ -73,38 +73,39 @@ void init_sysclock (void)
  uint8_t press_time(void)
 {
     // button_start timer
-    uint8_t delta;
-    volatile uint8_t button_end;
+    uint8_t button_end;
     
     // When button is pressed, determine PRESS_TIME
     static uint8_t button_state = 0;
     bool PRESSED = false;
-    CBI (PORTB, GREEN);
+    bool DOWN = false;
 
-    volatile uint8_t button_start = ticks_ctr;
     while (!PRESSED)
     {
         // Shift previous states left and add current state
         button_state = (button_state << 1) | (!(PINB & (1 << BUTTON))) | 0xE0;
         // Button is pressed when last 5 readings are all low (pressed)
-        if (button_state == 0xF0) 
+        if (button_state == 0xff) 
         {
-            PRESSED = true;
-            button_end = ticks_ctr;
+            DOWN = true;
+            cli();
+            ticks_ctr = 0;
+            sei();
+        }
+        while (DOWN)
+        {
+            button_state = (button_state << 1) | (!(PINB & (1 << BUTTON)));
+            if (button_state == 0xF0) 
+            {
+                PRESSED = true;
+                button_end = ticks_ctr;
+                DOWN = false;
+            }        
         }
     }
-        
-    // Compare PRESS_TIME to led_start
-    if (button_start > button_end)
-    {
-        delta = (255 - button_start) + button_end;
-    }
-    else
-    {
-        delta = button_end - button_start;
-    }
-    return delta;
+    return button_end;
 }
+
 void blink(uint8_t n)
 {
     do
@@ -166,6 +167,10 @@ int main (void)
             {
                 rand = 20;
             }
+            if (rand > 200)
+            {
+                rand = 180;
+            }
             volatile uint8_t ALLOW = rand / TOLERANCE;
             uint16_t i = rand;
 
@@ -209,6 +214,7 @@ int main (void)
                 CBI(PORTB, RED);
                 _delay_ms(250);
             }       
+            _delay_ms(1000);
         
         } while (--try);
 
@@ -216,9 +222,9 @@ int main (void)
         {
             do
             {
-                blink(4);
+                blink(good * 2);
             } while ( --good);
         }
-        _delay_ms(2000);
+        _delay_ms(1000);
     }
 }

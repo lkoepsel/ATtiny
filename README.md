@@ -191,9 +191,7 @@ When using DebugWire, you need:
 If you need to return to normal ISP programming:
 1. Use the debugger to **disable DebugWire** through the debugging software
 2. Or perform a **high-voltage programming** sequence to clear the DWEN fuse
-3. This restores the RESET pin functionality
-
-Remember that while DebugWire provides powerful debugging capabilities with just one wire, it **temporarily disables normal ISP programming** until you explicitly disable the DebugWire mode.
+3. Use *avrdude* to write a **HIGH** of 0xff to the ATtiny13A, see *Confirming/Changing...* below
 
 ### Confirming/Changing DWEN to enable ISP programming
 ```bash
@@ -205,6 +203,12 @@ avrdude -c snap_isp -p attiny13a -U lfuse:w:0x6A:m -U hfuse:w:0xFF:m
 make flash
 # confirm hash of FLASH memory
 avrdude -p t13 -c snap_isp -U flash:r:-:i 2>/dev/null | md5sum
+```
+Remember that while DebugWire provides powerful debugging capabilities with just one wire, it **temporarily disables normal ISP programming** until you explicitly disable the DebugWire mode.
+
+### Confirming hex file against FLASH
+# Verify flash against a file
+avrdude -p t13 -c snap_isp -U flash:v:main.hex:i
 ```
 
 ## Simple Blink Program (examples/blink_avr)
@@ -301,29 +305,6 @@ make size
 ```bash
 make flash
 ```
-
-## Fuse Configuration (Optional)
-
-The **ATtiny13A** comes with default fuse settings for 1.2MHz internal oscillator. To change clock settings:
-
-### Read Current Fuses
-```bash
-avrdude -c atmelice_isp -p attiny13a -U lfuse:r:-:h -U hfuse:r:-:h
-```
-
-### Common Fuse Settings
-
-**9.6MHz Internal Oscillator:**
-```bash
-avrdude -c atmelice_isp -p attiny13a -U lfuse:w:0x7A:m -U hfuse:w:0xFF:m
-```
-
-**4.8MHz Internal Oscillator:**
-```bash
-avrdude -c atmelice_isp -p attiny13a -U lfuse:w:0x79:m -U hfuse:w:0xFF:m
-```
-
-⚠️ **Warning:** Be careful with fuse settings! Incorrect values can brick your chip.
 
 ## Troubleshooting
 

@@ -207,6 +207,7 @@ avrdude -p t13 -c snap_isp -U flash:r:-:i 2>/dev/null | md5sum
 Remember that while DebugWire provides powerful debugging capabilities with just one wire, it **temporarily disables normal ISP programming** until you explicitly disable the DebugWire mode.
 
 ### Confirming hex file against FLASH
+```
 # Verify flash against a file
 avrdude -p t13 -c snap_isp -U flash:v:main.hex:i
 ```

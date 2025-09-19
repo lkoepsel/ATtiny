@@ -1,4 +1,5 @@
 // reaction - simple reaction time game
+// FLASH Hash - 9b945b4682713a764ce2a82d14e9f8e4
 // Game Rules
 // 1. Light BLUE between .5 and 2 seconds
 // 2. Blink GREEN to start.

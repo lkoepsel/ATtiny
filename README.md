@@ -195,6 +195,18 @@ If you need to return to normal ISP programming:
 
 Remember that while DebugWire provides powerful debugging capabilities with just one wire, it **temporarily disables normal ISP programming** until you explicitly disable the DebugWire mode.
 
+### Confirming/Changing DWEN to enable ISP programming
+```bash
+# read fuses, high fuse needs to be 0xff
+avrdude -c snap_isp -p attiny13a -U lfuse:r:-:h -U hfuse:r:-:h
+# if required, write fuses to allow for ISP programming
+avrdude -c snap_isp -p attiny13a -U lfuse:w:0x6A:m -U hfuse:w:0xFF:m
+# program ATtiny13A
+make flash
+# confirm hash of FLASH memory
+avrdude -p t13 -c snap_isp -U flash:r:-:i 2>/dev/null | md5sum
+```
+
 ## Simple Blink Program (examples/blink_avr)
 
 ```c
@@ -354,18 +366,6 @@ make flash
 avrdude -c snap_isp -p attiny13a -P usb -U flash:w:main.hex:i
 ```
 
-### Connection Speed
-Both programmers may benefit from specifying a bit clock rate, especially for targets with slow clocks:
-```bash
-# For Atmel-ICE
-avrdude -c atmelice_isp -p attiny13a -B 10 -U flash:w:blink.hex:i
-
-# For SNAP
-avrdude -c snap_isp -p attiny13a -B 10 -U flash:w:blink.hex:i
-```
-
-The ```-B``` parameter sets the ISP clock period in microseconds.
-
 ### Voltage Settings
 The **SNAP programmer doesn't provide target power**, so you must power the ATtiny13A externally. The Atmel-ICE can provide power, but it's often better to use external power.
 
@@ -399,7 +399,7 @@ sudo udevadm control --reload-rules
 sudo udevadm trigger
 ```
 
-## Understanding the Clock frequencies
+## Understanding the ATtiny13A Clock frequencies
 
 The ATtiny13A has an internal RC oscillator that can run at either 4.8MHz or 9.6MHz. There is a clock divider (CLKDIV8) that is enabled by default from the factory, which divides the clock by 8. So:
 
@@ -411,7 +411,7 @@ To run at 9.6MHz, you need to:
 1. Keep the oscillator at 9.6MHz (which is already the default)
 2. Disable the CLKDIV8 fuse
 
-## ATtiny13A Clock System Explanation
+### ATtiny13A Clock System Explanation
 
 The **ATtiny13A** has an internal RC oscillator that runs at either:
 - **9.6MHz** (default oscillator setting)
@@ -456,7 +456,6 @@ avrdude -c snap_isp -p attiny13a -U lfuse:r:-:h -U hfuse:r:-:h
 # be sure to set CPU speed in env.make to 9600000UL
 ```
 
-
 ### Compile for 9.6MHz
 
 Update the Makefile:
@@ -468,7 +467,7 @@ F_CPU = 9600000UL  # 9.6MHz instead of 1200000UL
 - Low Fuse: **0x6A**
 - High Fuse: **0xFF**
 
-## Complete Fuse Reference
+### Complete Fuse Reference for Clock Speed
 
 | Clock Speed | Low Fuse | CLKDIV8 | Oscillator |
 |-------------|----------|----------|------------|

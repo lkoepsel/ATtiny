@@ -1,5 +1,5 @@
 // reaction - simple reaction time game
-// FLASH Hash - c73ff08c657fe5e16a8a438eda6767b9
+// FLASH Hash - abde8a134e006204e0ba12f89aed2bb5
 // Game Rules
 // 1. Light BLUE between .5 and 2 seconds
 // 2. Blink GREEN to start.
@@ -153,9 +153,9 @@ int main (void)
         // initialize the pseudorandom number generator using a button press time
         volatile uint8_t rand = press_time();
 
-        _delay_ms(500);
+        _delay_ms(1000);
 
-        uint8_t good = 0;
+        volatile uint8_t good = 0;
         uint8_t try = 3;
         do
         {
@@ -192,7 +192,6 @@ int main (void)
             {
                 led_delta = led_end - led_start;
             }
-            _delay_ms(500);
 
             volatile uint8_t button_delta = press_time();
 
@@ -203,8 +202,8 @@ int main (void)
                 SBI(PORTB, GREEN);
                 _delay_ms(250);
                 CBI(PORTB, GREEN);
-                ++good;
                 _delay_ms(250);
+                ++good;
             }
             // Blink RED for every failure
             else

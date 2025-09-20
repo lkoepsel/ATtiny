@@ -2,8 +2,7 @@
 // Sets up a system tick of 1 millisec (1kHz) using a CPU clock of 9.6MHz
 // CKDIV8 fuse needs to be set to 1
 // Use: avrdude -c snap_isp -p attiny13a -U lfuse:w:0x7A:m -U hfuse:w:0xF7:m
-// To test, view DMM frequency measurement of 498Hz
-// to determine delta between a delay
+// To test, used DIgilent frequency measurement of 499Hz, 1.002ms tick width
  
 #include <avr/io.h>
 #include <avr/eeprom.h>
@@ -34,7 +33,7 @@ void init_sysclock_1k (void)
     // Set clock select to /8 CS => 010
     // Bit 2 – OCIE0A: Timer/Counter0 Output Compare Match A Interrupt Enable
     // COM0A0 - set to view OC0A on PB0 with scope
-    // OCR0A = x96
+    // OCR0A = x91
 
     // TCCR0A [ COM0A1 COM0A0 COM0B1 COM0B0 0 0 WGM01 WGM00 ] = 0b01000010
     // TCCR0B [ FOC0A FOC0B 0 0 WGM02 CS02 CS01 CS00 ] = 0b00000011
@@ -44,7 +43,7 @@ void init_sysclock_1k (void)
     TCCR0A = ( _BV(COM0A0) | _BV(WGM01) ) ; 
     TCCR0B |= ( _BV(CS01) | _BV(CS00)) ;
     TIMSK0 |= _BV(OCIE0A);
-    OCR0A = 0x96;
+    OCR0A = 0x91;
     sei();
 }
 

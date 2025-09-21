@@ -65,7 +65,7 @@ Page under development to explain PWM and ADC interaction.
 5. Look at the other examples to better understand how to use the code.
 
 ## Programming Summary
-For most of this development, I used the *Microchip SNAP* along with *bloom* and *avr-gdb*. This combination, eliminates the need for a bootloader, provides significant debugging resources and is inexpensive ([*Microchip SNAP is $12*](https://www.digikey.com/en/products/detail/microchip-technology/PG164100/9562532)).
+For most of this development, I used the *Microchip SNAP* along with *bloom* and *avr-gdb*. This combination, replaces the bootloader, provides significant debugging resources and is inexpensive ([*Microchip SNAP is $12*](https://www.digikey.com/en/products/detail/microchip-technology/PG164100/9562532)).
 ### Note:
 1. Bloom requires specific functionality of the ISP interface. Connect via ISP then use debugWire for debugging and loading programs. 
    From Bloom: "*The debugWIRE interface does not support fuse programming. Fuses can only be changed via the ISP interface (for debugWIRE AVR targets). In order for Bloom to manage the DWEN fuse bit, the debug tool must be connected to the target via the ISP interface.*"
@@ -245,100 +245,11 @@ avrdude -p t13 -c snap_isp -U flash:r:-:i 2>/dev/null | md5sum
 avrdude -p t13 -c snap_isp -U flash:v:main.hex:i
 ```
 
-## Simple Blink Program (examples/blink_avr)
+## Make Commands (requires ISP interface)
 
-```c
-//  blink_avr - uses bit setting by registers instead of digitalWrite()
-//  version uses PB3 as PB5, doubles as debugWire on ATtiny13A
-//  for smallest code size, set LIBRARY = no_lib in env.make 
-//   Smallest code size allows you to use a scope to confirm delay 
-//   is exactly 1 millisecondor other timing exercises.
-//   For example: (when measured):
-//   blink 2.0108s period while avr_blink 2.0022s period for a delay of 1000ms
-//   or remove the delays and determine fastest blink is 2.02MHz w/ -Og -ggdb
-//   or remove the delays and determine fastest blink is 2.68MHz w/ -Os -g
-
-#include <avr/io.h>
-#include <util/delay.h>
- 
-#define BLINK_DELAY_MS 1000
- 
-int main(void)
-{
-    /* set pin to output*/
-    DDRB |= (_BV(PORTB3));
-
-    while(1) 
-    {
-        /* turn led on and off */
-        PINB |= (_BV(PORTB3));
-        _delay_ms(BLINK_DELAY_MS);
-        PINB |= (_BV(PORTB3));
-        _delay_ms(BLINK_DELAY_MS);
-    }
-    return 0; 
-}
-```
-
-## Compilation Steps
-
-### Step 1: Confirm env.make
-```bash
-# Environmental variables for ATtiny13A with ATMEL-ICE
-# MCU = attiny13a
-# SERIAL = /dev/ttyACM0
-# F_CPU = 1200000UL
-# USB_BAUD = 250000UL
-# LIBDIR = $(DEPTH)Library
-# LIBRARY = no_lib
-# PROGRAMMER_TYPE = atmelice_isp
-# PROGRAMMER_ARGS = -F -V -P usb -b 115200
-# TOOLCHAIN =
-# OS =
-
-# Environmental variables for ATtiny13A with SNAP
-# Low Fuse CKDIV8 has been set to 1 for a 9.6MHZ clock
-MCU = attiny13a
-SERIAL = /dev/ttyACM0
-F_CPU = 1200000UL
-USB_BAUD = 250000UL
-LIBDIR = $(DEPTH)Library
-LIBRARY =
-PROGRAMMER_TYPE = snap_isp
-PROGRAMMER_ARGS = -F -V -P usb -b 115200
-TOOLCHAIN =
-OS =
-
-```
-
-### Step 2: Check compilation
-```bash
-make complete
-```
-
-### Step 3: Attach ATMEL ICE (or [SNAP](#microchip-snap-programmer))
-
-Connect your **ISP programmer** to the ATtiny13A:
-
-| ISP Pin | ATtiny13A  | 13A Pin  | Uno ISP | Color  |
-|---------|------------|----------| ------- | ------ |
-| VCC     | VCC        | Pin 8    | Pin 2   | Red    |
-| GND     | GND        | Pin 4    | Pin 6   | Black  |
-| MISO    | PB0        | Pin 6    | Pin 1   | Yellow |
-| MOSI    | PB1        | Pin 5    | Pin 4   | Green  |
-| SCK     | PB2        | Pin 7    | Pin 3   | Orange |
-| RESET   | PB5/RESET  | Pin 1    | Pin 5   | Brown  |  
-
-### Step 4: Check Program Size (Optional)
-```bash
-make size
-```
-
-### Step 5: Upload Program
-
-```bash
-make flash
-```
+* **complete**: Cleans out all .o files and recompiles
+* **size**: Shows the size of program and memory
+* **flash**: Uploads program to *ATtiny13A*
 
 ## Troubleshooting
 
@@ -361,25 +272,6 @@ make flash
 The Atmel-ICE supports multiple programming modes:
 - **ISP mode**: ```-c atmelice_isp```
 - **debugWIRE**: ```-c atmelice_dw```
-
-## Microchip SNAP Programmer
-
-### Basic Terminal Command
-```bash
-avrdude -c snap_isp -p attiny13a -t
-```
-
-### Basic Flash Command
-```bash
-avrdude -c snap_isp -p attiny13a -U flash:w:main.hex:i
-# better method
-make flash
-```
-
-### With Port Specification
-```bash
-avrdude -c snap_isp -p attiny13a -P usb -U flash:w:main.hex:i
-```
 
 ### Voltage Settings
 The **SNAP programmer doesn't provide target power**, so you must power the ATtiny13A externally. The Atmel-ICE can provide power, but it's often better to use external power.
@@ -502,11 +394,6 @@ F_CPU = 9600000UL  # 9.6MHz instead of 1200000UL
 4. **After changing fuses**: The new clock speed takes effect immediately, so subsequent programming operations will use the new speed
 
 The confusion often arises because Atmel/Microchip ships the chips with **CLKDIV8 enabled by default** for compatibility and lower power consumption, even though the oscillator itself runs at 9.6MHz.
-
-## Important Considerations
-
-### Voltage Settings
-The **SNAP programmer doesn't provide target power**, so you must power the ATtiny13A externally. The Atmel-ICE can provide power, but it's often better to use external power.
 
 ## Multiplex ATtiny13A pin
 ### Context Provided
@@ -736,7 +623,6 @@ digitalWrite(ADC_PIN, HIGH);    // LED on
 ```
 
 ## Using Bloom and avr-gdb
-
 [Bloom and ATtiny13A](https://bloom.oscillate.io/docs/target/attiny13a)
 
 ### .gdbinit - place in home folder
@@ -821,8 +707,11 @@ environments:
       port: 1442
 ```
 
-### Startup
+### Steps
 
+1. Copy the .gdbinit into your home folder
+2. Copy bloom.yaml file into your home folder
+3. Open two windows in your **CLI**
 1. In first window:
 ```bash
 cd ATtiny

@@ -652,7 +652,7 @@ tui enable
 end
 ```
 
-## bloom.yaml 
+## bloom.yaml - place in home folder
 ```yaml
 environments:
   default:
@@ -709,13 +709,13 @@ environments:
 
 ### Steps
 
-1. Copy the .gdbinit into your home folder
-2. Copy bloom.yaml file into your home folder
+1. Copy *.gdbinit* in your home folder
+2. Copy *bloom.yaml* file in your home folder
 3. Open two windows in your **CLI**
 1. In first window:
 ```bash
 cd ATtiny
-bloom snap
+bloom snap_13a
 # bloom will initialize then wait for gdb server
 ```
 2. In second window (remain in this window):
@@ -730,11 +730,19 @@ avr-gdb
 * `ll` to load main.elf and list contents
 * `c` to run
 * *Ctrl-c* to stop
-* `mon reset` to reset PC to 0x0000
+* `mon reset` to reset PC to *0x0000*
+* `br lineno` to set a *breakpoint* on a line number
+* `display variablename` to see a variable valuable every *breakpoint*
+* `set variablename=n` to change a value of the *variablename*
+
 * to use register commands below, turn off *tui* using `td`
 * `mon lr` to list ALL registers
 * `mon rr portb` to show contents of *PORTB*, *DDRB* and *PINB*
 * `mon wr portb portb 07` to set lowest 3 bits to 1
+
+#### bloom and using register commands
+
+*avr-gdb* has a bug when using the *TUI* and terminal color commands, it will be fixed in version 17. Until then, use *td* to *disable the TUI* and *te* to *enable the TUI*. The commands below have had the *TUI* disabled.
 
 #### Example: Setting Pins
 ```bash
@@ -778,4 +786,61 @@ Register written
 Writing value 0x90 (8-bit) to "OCR0A" register, at address 0x00000056, via `data` address space...
 Register written
 ```
+
+## avr-gdb commands
+
+### Basic Control Commands
+- ```run``` or ```r``` - Start program execution from the beginning
+- ```continue``` or ```c``` - Continue execution after a breakpoint
+- ```step``` or ```s``` - Execute one line of code, stepping into functions
+- ```next``` or ```n``` - Execute one line of code, stepping over functions
+- ```finish``` - Run until current function returns
+- ```kill``` - Terminate the running program
+
+### Breakpoint Commands
+- ```break main``` or ```b main``` - Set breakpoint at function main
+- ```break 25``` - Set breakpoint at line 25 of current file
+- ```break file.c:30``` - Set breakpoint at line 30 of file.c
+- ```info breakpoints``` or ```i b``` - List all breakpoints
+- ```delete 1``` - Delete breakpoint number 1
+- ```disable 2``` - Temporarily disable breakpoint 2
+- ```enable 2``` - Re-enable breakpoint 2
+
+### Variable Inspection
+- ```print variable``` or ```p variable``` - Print value of variable
+- ```print/x variable``` - Print in hexadecimal format
+- ```print/t variable``` - Print in binary format
+- ```display variable``` - Automatically show variable value at each stop
+- ```undisplay 1``` - Remove automatic display number 1
+- ```info locals``` - Show all local variables
+- ```info registers``` - Display all register values
+
+### Watchpoint Commands
+- ```watch variable``` - Break when variable value changes
+- ```watch *0x20``` - Watch memory address 0x20
+- ```rwatch variable``` - Break on read access to variable
+- ```awatch variable``` - Break on any access (read or write)
+- ```info watchpoints``` - List all watchpoints
+
+### Stack and Memory Commands
+- ```backtrace``` or ```bt``` - Show call stack
+- ```frame 2``` - Select stack frame 2
+- ```up``` - Move up one stack frame
+- ```down``` - Move down one stack frame
+- ```x/10xb 0x60``` - Examine 10 bytes in hex starting at 0x60
+- ```x/5i $pc``` - Display 5 instructions starting at program counter
+
+### Program Flow
+- ```list``` or ```l``` - Show source code around current line
+- ```list 20,30``` - Show lines 20-30
+- ```disassemble``` - Show assembly of current function
+- ```stepi``` or ```si``` - Execute one machine instruction
+- ```nexti``` or ```ni``` - Execute one instruction (skip calls)
+
+### Miscellaneous
+- ```set var variable = 5``` - Change variable value to 5
+- ```info functions``` - List all functions
+- ```help command``` - Get help for specific command
+- ```quit``` or ```q``` - Exit gdb
+
 

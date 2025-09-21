@@ -2,6 +2,15 @@
 
 Notes as to developing C code for the Microchip ATtiny13A. 
 
+## Introduction
+This repository provides example programs in  [*C* (ANSI C99) AVR-LibC](https://github.com/avrdudes/avr-libc) which support programming the ATtiny13A. In order to use this framework, you can either install the *GNU avr* tool chain appropriate for your computer (*Linux*, *macOS*, or *Windows*). 
+
+As there is not a boot loader for the *ATtiny13A* due to memory constraints, you will need to use an *ATMEL-ICE* or *Microchip SNAP* to load programs. The *env.make* allows for this, with entries for both.
+
+ I also recommend using [Bloom](https://bloom.oscillate.io/) and *avr-gdb*. Bloom provides the ability to load code as well as display the microcontroller's registers and memory. More details specific to the *ATTiny13A*, **bloom**, and *gdb* at the [bottom of this page](#using-bloom-and-avr-gdb).
+
+[gdb](https://www.sourceware.org/gdb/) is a simple yet extremely powerful debugging tool. I find it easier to use than most IDE's such as Visual Studio, MPLAB IDE etc. More guidance at [Developing in C for the ATmega328: Setup Bloom and gdb for Hardware Debug](https://wellys.com/posts/avr_c_gdb_bloomsetup/). 
+
 ## Local Documentation
 
 * [ATTiny13A Datasheet](./documentation/ATtiny13A-Data-Sheet-DS40002307A.pdf)
@@ -46,35 +55,34 @@ Given the ATtiny13A requires a hardware interface to load software, I recommend 
 #### [PWM and ADC.md](./docs/PWMandADC.md)
 Page under development to explain PWM and ADC interaction. 
 
-## Introduction
-This repository provides example programs in  [*C* (ANSI C99) AVR-LibC](https://github.com/avrdudes/avr-libc) which support programming the ATtiny13A.
-
-In order to use this framework, you can either install the *GNU avr* tool chain appropriate for your computer (Linux, macOS, or Windows). 
-
-Because there is not a boot loader for the ATtiny13A due to memory constraints, you will need to use an ATMEL-ICE or Microchip SNAP to load programs. The *env.make* allows for this, with entries for both.
-
- I also recommend using [Bloom](https://bloom.oscillate.io/) and *avr-gdb*. Bloom provides the ability to load code as well as display the microcontroller's registers and memory. More details specific to the *ATTiny13A*, **bloom**, and *gdb* at the [bottom of this page](#using-bloom-and-avr-gdb).
-
-[gdb](https://www.sourceware.org/gdb/) is a simple yet extremely powerful debugging tool. I find it easier to use than most IDE's such as Visual Studio, MPLAB IDE etc. More guidance at [Developing in C for the ATmega328: Setup Bloom and gdb for Hardware Debug](https://wellys.com/posts/avr_c_gdb_bloomsetup/). 
-
 ## Steps to Use
-1. Install toolchain. [Details here](https://www.wellys.com/posts/avr_c_setup/). The **best** method is to use a [Raspberry Pi as your development platform.](./docs/RPi_build.md)
-2. Clone this repository, [use git and clone to your system](https://www.wellys.com/posts/avr_c_step5/).
-3. Open the *ATtiny* folder and add an *env.make* file (*see below*) based on your board and system.
+1. Install the AVR toolchain which consists of *avr-gcc*, *avr-gdb*, and *avrdude* as well as *make* and *git*. The **best** method is to use a [Raspberry Pi as your development platform.](./docs/RPi_build.md). If you wish to use *Windows* or *macOS*, some instruction is provided [here](https://www.wellys.com/posts/avr_c_setup/).
+2. Clone this repository.
+3. Open the *ATtiny* folder and add an *env.make* file (*see below*) based on your programming board and system.
 4. Navigate to *examples/blink* in your CLI and run:
 	* *make* to compile, link and create an executable file
 	* *make flash* to upload executable file to your board.
-5. Look at the other examples to better understand how to use the code and begin writing your own!
+5. Look at the other examples to better understand how to use the code.
 
 ## Programming Summary
-
+For most of this development, I used the *Microchip SNAP* along with *bloom* and *avr-gdb*. This combination, eliminates the need for a bootloader, provides significant debugging resources and is inexpensive ([*Microchip SNAP is $12*](https://www.digikey.com/en/products/detail/microchip-technology/PG164100/9562532)).
 ### Note:
-1. *PB3* and *PB4* are available using *ISP* programmer
-1. *PB0-PB4* are available using *debugWire*
 1. Bloom requires specific functionality of the ISP interface. Connect via ISP then use debugWire for debugging and loading programs. 
    From Bloom: "*The debugWIRE interface does not support fuse programming. Fuses can only be changed via the ISP interface (for debugWIRE AVR targets). In order for Bloom to manage the DWEN fuse bit, the debug tool must be connected to the target via the ISP interface.*"
-1. **Therefore, it's best to use *load* and *mon reset* within *avr-gdb* instead of using AVRDUDE, when connected using the ATMEL ICE or Microchip SNAP.** 
+1. **The note above means *bloom* will control the DWEN fuse. The less the fuse is changed, the better, therefore, it's best to use *load* and *mon reset* within *avr-gdb* instead of using AVRDUDE, when connected using the ATMEL ICE or Microchip SNAP.**
+1. *PB3* and *PB4* are available using *ISP* programmer
+1. *PB0-PB4* are available using *debugWire*. Most of the time, *bloom* is interacting with the *ATtiny13A* using the *RESET* pin (*debugWIRE*), which means you can easily use all of the *PORTB* pins.
 1. The arrow on the ATMEL ICE ISP connector is incorrect. Pin 3 (middle pin) is at the notch.
+
+## Making Connections
+Insert your ATtiny13A into your breadboard. You will then need to make connections to it via a cable from the *ATMEL-ICE* or *SNAP*.
+
+### **Minimal Working Circuit**
+1. Connect **VCC** (pin 8) to your power supply (2.7-5.5V)
+2. Connect **GND** (pin 4) to ground
+3. Add **100nF decoupling capacitor** between VCC and GND
+5. Connect ISP header for programming
+6. When **NOT** using *debugWIRE*, add a 10kΩ pull-up resistor to pin 1 **RESET**, along with a button (one side to **GND**, other side to **RESET**)
 
 ### ATtiny13A Pinout
 ```
@@ -87,17 +95,18 @@ Because there is not a boot loader for the ATtiny13A due to memory constraints, 
                   └──────────┘
 ```
 
-| ISP Pin | ATtiny13A  | **13A Pin**  | Uno ISP | Color  |
-|---------|------------|------------| ------- | ------ |
-| RESET   | PB5/RESET  | **Pin 1**    | Pin 5   | Brown  |  
-| GND     | GND        | **Pin 4**    | Pin 6   | Black  |
-| MOSI    | PB0        | **Pin 5**    | Pin 4   | Green  |
-| MISO    | PB1        | **Pin 6**    | Pin 1   | Yellow |
-| SCK     | PB2        | **Pin 7**    | Pin 3   | Orange |
-| VCC     | VCC        | **Pin 8**    | Pin 2   | Red    |
+### ISP Connections
 
+| ISP Desc | ISP Pin   | ATtiny13A  | **13A Pin** | Color  |
+|---------|--------|------------|-------------|--------|
+| RESET   | Pin 5  | PB5/RESET  | **Pin 1**   | Brown  |
+| GND     | Pin 6  | GND        | **Pin 4**   | Black  |
+| MOSI    | Pin 4  | PB0        | **Pin 5**   | Green  |
+| MISO    | Pin 1  | PB1        | **Pin 6**   | Yellow |
+| SCK     | Pin 3  | PB2        | **Pin 7**   | Orange |
+| VCC     | Pin 2  | VCC        | **Pin 8**   | Red    |
 
-### ATtiny13A ISP Connections
+### ATtiny13A Connections for ATMEL-ICE Connector
 
 ```
                 ISP Header (2x3)
@@ -117,6 +126,26 @@ RESET/BROWN --| 5  ●     ●  6 |--- GND/BLACK
                   |+------- Pin 1: MISO
                   +-------- Notch/Key (orientation)
 ```
+
+### ATtiny 13A Connections for SNAP SIL
+| Snap SIL | Signal/Adapter | Wire Color | **13A Pin**  | 
+| :---------: | :-----------: | :------: | :----------: |
+| 1  | N/C    | none   | N/C |
+| 2  | VTG   | Red    | 8   |
+| 3  | GND   | Black  | 4   |
+| 4  | MISO  | Yellow | 6   |
+| 5  | SCK   | Orange | 7   |
+| 6  | RESET | Brown  | 1   |
+| 7  | MOSI  | Green  | 5   |
+| 8  | N/C    | none   | N/C |
+
+### **Modified Reset Pin Configuration for debugWIRE**
+- If exists, **remove the 10kΩ pull-up resistor** from the RESET pin (pin 1)
+- The RESET pin becomes a **bidirectional communication line** when DebugWire is enabled
+- Keep the reset line as short as possible to minimize noise
+
+Remember that while DebugWire provides powerful debugging capabilities with just one wire, it **temporarily disables normal ISP programming** until you explicitly disable the DebugWire mode.
+
 
 ## Port B Pin Functionality
 
@@ -140,73 +169,77 @@ RESET/BROWN --| 5  ●     ●  6 |--- GND/BLACK
 - **GND**: Connect to pin 4
 - **Decoupling capacitor**: 100nF ceramic capacitor between VCC and GND, placed as close to the chip as possible
 
-### **Programming Interface**
-
-Required by **bloom** to change fuses, specifically setting *DWEN* to use *debugWire* interface.
-
-For In-System Programming (ISP), connect:
-- **MISO** (PB1) - Pin 6
-- **MOSI** (PB0) - Pin 5  
-- **SCK** (PB2) - Pin 7
-- **RESET** (PB5) - Pin 1
-- **VCC** and **GND** from programmer
-
-### **Minimal Working Circuit**
-1. Connect **VCC** (pin 8) to your power supply (2.7-5.5V)
-2. Connect **GND** (pin 4) to ground
-3. Add **100nF decoupling capacitor** between VCC and GND
-5. Connect ISP header for programming
-
-## **Hardware Requirements for DebugWire**
-
-### **Modified Reset Pin Configuration**
-- If exists, **remove the 10kΩ pull-up resistor** from the RESET pin (pin 1)
-- The RESET pin becomes a **bidirectional communication line** when DebugWire is enabled
-- Keep the reset line as short as possible to minimize noise
-
-### **Simplified Connection**
-When using DebugWire, you need:
-- **RESET/dW** (pin 1) - Connected to debugger
-- **VCC** (pin 8) - Power supply
-- **GND** (pin 4) - Ground
-- **100nF decoupling capacitor** between VCC and GND
-
 ### **Important Considerations**
 
 1. **Fuse Configuration**
-   - You must **enable the DWEN (DebugWire Enable) fuse bit**
-   - Once enabled, the RESET pin loses its reset functionality and becomes a DebugWire interface
-   - ISP programming is disabled when DebugWire is active
-   - **Bloom does this quite well, leave it to Bloom**
+
+  * You must **enable the DWEN (DebugWire Enable) fuse bit**
+  * Once enabled, the RESET pin loses its reset functionality and becomes a DebugWire interface
+  * ISP programming is disabled when DebugWire is active
+  * **Bloom does this quite well, leave it to Bloom**
 
 2. **Debugger Requirements**
-   - Use a compatible debugger like **Atmel-ICE**, **Microchip SNAP**, or **AVR Dragon**
-   - The debugger must support DebugWire protocol
+  * Use a compatible debugger like **Atmel-ICE**, **Microchip SNAP**, or **AVR Dragon**
+  * The debugger must support DebugWire protocol
 
 3. **Power Cycling**
-   - After enabling DebugWire, you need to **power cycle** the target device
-   - The debugger will then communicate through the single-wire interface
+  * After enabling DebugWire, you need to **power cycle** the target device
+  * The debugger will then communicate through the single-wire interface
 
 ### **To Disable DebugWire**
 If you need to return to normal ISP programming:
 1. Use the debugger to **disable DebugWire** through the debugging software
-2. Or perform a **high-voltage programming** sequence to clear the DWEN fuse
-3. Use *avrdude* to write a **HIGH** of 0xff to the ATtiny13A, see *Confirming/Changing...* below
+1. Use *avrdude* to write a **HIGH** of 0xff to the ATtiny13A, see *avrdude commands* below
 
-### Confirming/Changing DWEN to enable ISP programming
+## *avrdude* commands
+
+### LOW Fuse Reference for Clock Speed (Default in BOLD)
+
+| Clock Speed | Low Fuse | CLKDIV8 | Oscillator |
+|-------------|----------|----------| --------------- |
+| 9.6MHz      | 0x7A     | Disabled    | 9.6MHz       |
+| 4.8MHz      | 0x79     | Disabled    | 4.8MHz       |
+| **1.2MHz**  | **0x6A** | **Enabled** | **9.6MHz÷8** |
+| 600kHz      | 0x69     | Enabled     | 4.8MHz÷8     |
+
+### HIGH Fuse Reference for DWEN (Default in BOLD)
+
+| Mode        | HIGH Fuse| debugWIRE| 
+|-------------|----------|---------------|
+| **ISP**     | **0xFF** | **Disabled**  |
+| *debugWIRE*   | 0x7F     | Enabled       | 
+
+
+#### simple *avrdude* terminal command to test connection
 ```bash
-# read fuses, high fuse needs to be 0xff
+avrdude -p m328p -P usb  -c snap_isp -t
+```
+
+* *?* for help
+* *part* for confirming chip
+* *q* to quit
+
+#### read fuses, high fuse needs to be 0xff for ISP (*avrdude*) programming
+```bash
 avrdude -c snap_isp -p attiny13a -U lfuse:r:-:h -U hfuse:r:-:h
-# if required, write fuses to allow for ISP programming
+```
+
+#### if required, write fuses to allow for ISP programming
+```bash
 avrdude -c snap_isp -p attiny13a -U lfuse:w:0x6A:m -U hfuse:w:0xFF:m
-# program ATtiny13A
-make flash
-# confirm hash of FLASH memory
+```
+
+#### program ATtiny13A
+```bash
+avrdude -c snap_isp -p attiny13a -U flash:w:main.elf:e
+```
+
+#### confirm hash of FLASH memory
+```bash
 avrdude -p t13 -c snap_isp -U flash:r:-:i 2>/dev/null | md5sum
 ```
-Remember that while DebugWire provides powerful debugging capabilities with just one wire, it **temporarily disables normal ISP programming** until you explicitly disable the DebugWire mode.
 
-### Confirming hex file against FLASH
+#### Confirming hex file against FLASH
 ```
 # Verify flash against a file
 avrdude -p t13 -c snap_isp -U flash:v:main.hex:i

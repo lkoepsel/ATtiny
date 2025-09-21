@@ -32,7 +32,7 @@ Notes as to developing C code for the Microchip ATtiny13A. *Some* of this conten
 The file env_make is used to customize the *make* process for *ATtiny* development. It is **required** in order for make to properly identify the parameters needed for compiling/linking/uploading executable code to an AVR microcontroller. **This file is not tracked by *git* and needs to be installed manually.** 
 
 #### [vs_code.md](./docs/vs_code.md)
-This page contains the files needed to be more efficient with *VS Code*. Install them inot the *.vscode* folder of *ATtiny*. They are not tracked by *git*.
+This page contains the files needed to be more efficient with *VS Code*. Install them in the *.vscode* folder of *ATtiny*. **They are not tracked by *git*.**
 
 #### [git.md](./docs/git.md)
 Notes on using *git*. I am neither an expert on *git* nor proficient in *git*. This page is primarily for myself, however, it has helped a few people.

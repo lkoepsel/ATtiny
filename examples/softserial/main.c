@@ -6,19 +6,20 @@
 #include <stdio.h>
 #include "soft_serial.h"
 
-#define N_in 10
-#define N_out 10
+const char prompt[] PROGMEM = "13A:";
+const char chr_recd[] PROGMEM = " rec";
+
+#define N_in 7
+#define N_out 7
 
 int main(void) {
-    // Initialize software serial and hardware serial (UART)
-    init_serial();
-
     char soft_in[N_in] = {""};
     char soft_out[N_out] = {""};
 
     // Example: Send and receive data
     init_soft_serial();
     soft_char_NL();
+    soft_pgmtext_write(prompt);
 
     while (1) {
 

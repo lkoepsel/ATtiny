@@ -15,18 +15,20 @@
 // soft_int16_write - write a int16 number
 // soft_int16_writef - write a int16 number, size is width of field, fill with blanks
 // soft_int8_write - write a int8 number
-
+// void soft_pgmtext_write(const char* pgm_text) - write PROGMEM string
 
 #ifndef SOFT_SERIAL_H
 #define SOFT_SERIAL_H
 
 #include <avr/io.h>
 #include <stdio.h>
-// #include <string.h>
 #include <util/delay.h>
+#include <stdlib.h>
+#include <avr/pgmspace.h>
 
-#define SOFT_RX_PIN PIND2 // Define the RX pin
-#define SOFT_TX_PIN PIND3 // Define the TX pin
+
+#define SOFT_RX_PIN PINB2 // Define the RX pin
+#define SOFT_TX_PIN PINB3 // Define the TX pin
 #define BIT_DURATION (1000000 / SOFT_BAUD) // Bit duration in microseconds
 
 #define CR 13		// carriage return
@@ -48,5 +50,6 @@ void soft_int8_write(int8_t number) ;
 
 void soft_char_NL(void) ;
 void soft_char_BL(void) ;
+void soft_pgmtext_write(const char* pgm_text) ;
 
 #endif

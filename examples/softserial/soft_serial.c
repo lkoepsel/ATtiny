@@ -1,10 +1,5 @@
 #include "soft_serial.h"
 
-char num_string[6] = {};
-const char debug1[] PROGMEM = "debug:1 ";
-const char debug2[] PROGMEM = "debug:2 ";
-const char debug3[] PROGMEM = "debug:3 ";
-
 void init_soft_serial()
 {
     // // Set TX pin as output, set RX pin as input, RX as input pullup
@@ -134,13 +129,4 @@ void soft_char_NL(void)
 void soft_char_BL(void)
 {
     soft_char_write(BL);
-}
-
-void soft_pgmtext_write(const char *pgm_text)
-{
-    for (uint8_t i = 0; i < strlen_P(pgm_text); i++)
-    {
-        uint8_t c = pgm_read_byte(&(pgm_text[i]));
-        soft_char_write(c);
-    }
 }

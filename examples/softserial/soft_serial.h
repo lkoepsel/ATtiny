@@ -13,7 +13,6 @@
 // void soft_char_NL(void) - write a new line
 // void soft_char_BL(void) - write a space
 // soft_int16_write - write a int16 number
-// soft_int16_writef - write a int16 number, size is width of field, fill with blanks
 // soft_int8_write - write a int8 number
 // void soft_pgmtext_write(const char* pgm_text) - write PROGMEM string
 
@@ -45,7 +44,6 @@ int8_t soft_string_write(char * buffer, int8_t len) ;
 int8_t soft_readLine(char *buffer, int8_t SIZE) ;
 
 void soft_int16_write(int16_t number) ;
-void soft_int16_writef(int16_t number, int8_t size) ;
 void soft_int8_write(int8_t number) ;
 
 void soft_char_NL(void) ;

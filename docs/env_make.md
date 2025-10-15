@@ -24,6 +24,7 @@ PROGRAMMER_TYPE = atmelice_isp
 PROGRAMMER_ARGS = -F -V -P usb -b 115200
 TOOLCHAIN =
 OS =
+SOFT_BAUD = 28800UL
 ```
 
 ## 3. Save and close *nano*

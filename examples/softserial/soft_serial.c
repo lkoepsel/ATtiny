@@ -111,16 +111,16 @@ int8_t soft_readLine(char *buffer, int8_t SIZE)
     return n_chars;
 }
 
-void soft_char_NL(void)
-{
-    soft_char_write(CR);
-    soft_char_write(LF);
-}
+// void soft_char_NL(void)
+// {
+//     soft_char_write(CR);
+//     soft_char_write(LF);
+// }
 
-void soft_char_BL(void)
-{
-    soft_char_write(BL);
-}
+// void soft_char_BL(void)
+// {
+//     soft_char_write(BL);
+// }
 
 void soft_pgmtext_write(const char *pgm_text)
 {

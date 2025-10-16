@@ -47,6 +47,7 @@
 
 #define ASCII_INTEGER 0x30 // constant added to an integer(0-9) to make ASCII
 
+void timer0_delay_us(uint16_t us);
 void init_soft_serial() ;
 void soft_char_write(char data) ;
 int8_t soft_char_read() ;

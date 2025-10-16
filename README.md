@@ -212,7 +212,7 @@ If you need to return to normal ISP programming:
 
 #### simple *avrdude* terminal command to test connection
 ```bash
-avrdude -p m328p -P usb  -c snap_isp -t
+avrdude -p attiny13a -P usb  -c snap_isp -t
 ```
 
 * *?* for help

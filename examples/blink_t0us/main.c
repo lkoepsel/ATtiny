@@ -4,16 +4,16 @@
 
 #include <avr/io.h>
 #include "ATtiny.h"
-#define baud_ticks 124 // 9600 baud
+#define baud_ticks 156 // 1200 baud
 
 int main (void)
 {
     // set pin to output
     DDRB |= (_BV(PORTB0));
-    TCCR0B = (1 << CS00);  // Prescaler /1
-    OSCCAL = 0x68;
+    TCCR0B = (1 << CS01);  // Prescaler /8
+    OSCCAL = 0x73;
 
-    for (;;)
+    do
     {
         
         SBI(PORTB, PORTB0);
@@ -22,5 +22,5 @@ int main (void)
         CBI(PORTB, PORTB0);
         TCNT0 = 0;
         while (TCNT0 < baud_ticks) {} ;
-    }
+    } while (1);
 }

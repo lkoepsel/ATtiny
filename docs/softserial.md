@@ -566,3 +566,93 @@ Given your OSCCAL calibration to 0x73, you should define `BIT_DURATION` as:
 The higher baud rates (57600 and 115200) are generally not recommended for software UART on the ATtiny13A running at 1.2MHz due to insufficient CPU cycles to reliably sample and process bits.
 
 [Most Common Baud Rates](https://lucidar.me/en/serialib/most-used-baud-rates-table/)
+
+Here's how to create a macro for that timer delay in avr-gcc:
+
+## Basic Macro Definition
+
+```c
+#define TIMER_DELAY(ticks) do { \
+    TCNT0 = 0; \
+    while (TCNT0 < (ticks)) {} ; \
+} while(0)
+```
+
+## Usage Example
+
+```c
+// In your code, you can now use:
+TIMER_DELAY(baud_ticks);
+// or with a literal value:
+TIMER_DELAY(144);
+// or with any expression:
+TIMER_DELAY(baud_ticks / 2);
+```
+
+## Why This Macro Design?
+
+### The `do-while(0)` Wrapper
+This is a **critical safety pattern** for multi-statement macros in C. It ensures the macro behaves like a single statement in all contexts:
+
+```c
+// Without do-while(0), this would break:
+if (condition)
+    TIMER_DELAY(baud_ticks);  // Works correctly
+else
+    something_else();
+
+// The semicolon after the macro call completes the do-while
+```
+
+### Parentheses Around `ticks`
+The parentheses around `(ticks)` in the comparison protect against operator precedence issues:
+
+```c
+// Safe even with expressions:
+TIMER_DELAY(baud_ticks + 10);  // Evaluates correctly
+```
+
+## Complete Example for Your UART
+
+```c
+#include <avr/io.h>
+#include "ATtiny.h"
+
+#define TIMER_DELAY(ticks) do { \
+    TCNT0 = 0; \
+    while (TCNT0 < (ticks)) {} ; \
+} while(0)
+
+#define BAUD_9600  144   // Your measured value
+#define BAUD_19200 72    // Half the period
+
+int main(void)
+{
+    DDRB |= (_BV(PORTB0));
+    TCCR0B = (1 << CS00);  // Prescaler /1
+    OSCCAL = 0x73;
+
+    for (;;)
+    {
+        SBI(PORTB, PORTB0);
+        TIMER_DELAY(BAUD_9600);
+        
+        CBI(PORTB, PORTB0);
+        TIMER_DELAY(BAUD_9600);
+    }
+}
+```
+
+## Alternative: Function-Like Macro with Type Safety
+
+If you want more control, you can add type checking:
+
+```c
+#define TIMER_DELAY(ticks) do { \
+    uint8_t _ticks = (uint8_t)(ticks); \
+    TCNT0 = 0; \
+    while (TCNT0 < _ticks) {} ; \
+} while(0)
+```
+
+This ensures the value is always treated as an 8-bit value, matching the TCNT0 register size.

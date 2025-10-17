@@ -1,8 +1,9 @@
 // soft serial - adds a software defined serial port
 // Slow serial port, use for non-intensive serial interaction
 // Set serial pins below: SOFT_RX_PIN/SOFT_TX_PIN
-// Set baud rate below: SOFT_BAUD
-// Highest baud rate is 28800
+// Set baud ticks below for baud rate
+// Tested baud rate is 1200, due to freq fluctuations of internal clock
+//
 
 // API:
 // init_soft_serial(); initialize the ports, REQUIRED
@@ -35,10 +36,11 @@
 #include <stdlib.h>
 #include <avr/pgmspace.h>
 #include <avr/cpufunc.h>
+#include "ATtiny.h"
 
 #define SOFT_RX_PIN PINB4 // Define the RX pin
 #define SOFT_TX_PIN PINB3 // Define the TX pin
-#define BIT_DURATION 124  // For 9600 baud
+#define baud_ticks 156    // For 1200 baud
 
 #define CR 13		// carriage return
 #define LF 10		// line feed

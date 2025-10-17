@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <avr/io.h>
 
-#define SBI(port, bit) \
+  #define SBI(port, bit) \
     __asm__ __volatile__ ( \
         "sbi %0, %1" \
         : \
@@ -22,4 +22,10 @@
           "I" (bit) \
     )
 
-#endif
+  #define TIMER_DELAY(ticks) do { \
+      TCNT0 = 0; \
+      while (TCNT0 < (ticks)) {} ; \
+  } while(0)
+
+
+    #endif

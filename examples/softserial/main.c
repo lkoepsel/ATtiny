@@ -14,12 +14,11 @@ const char chr_recd[] PROGMEM = " R:";
 #define N_out 7
 
 int main(void) {
-    // char soft_in[N_in] = {""};
-    // char soft_out[N_out] = {""};
+    char soft_in[N_in] = {""};
+    char soft_out[N_out] = {""};
 
     // Example: Send and receive data
     init_soft_serial();
-    OSCCAL = 0x73; // use ../osscal routine to determine optimal value
 
     soft_char_write(CR);
     soft_char_write(LF);
@@ -29,22 +28,16 @@ int main(void) {
     soft_pgmtext_write(waiting);
 
     while (1) 
-    {
-        volatile uint8_t char_r = soft_char_read();
-        _NOP();
-        soft_char_write(char_r);
-        _NOP();
-    
-    
+    {    
         // Receive data
-        // uint8_t received = soft_readLine(soft_in, N_in - 1);
-        // soft_pgmtext_write(chr_recd);
-        // soft_char_write(received + ASCII_INTEGER);
-        // soft_char_write(BL);
-        // soft_string_write(soft_out, (sizeof(soft_out)/sizeof(soft_out[0])));
-        // soft_string_write(soft_in, received + 1);
-        // soft_char_write(CR);
-        // soft_char_write(LF);
+        uint8_t received = soft_readLine(soft_in, N_in - 1);
+        soft_pgmtext_write(chr_recd);
+        soft_char_write(received + ASCII_INTEGER);
+        soft_char_write(BL);
+        soft_string_write(soft_out, (sizeof(soft_out)/sizeof(soft_out[0])));
+        soft_string_write(soft_in, received + 1);
+        soft_char_write(CR);
+        soft_char_write(LF);
     }
 
     return 0;

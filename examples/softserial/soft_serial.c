@@ -39,38 +39,26 @@ void soft_char_write(char data)
 
 }
 
-// AI generated using _delay_us and full bit checking
+// read routine, waits til middle of bit to check value
 int8_t soft_char_read()
 {
     int8_t data = 0;
-    uint8_t bit_count;
 
-    // Wait for idle state first (line high)
-    while (!(PINB & (1 << SOFT_RX_PIN))) {} ;
-
-    // Wait for start bit (falling edge)
+    // Wait for start bit
     while (PINB & (1 << SOFT_RX_PIN)) {} ;
 
-    // Critical: Skip past the entire start bit
-    TIMER_DELAY(baud_ticks);
-
-    // Now we're at the beginning of bit 0
-    // Sample in the middle of each data bit
-    for (bit_count = 0; bit_count < 8; bit_count++)
+    // Wait 1.5 bit periods to sample first data bit in the middle
+    TIMER_DELAY(baud_ticks + baud_ticks / 2);
+    
+    // Read each bit
+    for (int8_t i = 0; i < 8; i++)
     {
-        TIMER_DELAY(baud_ticks / 2);  // Move to middle of bit
-
         if (PINB & (1 << SOFT_RX_PIN))
         {
-            data |= (1 << bit_count);
+            data |= (1 << i);
         }
-
-        TIMER_DELAY(baud_ticks / 2);  // Complete the bit period
+        TIMER_DELAY(baud_ticks);
     }
-
-    // Optional: Check stop bit
-    TIMER_DELAY(baud_ticks / 2);
-    // Stop bit should be high here
 
     return data;
 }
@@ -91,11 +79,11 @@ int8_t soft_string_write(char *buffer, int8_t len)
 {
     // Transmit data
     int8_t count = 0;
-    while ((*buffer != '\0') && (count <= len))
+    while ((*buffer != '\0') && (count++ <= len))
     {
-        soft_char_write(*buffer);
-        buffer++;
-        count++;
+        soft_char_write(*buffer++);
+        // buffer++;
+        // count++;
     }
     return count;
 }
@@ -113,8 +101,8 @@ int8_t soft_readLine(char *buffer, int8_t SIZE)
         }
         else
         {
-            buffer[n_chars] = temp;
-            n_chars++;
+            buffer[n_chars++] = temp;
+            // n_chars++;
             if (n_chars >= SIZE)
             {
                 EOL = 1;
@@ -123,17 +111,6 @@ int8_t soft_readLine(char *buffer, int8_t SIZE)
     } while (!EOL);
     return n_chars;
 }
-
-// void soft_char_NL(void)
-// {
-//     soft_char_write(CR);
-//     soft_char_write(LF);
-// }
-
-// void soft_char_BL(void)
-// {
-//     soft_char_write(BL);
-// }
 
 void soft_pgmtext_write(const char *pgm_text)
 {

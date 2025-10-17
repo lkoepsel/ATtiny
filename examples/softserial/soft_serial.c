@@ -66,13 +66,13 @@ int8_t soft_char_read()
 void soft_int16_write(int16_t number)
 {
     itoa(number, num_string, 10);
-    soft_string_write(num_string, 5);
+    soft_string_write(num_string, 6);
 }
 
-void soft_int8_write(int8_t number)
+void soft_uint16_write(uint16_t number)
 {
     itoa(number, num_string, 10);
-    soft_string_write(num_string, 3);
+    soft_string_write(num_string, 5);
 }
 
 int8_t soft_string_write(char *buffer, int8_t len)
@@ -82,9 +82,8 @@ int8_t soft_string_write(char *buffer, int8_t len)
     while ((*buffer != '\0') && (count++ <= len))
     {
         soft_char_write(*buffer++);
-        // buffer++;
-        // count++;
     }
+
     return count;
 }
 
@@ -102,13 +101,13 @@ int8_t soft_readLine(char *buffer, int8_t SIZE)
         else
         {
             buffer[n_chars++] = temp;
-            // n_chars++;
             if (n_chars >= SIZE)
             {
                 EOL = 1;
             }
         }
     } while (!EOL);
+    buffer[n_chars] = 0;
     return n_chars;
 }
 

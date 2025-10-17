@@ -32,10 +32,8 @@
 
 #include <avr/io.h>
 #include <stdio.h>
-#include <util/delay.h>
-#include <stdlib.h>
+// #include <stdlib.h>
 #include <avr/pgmspace.h>
-#include <avr/cpufunc.h>
 #include "ATtiny.h"
 
 #define SOFT_RX_PIN PINB4 // Define the RX pin
@@ -45,10 +43,8 @@
 #define CR 13		// carriage return
 #define LF 10		// line feed
 #define BL 32		// blank or space (SP is taken for stack pointer)
-
 #define ASCII_INTEGER 0x30 // constant added to an integer(0-9) to make ASCII
 
-void timer0_delay_us(uint16_t us);
 void init_soft_serial() ;
 void soft_char_write(char data) ;
 int8_t soft_char_read() ;
@@ -57,10 +53,8 @@ int8_t soft_string_write(char * buffer, int8_t len) ;
 int8_t soft_readLine(char *buffer, int8_t SIZE) ;
 
 void soft_int16_write(int16_t number) ;
-void soft_int8_write(int8_t number) ;
+void soft_uint16_write(uint16_t number) ;
 
-// void soft_char_NL(void) ;
-// void soft_char_BL(void) ;
 void soft_pgmtext_write(const char* pgm_text) ;
 
 #endif

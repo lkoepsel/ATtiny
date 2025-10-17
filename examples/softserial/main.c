@@ -14,8 +14,9 @@ const char chr_recd[] PROGMEM = " R:";
 #define N_out 7
 
 int main(void) {
+    // used for line read/write, comment of for char echo
     char soft_in[N_in] = {""};
-    char soft_out[N_out] = {""};
+    // char soft_out[N_out] = {""};
 
     // Example: Send and receive data
     init_soft_serial();
@@ -38,7 +39,6 @@ int main(void) {
         soft_pgmtext_write(chr_recd);
         soft_char_write(received + ASCII_INTEGER);
         soft_char_write(BL);
-        soft_string_write(soft_out, (sizeof(soft_out)/sizeof(soft_out[0])));
         soft_string_write(soft_in, received + 1);
         soft_char_write(CR);
         soft_char_write(LF);

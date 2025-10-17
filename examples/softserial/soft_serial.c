@@ -2,34 +2,14 @@
 
 char num_string[6] = {};
 
-void timer0_delay_us(uint16_t us)
-{
-    // Timer clock with prescaler /1: 1.2MHz
-    // Each timer tick = 0.833us
-    
-    // Calculate ticks (us * 6 / 5 approximates us / 0.833)
-    uint16_t ticks = (us * 6) / 5;
-    
-    TCCR0B = (1 << CS00);  // Prescaler /1
-    
-    while (ticks > 0)
-    {
-        TCNT0 = 0;
-        uint8_t wait = (ticks > 255) ? 255 : ticks;
-        while (TCNT0 < wait) {} ;
-        ticks -= wait;
-    }
-    
-    TCCR0B = 0;  // Stop timer
-}
-
 void init_soft_serial()
 {
     // // Set TX pin as output, set RX pin as input, RX as input pullup
-    OSCCAL = 0x73; // use ../osscal routine to determine optimal value
     DDRB |= _BV(SOFT_TX_PIN);
     DDRB &= ~_BV(SOFT_RX_PIN);
     PORTB |= _BV(SOFT_RX_PIN);
+    TCCR0B = (1 << CS00);  // Prescaler /1
+
 }
 
 void soft_char_write(char data)
@@ -67,11 +47,14 @@ int8_t soft_char_read()
     while (PINB & (1 << SOFT_RX_PIN)) {} ;
 
     // Wait for the middle of the start bit
-    timer0_delay_us(BIT_DURATION / 2);
+    TCNT0 = 0;
+    while (TCNT0 < BIT_DURATION / 2) {} ;
     // Read each bit
     for (int8_t i = 0; i < 8; i++)
     {
-        timer0_delay_us(BIT_DURATION);
+        TCNT0 = 0;
+        while (TCNT0 < BIT_DURATION) {} ;
+
         if (PINB & (1 << SOFT_RX_PIN))
         {
             data |= (1 << i);
@@ -79,7 +62,8 @@ int8_t soft_char_read()
     }
 
     // Wait for stop bit
-    timer0_delay_us(BIT_DURATION);
+    TCNT0 = 0;
+    while (TCNT0 < BIT_DURATION) {} ;
 
     return data;
 }

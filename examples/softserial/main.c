@@ -19,6 +19,8 @@ int main(void) {
 
     // Example: Send and receive data
     init_soft_serial();
+    OSCCAL = 0x73; // use ../osscal routine to determine optimal value
+
     soft_char_write(CR);
     soft_char_write(LF);
     soft_pgmtext_write(prompt);

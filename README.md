@@ -1,12 +1,7 @@
 # Programming the ATtiny13A in Standard C
 
 Notes as to developing C code for the Microchip ATtiny13A. 
-
-<<<<<<< HEAD
 ![ATtiny13A Pinout](./ATtiny13A%20Pinout.png)
-=======
-[ATtiny13A Pinout](./ATtiny13A%20Pinout.png)
->>>>>>> 6ac929dcc37990709708bc70bed2f299ca6eeb54
 
 ## Introduction
 This repository provides example programs in  [*C* (ANSI C99) AVR-LibC](https://github.com/avrdudes/avr-libc) which support programming the ATtiny13A. In order to use this framework, you can either install the *GNU avr* tool chain appropriate for your computer (*Linux*, *macOS*, or *Windows*). 

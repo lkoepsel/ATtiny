@@ -2,6 +2,8 @@
 
 Notes as to developing C code for the Microchip ATtiny13A. 
 
+![ATtiny13A Pinout](./ATtiny13A%20Pinout.png)
+
 ## Introduction
 This repository provides example programs in  [*C* (ANSI C99) AVR-LibC](https://github.com/avrdudes/avr-libc) which support programming the ATtiny13A. In order to use this framework, you can either install the *GNU avr* tool chain appropriate for your computer (*Linux*, *macOS*, or *Windows*). 
 
@@ -32,6 +34,7 @@ As there is not a boot loader for the *ATtiny13A* due to memory constraints, you
 * [Bloom Documentation](https://bloom.oscillate.io/docs/getting-started)
 * [Bloom Target Information](https://bloom.oscillate.io/docs/target/attiny13a)
 * [Arduino Sensors](https://arduinomodules.info)
+* [Arduino Compatible MicroCore for ATtiny](https://github.com/MCUdude/MicroCore/)
 
 ## docs
 

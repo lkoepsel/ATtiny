@@ -14,6 +14,7 @@ build
 *.lss
 *.sym
 *.map
+*.su
 *~
 *.eeprom
 *.bloom/

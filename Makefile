@@ -126,6 +126,9 @@ complete: all_clean compile size
 
 compile: $(TARGET).hex 
 
+stack: CFLAGS += -fstack-usage
+stack: $(TARGET).hex
+
 static: 
 	cppcheck --std=c99 --platform=avr8 --enable=all --suppressions-list=$(DEPTH)suppressions.txt . 2> cppcheck.txt
 

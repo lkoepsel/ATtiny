@@ -39,7 +39,7 @@ delay_1s:
 outer:
     ldi     r17, 195
 middle:
-    ldi     r16, 255
+    ldi     r16, 250
 inner:
     dec     r16
     brne    inner

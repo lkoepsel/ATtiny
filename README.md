@@ -1,12 +1,14 @@
-# Programming the ATtiny13A in Standard C
+# Programming the ATtiny13A in Standard C and Assembly Language
 
-Notes as to developing C code for the Microchip ATtiny13A. 
+Notes as to developing C and assembly code for the Microchip ATtiny13A. 
 ![ATtiny13A Pinout](./ATtiny13A%20Pinout.png)
 
 ## Introduction
-This repository provides example programs in  [*C* (ANSI C99) AVR-LibC](https://github.com/avrdudes/avr-libc) which support programming the ATtiny13A. In order to use this framework, you can either install the *GNU avr* tool chain appropriate for your computer (*Linux*, *macOS*, or *Windows*). 
+This repository provides example programs in  [*C* (ANSI C99) AVR-LibC](https://github.com/avrdudes/avr-libc) and *AVR assembly language* which support programming the ATtiny13A. In order to use this framework, you can either install the *GNU avr* tool chain appropriate for your computer (*Linux*, *macOS*, or *Windows*). 
 
 As there is not a boot loader for the *ATtiny13A* due to memory constraints, you will need to use an *ATMEL-ICE* or *Microchip SNAP* to load programs. The *env.make* allows for this, with entries for both.
+
+There are two examples folders, one for [C, examples](./examples) and one for [assembly, asm_examples](./asm_examples). The standard *make* commands will work such as `make flash`, `make size` etc. 
 
  I also recommend using [Bloom](https://bloom.oscillate.io/) and *avr-gdb*. Bloom provides the ability to load code as well as display the microcontroller's registers and memory. More details specific to the *ATTiny13A*, **bloom**, and *gdb* at the [bottom of this page](#using-bloom-and-avr-gdb).
 
@@ -844,5 +846,3 @@ Register written
 - ```info functions``` - List all functions
 - ```help command``` - Get help for specific command
 - ```quit``` or ```q``` - Exit gdb
-
-

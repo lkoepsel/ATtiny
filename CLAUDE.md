@@ -18,16 +18,21 @@ include $(DEPTH)Makefile
 **Key targets (run from within an example directory):**
 
 ```bash
-make compile      # Compile only (verify)
-make flash        # Compile and upload to device
-make complete     # Clean, compile, and upload
-make size         # Show Flash/SRAM usage
-make clean        # Remove build artifacts
-make disasm       # Generate assembly listing
-make static       # Run cppcheck static analysis
-make stack        # Compile with -fstack-usage, generates main.su
-make env          # Print active configuration variables
-make verbose      # Flash with detailed avrdude output
+make compile          # Compile only (verify)
+make flash            # Compile and upload to device
+make complete         # Full rebuild: remove all objects, recompile, show size (no upload)
+make size             # Show Flash/SRAM usage
+make clean            # Remove build artifacts
+make disasm           # Generate assembly listing
+make static           # Run cppcheck static analysis
+make stack            # Compile with -fstack-usage, generates main.su
+make env              # Print active configuration variables
+make verbose          # Flash with detailed avrdude output
+make help             # Print available targets
+make show_fuses       # Read current fuse values from device
+make set_fast_fuse    # Set LFUSE to 0xE2 (disable CLKDIV8, run at 9.6MHz)
+make avrdude_terminal # Open interactive avrdude terminal
+make flash_eeprom     # Flash EEPROM from main.eeprom
 ```
 
 ## env.make (Required, Not in Git)
@@ -41,9 +46,14 @@ SERIAL = /dev/ttyACM0      # Adjust per system
 PROGRAMMER_TYPE = atmelice_isp   # or snap_isp
 PROGRAMMER_ARGS = -F -V -P usb -b 115200
 LIBDIR = $(DEPTH)Library
+LIBRARY = no_lib           # Required for ATtiny13A — many AVR_C lib functions incompatible
+USB_BAUD = 250000UL
+SOFT_BAUD = 28800UL
 ```
 
 See `docs/env_make.md` for full documentation.
+
+**LIBRARY variable:** When set to `no_lib`, only `*.c` files in the current example directory are compiled (no LIBDIR). This is the correct default for ATtiny13A. When omitted or set to any other value, `$(LIBDIR)/*.c` is also compiled and `-I$(LIBDIR)` is added to include paths.
 
 ## Compilation Flags
 
@@ -64,15 +74,17 @@ The core library provides inline assembly macros to avoid compiler optimization 
 
 The `"I"` constraint enforces compile-time constants (0–63) required by the `sbi`/`cbi` AVR instructions.
 
+**Pin toggle shortcut:** Writing to `PINB` toggles the corresponding output bit — `sbi PINB, n` toggles pin n in a single instruction. Used extensively throughout examples for efficient LED toggling.
+
 ### Example Structure
 
-Each example in `examples/` is self-contained: a `main.c`, a local `Makefile`, and any needed headers copied locally (e.g., `ATtiny.h`, `soft_serial.h`, `sysclock.h`). There is no shared linking — headers are duplicated by design to keep examples independent.
+Each example in `examples/` is self-contained: a `main.c`, a local `Makefile`, and any needed files copied locally (e.g., `ATtiny.h`, `soft_serial.h`, `soft_serial.c`, `sysclock.h`, `sysclock.c`). There is no shared linking — files are duplicated by design to keep examples independent.
 
-### Key Headers (found in relevant examples)
+### Key Modules (copy both `.h` and `.c` into example directory when needed)
 
-- `ATtiny.h` — SBI/CBI/TIMER_DELAY macros
-- `sysclock.h` — `init_sysclock_1k()`, `ticks()` for 1kHz system clock using Timer0 overflow interrupt
-- `soft_serial.h` — Software UART at 1200 baud: `init_soft_serial()`, `soft_char_write()`, `soft_char_read()`, `soft_readLine()`, `soft_int16_write()`, `soft_pgmtext_write()`
+- `ATtiny.h` — SBI/CBI/TIMER_DELAY macros (header only)
+- `sysclock.h` / `sysclock.c` — `init_sysclock_1k()`, `ticks()` for 1kHz system clock using Timer0 CTC interrupt; **both files must be copied** to use in an example
+- `soft_serial.h` / `soft_serial.c` — Software UART at 1200 baud: `init_soft_serial()`, `soft_char_write()`, `soft_char_read()`, `soft_readLine()`, `soft_int16_write()`, `soft_pgmtext_write()`; **both files must be copied**
 
 ### Hardware Constraints
 
@@ -81,7 +93,7 @@ Each example in `examples/` is self-contained: a `main.c`, a local `Makefile`, a
 - **Pins:** PB0–PB5; PB5 is RESET (avoid as GPIO unless fuses are changed)
 - **ADC:** 4 channels on PB2–PB5, 10-bit, ~260µs conversion
 - **PWM:** OC0A (PB0) and OC0B (PB1) via Timer0
-- **Clock:** Default 1.2MHz (factory fuse). Higher speeds require fuse changes and env.make update.
+- **Clock:** Default 1.2MHz (factory fuse: 9.6MHz oscillator with CLKDIV8 enabled). Higher speeds require fuse changes and env.make update.
 
 ## Debugging
 
@@ -108,10 +120,3 @@ main.c:line:col:function_name  frame_bytes  static|dynamic|dynamic,bounded
 Worst-case stack depth = sum of frame sizes along the deepest call chain, plus ~4–6 bytes per
 active ISR. With only 64 bytes of RAM, always verify stack headroom after adding new functions or
 ISRs. See `docs/analysis.md` for a worked example using `examples/reaction`.
-
-To add the target, append to the root `Makefile` after the `compile` target:
-
-```makefile
-stack: CFLAGS += -fstack-usage
-stack: $(TARGET).hex
-```

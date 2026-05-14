@@ -6,33 +6,14 @@
 include $(DEPTH)env.make
 ##########------------------------------------------------------##########
 ##########                  Program Locations                   ##########
-##########     Be sure to set TOOLCHAIN and OS in env.make      ##########
 ##########------------------------------------------------------##########
 
-ifeq ($(TOOLCHAIN),arduino)
-    ifeq ($(OS),mac)
-        BIN = /Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/
-        AVRDUDECONF = -C /Applications/Arduino.app/Contents/Java/hardware/arduino/avr/bootloaders/gemma/avrdude.conf
-    endif
-    ifeq ($(OS),windows)
-        BIN = 'C:\Program Files (x86)\Arduino\hardware\tools\avr\bin\'
-        AVRDUDECONF = '-CC:\Program Files (x86)\Arduino\hardware\arduino\avr\bootloaders\gemma\avrdude.conf'
-    endif
-    ifeq ($(OS),raspberry)
-        BIN = /usr/local/arduino/hardware/tools/avr/bin/
-        AVRDUDECONF = -C /usr/local/arduino/hardware/arduino/avr/bootloaders/gemma/avrdude.conf
-    endif
-
-else
-	BIN =
-	AVRDUDECONF = 
-endif
-
-CC = $(BIN)avr-gcc
-OBJCOPY = $(BIN)avr-objcopy
-OBJDUMP = $(BIN)avr-objdump
-AVRSIZE = $(BIN)avr-size
-AVRDUDE = $(BIN)avrdude
+CC = avr-gcc
+OBJCOPY = avr-objcopy
+OBJDUMP = avr-objdump
+AVRSIZE = avr-size
+AVRDUDE = avrdude
+AVRDUDECONF =
 
 ##########------------------------------------------------------##########
 ##########                   Makefile Magic!                    ##########
@@ -141,9 +122,6 @@ env:
 	@echo "LIBRARY:"  $(LIBRARY)
 	@echo "PROGRAMMER_TYPE:"  $(PROGRAMMER_TYPE)
 	@echo "PROGRAMMER_ARGS:"  $(PROGRAMMER_ARGS)
-	@echo "TOOLCHAIN:"  $(TOOLCHAIN)
-	@echo "OS:"  $(OS)
-	@echo "BIN:"  $(BIN)
 	@echo
 	@echo "Source files:"   $(SOURCES)
 	@echo	

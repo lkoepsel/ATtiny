@@ -8,30 +8,36 @@ This is a framework for programming the **ATtiny13A** microcontroller in C (gnu9
 
 ## Build System
 
-All examples share a single root `Makefile`. Each example has a minimal 3-line local `Makefile`:
+C and assembly examples share the same `make` targets but use separate root Makefiles:
 
-```makefile
-DEPTH = ../../
-include $(DEPTH)Makefile
-```
+| | C examples (`examples/`) | Assembly examples (`asm_examples/`) |
+|---|---|---|
+| Root Makefile | `Makefile` | `Makefile.asm` |
+| Source file | `main.c` | `main.asm` |
+| Local Makefile | `DEPTH = ../../`<br>`include $(DEPTH)Makefile` | `DEPTH = ../../`<br>`include $(DEPTH)Makefile.asm` |
 
-**Key targets (run from within an example directory):**
+**Key targets (run from within any example directory):**
 
 ```bash
-make compile          # Compile only (verify)
-make flash            # Compile and upload to device
-make complete         # Full rebuild: remove all objects, recompile, show size (no upload)
+make compile          # Compile/assemble only
+make flash            # Build and upload to device
+make complete         # Full rebuild: clean, build, show size (no upload)
 make size             # Show Flash/SRAM usage
 make clean            # Remove build artifacts
 make disasm           # Generate assembly listing
-make static           # Run cppcheck static analysis
-make stack            # Compile with -fstack-usage, generates main.su
 make env              # Print active configuration variables
 make verbose          # Flash with detailed avrdude output
 make help             # Print available targets
 make show_fuses       # Read current fuse values from device
 make set_fast_fuse    # Set LFUSE to 0xE2 (disable CLKDIV8, run at 9.6MHz)
 make avrdude_terminal # Open interactive avrdude terminal
+```
+
+**C-only targets:**
+
+```bash
+make static           # Run cppcheck static analysis
+make stack            # Compile with -fstack-usage, generates main.su
 make flash_eeprom     # Flash EEPROM from main.eeprom
 ```
 

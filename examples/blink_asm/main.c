@@ -8,7 +8,7 @@
 #include <util/delay.h>
 
 #define GREEN 0
-#define delay 100
+#define delay 1000
 int main(void)
 {
     /* set pin to output*/

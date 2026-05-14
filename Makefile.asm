@@ -17,7 +17,7 @@ compile: $(TARGET).hex
 
 ## Pattern rules
 $(TARGET).o: $(TARGET).asm
-	avr-as -mmcu=$(MCU) -o $@ $<
+	avr-as -mmcu=$(MCU) -I$(DEPTH)Library -o $@ $<
 
 $(TARGET).elf: $(TARGET).o
 	avr-ld -m $(ARCH) $^ -o $@

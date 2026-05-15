@@ -100,7 +100,7 @@ $(TARGET).elf: $(OBJECTS)
 	$(OBJDUMP) -S $< > $@
 
 ## These targets don't have files named after them
-.PHONY: all disassemble disasm eeprom size clean squeaky_clean flash fuses
+.PHONY: all disassemble disasm eeprom size clean clean_all squeaky_clean flash fuses
 
 
 complete: all_clean compile size
@@ -130,6 +130,7 @@ help:
 	@echo "make compile - compile only (Arduino verify)"
 	@echo "make flash - show program size and flash to board (Arduino upload)"
 	@echo "make clean - delete all non-source files in folder"
+	@echo "make clean_all - run clean in every examples/ folder"
 	@echo "make complete - delete all .o files in folder & Library then compile, for complete rebuild/upload"
 	@echo "make verbose - make flash with more programming information for debugging upload"
 	@echo "make env - print active env.make variables"
@@ -156,6 +157,16 @@ clean:
 
 all_clean:
 	rm -f *.elf *.hex *.obj *.o *.d *.eep *.lst *.lss *.sym *.map *~ *.eeprom core $(LIBDIR)/*.o
+
+## Run clean in every example folder under examples/
+clean_all:
+	@for d in $(DEPTH)examples/*/; do \
+		if [ -f "$$d"Makefile ] || [ -f "$$d"makefile ]; then \
+			$(MAKE) --no-print-directory -C "$$d" clean; \
+		else \
+			echo "skipping $$d (no makefile)"; \
+		fi; \
+	done
 
 ##########------------------------------------------------------##########
 ##########              Programmer-specific details             ##########

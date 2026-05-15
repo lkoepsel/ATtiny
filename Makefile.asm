@@ -29,7 +29,7 @@ $(TARGET).hex: $(TARGET).elf
 $(TARGET).lst: $(TARGET).elf
 	$(OBJDUMP) -S $< > $@
 
-.PHONY: compile flash verbose disasm size complete clean show_fuses avrdude_terminal env help
+.PHONY: compile flash verbose disasm size complete clean clean_all show_fuses avrdude_terminal env help
 
 flash: $(TARGET).hex $(TARGET).lst size
 	@echo "use make verbose to see complete programming information"
@@ -49,6 +49,16 @@ complete: clean compile size
 
 clean:
 	rm -f $(TARGET).elf $(TARGET).hex $(TARGET).o $(TARGET).lst
+
+## Run clean in every example folder under asm_examples/
+clean_all:
+	@for d in $(DEPTH)asm_examples/*/; do \
+		if [ -f "$$d"Makefile ] || [ -f "$$d"makefile ]; then \
+			$(MAKE) --no-print-directory -C "$$d" clean; \
+		else \
+			echo "skipping $$d (no makefile)"; \
+		fi; \
+	done
 
 ##########------------------------------------------------------##########
 ##########              Programmer-specific details             ##########
@@ -76,6 +86,7 @@ help:
 	@echo "make disasm       - generate assembly listing"
 	@echo "make size         - show Flash/SRAM usage"
 	@echo "make clean        - remove build artifacts"
+	@echo "make clean_all    - run clean in every asm_examples/ folder"
 	@echo "make show_fuses   - read fuse values from device"
 	@echo "make env          - print active configuration variables"
 	@echo "make help         - print this message"

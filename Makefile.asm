@@ -10,6 +10,7 @@ ARCH    = avr25
 
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
+AVRSIZE = avr-size
 AVRDUDE = avrdude
 
 ## Compile only
@@ -40,7 +41,9 @@ verbose: $(TARGET).hex $(TARGET).lst size
 disasm: $(TARGET).lst
 
 size: $(TARGET).elf
-	$(OBJDUMP) -Pmem-usage $<
+# objdump -Pmem-usage reports "Device: Unknown" for hand-assembled ELFs
+# (no .note.gnu.avr.deviceinfo section); avr-size knows the device itself.
+	$(AVRSIZE) -C --mcu=$(MCU) $<
 
 complete: clean compile size
 

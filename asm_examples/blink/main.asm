@@ -20,11 +20,11 @@
 
 .section .text
 
-reset_handler:
-    ldi     r16, lo8(RAMEND)
+reset_handler:                  ; also serves as main_setup
+    ldi     r16, lo8(RAMEND)    ; init stack
     out     SPL, r16            ; ATtiny13A has no SPH
     eor     r1, r1
-    out     SREG, r1
+    out     SREG, r1            ; clear status register
     sbi     DDRB, PB0           ; PB0 as output
 
 main_loop:

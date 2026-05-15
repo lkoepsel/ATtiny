@@ -41,12 +41,12 @@ reset_handler:
     eor     r1, r1
     out     SREG, r1
 
-    rjmp    main
+    rjmp    main_setup
 
 ; --------------------------------------------------------------------
 ; main – application logic starts here
 ; --------------------------------------------------------------------
-main:
+main_setup:
     ; Configure PB0 (pin 5) as OUTPUT — avoid PB5 (pin 1, RESET)
     sbi     DDRB, PB0
 

@@ -1,0 +1,11 @@
+id = "avr-asm"
+name = "AVR Assembly"
+description = "Syntax highlighting for GNU-assembler (avr-as) AVR assembly, e.g. ATtiny13A."
+version = "0.1.0"
+schema_version = 1
+authors = ["Lief Koepsel <lkoepsel@wellys.com>"]
+
+# Generic assembly tree-sitter grammar. Commit pinned 2025-11-08.
+[grammars.asm]
+repository = "https://github.com/RubixDev/tree-sitter-asm"
+commit = "839741fef4dab5128952334624905c82b40c7133"

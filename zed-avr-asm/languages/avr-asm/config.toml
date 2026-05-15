@@ -1,0 +1,25 @@
+name = "AVR Assembly"
+grammar = "asm"
+path_suffixes = ["asm", "inc"]
+line_comments = ["; "]
+autoclose_before = ",)]"
+tab_size = 4
+hard_tabs = false
+
+[[brackets]]
+start = "("
+end = ")"
+close = true
+newline = false
+
+[[brackets]]
+start = "["
+end = "]"
+close = true
+newline = false
+
+[[brackets]]
+start = "\""
+end = "\""
+close = true
+newline = false

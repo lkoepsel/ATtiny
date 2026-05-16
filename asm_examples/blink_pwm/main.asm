@@ -1,5 +1,5 @@
 ; =============================================================
-; main.asm  –  Output 100ms signal on PB0
+; main.asm  –  PWM Output, no prescalar 4.51kHz, signal on PB0
 ; Target : ATtiny13A at 1.2MHz (factory default clock)
 ; Circuit: LED + 220Ω resistor from PB0 (pin 5) to GND
 ; ---------- Timer setup -------------------
@@ -29,7 +29,7 @@
 ; ---------- Registers ----------------
 ; R18                           ; Multi purpose register
 
-.equ    DC, 10                  ; duty cycle (%)
+.equ    DC, 25                  ; duty cycle (%)
 .equ    DC_FACTOR, (DC * 255) / 100    ; calculation for duty cycle
 
 main_setup:                  ; also serves as main_setup
@@ -39,16 +39,16 @@ main_setup:                  ; also serves as main_setup
     out     SREG, r1            ; clear status register
     sbi     DDRB, PB0           ; PB0 as output
 
-    ; TCCR0A: Toggle PB0 at Compare Match to OCR0A (CTC mode)
-    ldi     r18,(1<<COM0A0) | (1<<WGM01) | (1<<WGM00)
+    ; TCCR0A: Fast PWM, use DC_FACTOR to adjust
+    ldi     r18,(1<<COM0A1) | (1<<WGM01) | (1<<WGM00)
     out     TCCR0A,R18
 
-    ; TCCR0B: 1/1024 prescaler
-    ldi     r18, (1<<WGM02) | (1<<CS02)|(1<<CS00) ; prescaler 1024
-    out     TCCR0B,R18          ; to control port B
+    ; TCCR0B: no prescaler, 4.51kHz
+    ldi     r18, (1<<CS00)      ;
+    out     TCCR0B,R18          ;
 
-    ; OCR0A: Use DC_FACTOR for Compare Match
-    ldi     r18,DC_FACTOR         ; Match at DC_FACTOR
+    ; OCR0A: Use DC_FACTOR to adjust duty cycle
+    ldi     r18,DC_FACTOR       ;
     out     OCR0A,R18           ;
 
 main_loop:

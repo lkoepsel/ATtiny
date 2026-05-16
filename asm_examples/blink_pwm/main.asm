@@ -29,7 +29,7 @@
 ; ---------- Registers ----------------
 ; R18                           ; Multi purpose register
 
-.equ    DC, 50                  ; duty cycle (%)
+.equ    DC, 10                  ; duty cycle (%)
 .equ    DC_FACTOR, (DC * 255) / 100    ; calculation for duty cycle
 
 main_setup:                  ; also serves as main_setup
@@ -40,7 +40,7 @@ main_setup:                  ; also serves as main_setup
     sbi     DDRB, PB0           ; PB0 as output
 
     ; TCCR0A: Toggle PB0 at Compare Match to OCR0A (CTC mode)
-    ldi     r18,(1<<COM0A0) | (1<<WGM00)
+    ldi     r18,(1<<COM0A0) | (1<<WGM01) | (1<<WGM00)
     out     TCCR0A,R18
 
     ; TCCR0B: 1/1024 prescaler

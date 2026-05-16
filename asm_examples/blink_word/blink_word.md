@@ -265,77 +265,21 @@ The `CLKO` function on PB4 is controlled by a **fuse bit**, not by software regi
 
 ---
 
-## What Controls CLKO
-
-On the ATtiny13A, the clock output is enabled by the **`CKOUT` fuse bit** in the **Low Fuse byte**. By default it is **unprogrammed (1 = disabled)**. Setting it to **0 (programmed = enabled)** routes the system clock to PB4.Good news and a caution before you proceed.
-
----
-
-## Important Correction First
-
-The search results reveal something worth flagging — **CLKO on the ATtiny13A is PB4, but some other AVR devices map CLKO to PB0**. Always verify against the ATtiny13A datasheet specifically, not a generic AVR reference.
+- **CLKO does not exist on the ATtiny13A**
+- The search results I used were pulling information from other AVR devices (ATmega328P, ATtiny85, etc.) and I failed to catch that the information didn't apply to your specific target
+- The fuse byte values and pin assignments I gave you were wrong for this device
 
 ---
 
-## The ATtiny13A Low Fuse Byte
+## The Right Way to Measure Your Clock
 
-The default factory low fuse byte is `0x6A`:
+Since there's no CLKO, your options for measuring the actual oscillator frequency with the Analog Discovery 2 are:
 
-| Bit | Name | Default | Meaning |
-|---|---|---|---|
-| 7 | `SPIEN` | 0 | SPI programming enabled |
-| 6 | `EESAVE` | 1 | EEPROM not preserved on erase |
-| 5 | `WDTON` | 1 | Watchdog timer off |
-| 4 | `CKDIV8` | 0 | **Clock divided by 8 (active)** |
-| 3 | `CKOUT` | 1 | **Clock output disabled** |
-| 2 | `SUT1` | 0 | Start-up time |
-| 1 | `SUT0` | 1 | Start-up time |
-| 0 | `CKSEL0` | 0 | Internal RC oscillator |
+**1. Time a known software loop** — which you've already done empirically. N=284 for 1ms is your best measurement and works backwards to give you the actual clock frequency via `4N + 5` cycles.
 
-To enable CLKO you set bit 3 (`CKOUT`) to **0** (remember: 0 = programmed = active on AVR fuses). The new low fuse byte becomes `0x62`:
-
-```
-Default:  0110 1010  (0x6A)
-CKOUT=0:  0110 0010  (0x62)
-```
-
----
-
-## Two Critical Warnings Before Programming Fuses
-
-**1. Fuse mistakes can brick the chip.** Unlike Flash, bad fuse settings can make the chip unresponsive to future programming. The ATtiny13A has no high-voltage programming fallback on all programmers.
-
-**2. Do not touch `CKDIV8` or `CKSEL0` unless you intend to.** Accidentally disabling SPI (`SPIEN = 1`) locks you out of ISP programming entirely.
-
----
-
-## Steps Using avrdude
-
-**Step 1 — Read and verify current fuses first:**
+**2. Read the `OSCCAL` register value** and compare it to the factory calibration stored in the signature row at address `0x000001`, which you can read with avrdude:
 ```bash
-avrdude -p attiny13a -c usbasp -U lfuse:r:-:h
-```
-Confirm you see `0x6a` before proceeding. If you see something different, stop and investigate.
-
-**Step 2 — Program the new low fuse:**
-```bash
-avrdude -p attiny13a -c usbasp -U lfuse:w:0x62:m
+avrdude -p attiny13a -c usbasp -U signature:r:-:h
 ```
 
-**Step 3 — Connect the Analog Discovery 2 to PB4 (pin 3 on the DIP package) and GND.** You should immediately see the clock signal without any code change — CLKO is active as soon as the fuse is programmed, including during reset.
-
----
-
-## What You Should See
-
-At the default 9.6MHz RC oscillator divided by 8 (`CKDIV8` still active), the Analog Discovery 2 should show **1.2MHz** on PB4 — or whatever your specific chip's actual trimmed frequency is. That measured frequency is your ground truth for all timing calculations.
-
----
-
-## Useful Online Tool
-
-For verifying fuse byte values before programming, the Engbedded fuse calculator is the most reliable:
-
-**https://www.engbedded.com/fusecalc/**
-
-Select ATtiny13A, check the `CKOUT` box, and it will show you the correct hex value to use with avrdude.
+**3. Toggle a pin at a known rate** using a precisely counted loop and measure that pin with the Analog Discovery 2 — which is effectively what your blink program is already doing.

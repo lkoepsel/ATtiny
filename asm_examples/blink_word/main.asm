@@ -21,16 +21,16 @@
 
 .section .text
 
+.equ    counter,  50000     ; 1 to 65535 (does not generate code)
+
 reset_handler:                  ; also serves as main_setup
     eor     r1, r1
     out     SREG, r1            ; clear status register
     sbi     DDRB, PB0           ; PB0 as output
 
-    .equ    counter,  50000     ; 1 to 65535 (does not generate code)
+main_loop:
     ldi     R25,hi8(counter)    ; 1 clock cycle, executed once
     ldi     R24,lo8(counter)    ; 1 clock cycle, executed once
-
-main_loop:
     sbi     PINB, PB0           ; toggle PB0 — writing 1 to PINB flips PORTB output
 
     ; ~1ms delay at 1.2MHz

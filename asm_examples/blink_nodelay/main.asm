@@ -32,7 +32,7 @@
 ; ---------- Registers ----------------
 ; R18                           ; Multi purpose register
 
-.equ    COUNT_A, 0x7f           ;
+.equ    COUNT_A, 0x6f           ; measured 100ms
 
 reset_handler:                  ; also serves as main_setup
     ldi     r16, lo8(RAMEND)    ; init stack

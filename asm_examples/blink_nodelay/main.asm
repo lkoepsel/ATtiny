@@ -32,6 +32,8 @@
 ; ---------- Registers ----------------
 ; R18                           ; Multi purpose register
 
+.equ    COUNT_A, 0x7f           ;
+
 reset_handler:                  ; also serves as main_setup
     ldi     r16, lo8(RAMEND)    ; init stack
     out     SPL, r16            ; ATtiny13A has no SPH
@@ -39,15 +41,15 @@ reset_handler:                  ; also serves as main_setup
     out     SREG, r1            ; clear status register
     sbi     DDRB, PB0           ; PB0 as output
 
-    ; Select Compare Match
-    ldi     r18,0xFF            ; Match at 255
-    out     OCR0A,R18           ; to Compare Match A
+    ; OCR0A: Use COUNT_A for Compare Match
+    ldi     r18,COUNT_A         ; Match at COUNT_A
+    out     OCR0A,R18           ;
 
-    ; toggle PB0 at Compare Match
-    ldi     r18,1<<COM0A0       ; Toggle Mode
-    out     TCCR0A,R18          ; to control port A
+    ; TCCR0A: Toggle PB0 at Compare Match to OCR0A (CTC mode)
+    ldi     r18,(1<<COM0A0) |(1<<WGM01)
+    out     TCCR0A,R18
 
-    ; Start timer
+    ; TCCR0B: 1/1024 prescaler
     ldi     r18,(1<<CS02)|(1<<CS00) ; prescaler 1024
     out     TCCR0B,R18          ; to control port B
 

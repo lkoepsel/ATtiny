@@ -36,8 +36,8 @@
 
 .equ    TX_PIN, PB1             ; transmit pin, output
 .equ    RX_PIN, PB2             ; receive pin, input pullup
-.equ    period, 35              ; ticks for 1 bit period (9600 baud @ 1.2MHz)
-.equ    half_period, 18         ; ticks for  a .5 bit period
+.equ    period, 35              ; # of ticks for 1 bit period (9600 baud @ 1.2MHz)
+.equ    half_period, 18         ; # of ticks for  a .5 bit period
 ; --------------------------------------------------------------------
 ; reset_handler – entry point after RESET
 ; --------------------------------------------------------------------
@@ -63,6 +63,7 @@ main_setup:
 ; simple echo loop to test read/write char
 main_loop:
     rcall   char_read
+    brts    main_loop          ; framing error -> discard, wait for next char
     rcall   char_write
     rjmp    main_loop
 
@@ -126,6 +127,7 @@ next_write:
 
 
 ; char_read - receive one char into r17 (8N1, LSB first)
+;   Returns status in T flag:  T=0 frame OK,  T=1 framing error.
 char_read:
 ;   Wait for start bit: idle is HIGH, start bit is LOW
 ;   while (PINB & (1 << RX_PIN)) {} ;
@@ -162,11 +164,13 @@ read_bit:
     dec     r16
     brne    read_bit
 
-    ; consume stop bit
-    ldi     r24, period
-    rcall   timer_delay
-
-   ret
+;   Stop bit check - line must be HIGH (mark); loop fall-through is ~mid stop bit.
+;   Status returned in T flag:  T=0 frame OK,  T=1 framing error.
+    clt                         ; assume frame OK
+    in      r18, PINB
+    sbrs    r18, RX_PIN         ; skip 'set' when stop bit is HIGH (valid)
+    set                         ; stop bit LOW -> framing error
+    ret
 ; --------------------------------------------------------------------
 
 

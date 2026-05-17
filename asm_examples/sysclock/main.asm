@@ -36,6 +36,8 @@
 
 .equ    COUNTER,  30000         ; 299@1.2MHZ => 1ms delay
 .equ    TRIM, 0x65              ; OSCCAL trim value, typically x6n
+.equ    NUM_START, 0x3c             ; "<"
+.equ    NUM_END, 0x3e               ; ">"
 ; --------------------------------------------------------------------
 ; reset_handler – entry point after RESET
 ; --------------------------------------------------------------------
@@ -54,9 +56,13 @@ reset_handler:
 ; --------------------------------------------------------------------
 main_setup:
 
-    rcall     init_sysclock_1k
+    rcall   init_sysclock_1k
+    rcall   init_serial
 
 main_loop:
+    ldi     r17, NUM_START
+    rcall   char_write
+
     ldi     r27,hi8(COUNTER)    ; 1 clock cycle, executed once
     ldi     r26,lo8(COUNTER)    ; 1 clock cycle, executed once
     movw    r14, r24            ; get clock start
@@ -76,6 +82,10 @@ delay_1ms:
     rcall   char_write
     mov     r17, r19
     rcall   char_write
+
+    ldi     r17, NUM_END
+    rcall   char_write
+
     rjmp    main_loop
 
 ; ====================================================================

@@ -5,6 +5,7 @@
 ; =============================================================
 
 .include "tn13Adef.inc"
+.include "soft_serial.asm"
 
 ; ====================================================================
 ;  INTERRUPT VECTOR TABLE
@@ -33,8 +34,7 @@
 ; R25:R24 reserved as global 16-bit ISR counter
 ; Do NOT use R24 or R25 anywhere else in your code
 
-.equ    COUNTER,  300           ; 299@1.2MHZ => 1ms delay
-.equ    SYS_CLOCK, PB0          ; OC0A, fires every interrupt, use to measure SYS_CLOCK
+.equ    COUNTER,  30000         ; 299@1.2MHZ => 1ms delay
 .equ    TRIM, 0x65              ; OSCCAL trim value, typically x6n
 ; --------------------------------------------------------------------
 ; reset_handler – entry point after RESET
@@ -49,27 +49,33 @@ reset_handler:
     eor     r1, r1
     out     SREG, r1
 
-    rjmp    main_setup
-
 ; --------------------------------------------------------------------
 ; main – application logic starts here
 ; --------------------------------------------------------------------
 main_setup:
 
-    ; rcall     init_soft_serial
     rcall     init_sysclock_1k
 
 main_loop:
     ldi     r27,hi8(COUNTER)    ; 1 clock cycle, executed once
     ldi     r26,lo8(COUNTER)    ; 1 clock cycle, executed once
-    movw    r16, r24    ; get clock start
+    movw    r14, r24            ; get clock start
+
     ; ~1ms delay at 1.2MHz
     ; TODO: cycles = 2 × (3×189 + 3) + 4) ~= 1ms (.998ms measured)
 delay_1ms:
-    sbiw r26,1
-    brne delay_1ms
+    sbiw    r26,1
+    brne    delay_1ms
 
     movw    r18, r24
+    mov     r17, r14
+    rcall   char_write
+    mov     r17, r15
+    rcall   char_write
+    mov     r17, r18
+    rcall   char_write
+    mov     r17, r19
+    rcall   char_write
     rjmp    main_loop
 
 ; ====================================================================

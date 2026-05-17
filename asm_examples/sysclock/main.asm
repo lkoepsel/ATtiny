@@ -18,7 +18,7 @@
     reti                        ; 0x003  TIM0_OVF   - Timer/Counter0 Overflow
     reti                        ; 0x004  EE_RDY     - EEPROM Ready
     reti                        ; 0x005  ANA_COMP   - Analog Comparator
-    reti                        ; 0x006  TIM0_COMPA - Timer0 Compare Match A
+    rjmp    TIM0_COMPA_handler  ; 0x006  TIM0_COMPA - Timer0 Compare Match A
     reti                        ; 0x007  TIM0_COMPB - Timer0 Compare Match B
     reti                        ; 0x008  WDT        - Watchdog Time-out
     reti                        ; 0x009  ADC        - ADC Conversion Complete
@@ -30,12 +30,14 @@
 
 ; ---------- Registers and Values ----------------
 ; r16                           ; temp register
+; R25:R24 reserved as global 16-bit ISR counter
+; Do NOT use R24 or R25 anywhere else in your code
 
 .equ    SYS_CLOCK, PB0          ; OC0A, fires every interrupt, use to measure SYS_CLOCK
 .equ    SOFT_TX_PIN, PB1        ; transmit pin, output
 .equ    SOFT_RX_PIN, PB2        ; receive pin, input pullup
 .equ    TRIM, 0x65              ; OSCCAL trim value, typically x6n
-.equ    baud_ticks, 248         ; number of ticks for 1200 baud
+.equ    baud_ticks, 156         ; number of ticks for 1200 baud
 ; --------------------------------------------------------------------
 ; reset_handler – entry point after RESET
 ; --------------------------------------------------------------------
@@ -58,24 +60,51 @@ reset_handler:
 ; --------------------------------------------------------------------
 main_setup:
 
-    rcall   init_soft_serial
+    ; rcall     init_soft_serial
+    rcall     init_sysclock_1k
 
 main_loop:
-    rcall   soft_char_write
+    ; Put your program logic here
     rjmp    main_loop
 
 ; ====================================================================
 ;  Subroutines SECTION
 ; ====================================================================
-; blocking delay, enter with r25, r24 as 16-bit counter value
-timer_delay:
-; ~1ms delay at 1.2MHz
-; TODO: cycles = 2 × (3×189 + 3) + 4) ~= 1ms (.998ms measured)
-delay_loop:
-    sbiw    R24,1
-    brne    delay_loop
-    ret
+TIM0_COMPA_handler:
+    push    r16             ; save temp register
+    in      r16, SREG       ; save status flags
+    push    r16
 
+    adiw    R24, 1          ; increment global counter — NOT saved/restored
+
+    pop     r16
+    out     SREG, r16
+    pop     r16
+    reti
+
+
+init_sysclock_1k:
+;      Initialize timer 0 to CTC Mode using OCR0A, with a chip clock of 1.2Mhz
+;      The values below will result in a 1kHz counter (1000 ticks = 1 second)
+
+;   WGM01 CTC mode, OCR0A is TOP, toggle PB0 on Compare Match
+    ldi     r16, (1<<COM0A0) | (1<<WGM01)
+    out     TCCR0A,R16
+
+;   / 8 prescalar
+    ldi     r16, (1<<CS01)      ;
+    out     TCCR0B,r16          ;
+
+;   w/ sei and OCIE0A set, Timer/Counter0 Compare Match A interrupt is enabled
+    ldi     r16, (1<<OCIE0A)      ;
+    out     TIMSK0,r16          ;
+
+    ; OCR0A: adjust for a 1kHz signal (998.8kHz measured)
+    ldi     r18,0x47       ;
+    out     OCR0A,r18           ;
+    sei
+    sbi     DDRB, PB0           ; PB0 as output, for checking SYS_CLOCK
+    ret
 
 init_soft_serial:
 ;   Set TX pin as output, set RX pin as input pullup
@@ -83,52 +112,38 @@ init_soft_serial:
 ;   DDRB &= ~_BV(SOFT_RX_PIN);
 ;   PORTB |= _BV(SOFT_RX_PIN);
 ;   OSCCAL = 0x73;  use ../osscal routine to determine optimal value
+;   TCCR0B = (1 << CS01);   Prescaler /8
     sbi     DDRB, SOFT_TX_PIN
     cbi     DDRB, SOFT_RX_PIN
     sbi     PORTB, SOFT_RX_PIN
     ldi     r16, TRIM           ; osc trim value
     out     OSCCAL, r16         ; nudge oscillator toward true 1.2MHz (maybe)
-    sbi     PORTB, SOFT_TX_PIN
+
     ret
 
 soft_char_write:
-    ; char predefined for now
-    ldi     r20, 0x41
+        ; Start bit
+        ; PORTB &= ~(1 << SOFT_TX_PIN);
+        ; TIMER_DELAY(baud_ticks);
 
-    ; Start bit
-    cbi     PORTB, SOFT_TX_PIN
-    ldi     R25,hi8(baud_ticks)
-    ldi     R24,lo8(baud_ticks)
-    rcall   timer_delay
+        ;  Data bits
+        ; for (uint8_t i = 0; i < 8; i++)
+        ; {
+        ;     if (data & (1 << i))
+        ;     {
+        ;         PORTB |= (1 << SOFT_TX_PIN);
+        ;     }
+        ;     else
+        ;     {
+        ;         PORTB &= ~(1 << SOFT_TX_PIN);
+        ;     }
+        ;     TIMER_DELAY(baud_ticks);
+        ; }
 
+        ;  Stop bit
+        ; PORTB |= (1 << SOFT_TX_PIN);
+        ; TIMER_DELAY(baud_ticks);
 
-    ;  Data bits
-    ldi     r16, 8
-
-next_bit:
-    ror     r20
-    brcs    one
-    cbi     PORTB, SOFT_TX_PIN
-    rjmp     next
-
-one:
-    sbi     PORTB, SOFT_TX_PIN
-
-next:
-
-    ldi     R25,hi8(baud_ticks)
-    ldi     R24,lo8(baud_ticks)
-    rcall   timer_delay
-
-    dec     r16
-    brne    next_bit
-
-    ;  Stop bit
-    sbi     PORTB, SOFT_TX_PIN
-    ldi     R25,hi8(baud_ticks)
-    ldi     R24,lo8(baud_ticks)
-    rcall   timer_delay
-    ret
 
 ; ====================================================================
 ;  DATA SECTION  (initialized variables in SRAM)

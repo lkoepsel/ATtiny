@@ -35,7 +35,7 @@
 .equ    SOFT_TX_PIN, PB1        ; transmit pin, output
 .equ    SOFT_RX_PIN, PB2        ; receive pin, input pullup
 .equ    TRIM, 0x65              ; OSCCAL trim value, typically x6n
-.equ    baud_ticks, 248         ; number of ticks for 1200 baud
+.equ    baud_ticks, 35         ; number of ticks for 1200 baud
 ; --------------------------------------------------------------------
 ; reset_handler – entry point after RESET
 ; --------------------------------------------------------------------
@@ -49,7 +49,6 @@ reset_handler:
     eor     r1, r1
     out     SREG, r1
     eor     r24, r24        ; clear counter low byte
-    eor     r25, r25        ; clear counter high byte
 
     rjmp    main_setup
 
@@ -67,13 +66,12 @@ main_loop:
 ; ====================================================================
 ;  Subroutines SECTION
 ; ====================================================================
-; blocking delay, enter with r25, r24 as 16-bit counter value
+; blocking delay, enter with r24 as 8-bit counter value
 timer_delay:
 ; ~1ms delay at 1.2MHz
-; TODO: cycles = 2 × (3×189 + 3) + 4) ~= 1ms (.998ms measured)
 delay_loop:
-    sbiw    R24,1
-    brne    delay_loop
+    dec    R24
+    brne   delay_loop
     ret
 
 
@@ -86,8 +84,8 @@ init_soft_serial:
     sbi     DDRB, SOFT_TX_PIN
     cbi     DDRB, SOFT_RX_PIN
     sbi     PORTB, SOFT_RX_PIN
-    ldi     r16, TRIM           ; osc trim value
-    out     OSCCAL, r16         ; nudge oscillator toward true 1.2MHz (maybe)
+    ; ldi     r16, TRIM           ; osc trim value
+    ; out     OSCCAL, r16         ; nudge oscillator toward true 1.2MHz (maybe)
     sbi     PORTB, SOFT_TX_PIN
     ret
 
@@ -97,8 +95,7 @@ soft_char_write:
 
     ; Start bit
     cbi     PORTB, SOFT_TX_PIN
-    ldi     R25,hi8(baud_ticks)
-    ldi     R24,lo8(baud_ticks)
+    ldi     R24,baud_ticks
     rcall   timer_delay
 
 
@@ -115,9 +112,7 @@ one:
     sbi     PORTB, SOFT_TX_PIN
 
 next:
-
-    ldi     R25,hi8(baud_ticks)
-    ldi     R24,lo8(baud_ticks)
+    ldi     R24,baud_ticks
     rcall   timer_delay
 
     dec     r16
@@ -125,8 +120,7 @@ next:
 
     ;  Stop bit
     sbi     PORTB, SOFT_TX_PIN
-    ldi     R25,hi8(baud_ticks)
-    ldi     R24,lo8(baud_ticks)
+    ldi     R24,baud_ticks
     rcall   timer_delay
     ret
 

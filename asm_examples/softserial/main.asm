@@ -36,8 +36,8 @@
 
 .equ    TX_PIN, PB1             ; transmit pin, output
 .equ    RX_PIN, PB2             ; receive pin, input pullup
-.equ    baud_ticks, 35          ; ticks for one bit period (9600 baud @ 1.2MHz)
-.equ    start_ticks, 60         ; ticks for ~1.5 bit periods - tune on scope
+.equ    period, 35              ; ticks for 1 bit period (9600 baud @ 1.2MHz)
+.equ    half_period, 18         ; ticks for  a .5 bit period
 ; --------------------------------------------------------------------
 ; reset_handler – entry point after RESET
 ; --------------------------------------------------------------------
@@ -93,7 +93,7 @@ char_write:
 
     ; Start bit
     cbi     PORTB, TX_PIN
-    ldi     r24,baud_ticks
+    ldi     r24,period
     rcall   timer_delay
 
 
@@ -111,7 +111,7 @@ write_one:
     sbi     PORTB, TX_PIN
 
 next_write:
-    ldi     r24,baud_ticks
+    ldi     r24,period
     rcall   timer_delay
 
     dec     r16
@@ -119,7 +119,7 @@ next_write:
 
     ;  Stop bit
     sbi     PORTB, TX_PIN
-    ldi     r24,baud_ticks
+    ldi     r24,period
     rcall   timer_delay
     ret
 ; --------------------------------------------------------------------
@@ -134,8 +134,16 @@ wait_start:
     sbrc    r16, RX_PIN    ; skip rjmp when RX is LOW = start bit
     rjmp    wait_start
 
-;   Wait ~1.5 bit periods so bit0 is sampled mid-bit
-    ldi     r24, start_ticks
+;   Wait a .5 bit period so bit0 is sampled mid-bit
+    ldi     r24, half_period
+    rcall   timer_delay
+
+    in      r16, PINB
+    sbrc    r16, RX_PIN    ; confirm start bit remains low
+    rjmp    wait_start
+
+;   Wait a 1 bit period for a total of 1.5 bit periods
+    ldi     r24, period
     rcall   timer_delay
 
 ;   Read 8 data bits, LSB first, into r17
@@ -148,14 +156,14 @@ read_bit:
     sec                         ; RX HIGH -> bit is 1
     ror     r17                 ; shift carry into MSB (LSB-first)
 
-    ldi     r24, baud_ticks
+    ldi     r24, period
     rcall   timer_delay
 
     dec     r16
     brne    read_bit
 
     ; consume stop bit
-    ldi     r24, baud_ticks
+    ldi     r24, period
     rcall   timer_delay
 
    ret

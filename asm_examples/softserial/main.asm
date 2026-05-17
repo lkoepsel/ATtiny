@@ -30,13 +30,14 @@
 
 ; ---------- Registers and Values ----------------
 ; r16                           ; temp register
+; r17                           ; char register
+; r18                           ; temp register
+; r24                           ; timer delay register
 
-.equ    SYS_CLOCK, PB0          ; OC0A, fires every interrupt, use to measure SYS_CLOCK
-.equ    SOFT_TX_PIN, PB1        ; transmit pin, output
-.equ    SOFT_RX_PIN, PB2        ; receive pin, input pullup
-.equ    TRIM, 0x65              ; OSCCAL trim value, typically x6n
-.equ    baud_ticks, 35         ; ticks for one bit period (9600 baud @ 1.2MHz)
-.equ    start_ticks, 60        ; ticks for ~1.5 bit periods - tune on scope
+.equ    TX_PIN, PB1             ; transmit pin, output
+.equ    RX_PIN, PB2             ; receive pin, input pullup
+.equ    baud_ticks, 35          ; ticks for one bit period (9600 baud @ 1.2MHz)
+.equ    start_ticks, 60         ; ticks for ~1.5 bit periods - tune on scope
 ; --------------------------------------------------------------------
 ; reset_handler – entry point after RESET
 ; --------------------------------------------------------------------
@@ -49,7 +50,6 @@ reset_handler:
     ; r1 = 0 by convention (zero register); clear status flags
     eor     r1, r1
     out     SREG, r1
-    eor     r24, r24        ; clear counter low byte
 
     rjmp    main_setup
 
@@ -58,11 +58,12 @@ reset_handler:
 ; --------------------------------------------------------------------
 main_setup:
 
-    rcall   init_soft_serial
+    rcall   init_serial
 
+; simple echo loop to test read/write char
 main_loop:
-    rcall   soft_char_read
-    rcall   soft_char_write
+    rcall   char_read
+    rcall   char_write
     rjmp    main_loop
 
 ; ====================================================================
@@ -70,69 +71,67 @@ main_loop:
 ; ====================================================================
 ; blocking delay, enter with r24 as 8-bit counter value
 timer_delay:
-; ~1ms delay at 1.2MHz
-delay_loop:
-    dec    R24
-    brne   delay_loop
+    dec    r24
+    brne   timer_delay
     ret
+; --------------------------------------------------------------------
 
-
-init_soft_serial:
+;initialize serial port, must be called before using char_read and char_write
+init_serial:
 ;   Set TX pin as output, set RX pin as input pullup
-;   DDRB |= _BV(SOFT_TX_PIN);
-;   DDRB &= ~_BV(SOFT_RX_PIN);
-;   PORTB |= _BV(SOFT_RX_PIN);
-;   OSCCAL = 0x73;  use ../osscal routine to determine optimal value
-    sbi     DDRB, SOFT_TX_PIN
-    cbi     DDRB, SOFT_RX_PIN
-    sbi     PORTB, SOFT_RX_PIN
-    ; ldi     r16, TRIM           ; osc trim value
-    ; out     OSCCAL, r16         ; nudge oscillator toward true 1.2MHz (maybe)
-    sbi     PORTB, SOFT_TX_PIN
-    ret
+    sbi     DDRB, TX_PIN
+    cbi     DDRB, RX_PIN
+    sbi     PORTB, RX_PIN
 
-soft_char_write:
-    ; char to write in r17
-    ; ldi     r20, 0x41
+    ; set TX_PIN high to start, start_bit is low
+    sbi     PORTB, TX_PIN
+    ret
+; --------------------------------------------------------------------
+
+; write a char in r17 to serial port, r17 is preserved
+char_write:
 
     ; Start bit
-    cbi     PORTB, SOFT_TX_PIN
-    ldi     R24,baud_ticks
+    cbi     PORTB, TX_PIN
+    ldi     r24,baud_ticks
     rcall   timer_delay
 
 
-    ;  Data bits
+    ;  8 data bits and preserve char
     ldi     r16, 8
+    mov     r18, r17
 
 write_bit:
-    ror     r17
+    ror     r18
     brcs    write_one
-    cbi     PORTB, SOFT_TX_PIN
+    cbi     PORTB, TX_PIN
     rjmp     next_write
 
 write_one:
-    sbi     PORTB, SOFT_TX_PIN
+    sbi     PORTB, TX_PIN
 
 next_write:
-    ldi     R24,baud_ticks
+    ldi     r24,baud_ticks
     rcall   timer_delay
 
     dec     r16
     brne    write_bit
 
     ;  Stop bit
-    sbi     PORTB, SOFT_TX_PIN
-    ldi     R24,baud_ticks
+    sbi     PORTB, TX_PIN
+    ldi     r24,baud_ticks
     rcall   timer_delay
     ret
+; --------------------------------------------------------------------
 
-; soft_char_read - receive one char into r17 (8N1, LSB first)
-soft_char_read:
+
+; char_read - receive one char into r17 (8N1, LSB first)
+char_read:
 ;   Wait for start bit: idle is HIGH, start bit is LOW
-;   while (PINB & (1 << SOFT_RX_PIN)) {} ;
+;   while (PINB & (1 << RX_PIN)) {} ;
 wait_start:
     in      r16, PINB
-    sbrc    r16, SOFT_RX_PIN    ; skip rjmp when RX is LOW = start bit
+    sbrc    r16, RX_PIN    ; skip rjmp when RX is LOW = start bit
     rjmp    wait_start
 
 ;   Wait ~1.5 bit periods so bit0 is sampled mid-bit
@@ -145,7 +144,7 @@ wait_start:
 read_bit:
     in      r18, PINB           ; scratch read - do not clobber r17
     clc                         ; assume bit is 0
-    sbrc    r18, SOFT_RX_PIN    ; skip sec when RX is LOW
+    sbrc    r18, RX_PIN         ; skip sec when RX is LOW
     sec                         ; RX HIGH -> bit is 1
     ror     r17                 ; shift carry into MSB (LSB-first)
 
@@ -154,7 +153,14 @@ read_bit:
 
     dec     r16
     brne    read_bit
-    ret
+
+    ; consume stop bit
+    ldi     r24, baud_ticks
+    rcall   timer_delay
+
+   ret
+; --------------------------------------------------------------------
+
 
 ; ====================================================================
 ;  DATA SECTION  (initialized variables in SRAM)

@@ -35,7 +35,8 @@
 .equ    SOFT_TX_PIN, PB1        ; transmit pin, output
 .equ    SOFT_RX_PIN, PB2        ; receive pin, input pullup
 .equ    TRIM, 0x65              ; OSCCAL trim value, typically x6n
-.equ    baud_ticks, 35         ; number of ticks for 1200 baud
+.equ    baud_ticks, 35         ; ticks for one bit period (9600 baud @ 1.2MHz)
+.equ    start_ticks, 60        ; ticks for ~1.5 bit periods - tune on scope
 ; --------------------------------------------------------------------
 ; reset_handler – entry point after RESET
 ; --------------------------------------------------------------------
@@ -60,6 +61,7 @@ main_setup:
     rcall   init_soft_serial
 
 main_loop:
+    rcall   soft_char_read
     rcall   soft_char_write
     rjmp    main_loop
 
@@ -90,8 +92,8 @@ init_soft_serial:
     ret
 
 soft_char_write:
-    ; char predefined for now
-    ldi     r20, 0x41
+    ; char to write in r17
+    ; ldi     r20, 0x41
 
     ; Start bit
     cbi     PORTB, SOFT_TX_PIN
@@ -102,21 +104,21 @@ soft_char_write:
     ;  Data bits
     ldi     r16, 8
 
-next_bit:
-    ror     r20
-    brcs    one
+write_bit:
+    ror     r17
+    brcs    write_one
     cbi     PORTB, SOFT_TX_PIN
-    rjmp     next
+    rjmp     next_write
 
-one:
+write_one:
     sbi     PORTB, SOFT_TX_PIN
 
-next:
+next_write:
     ldi     R24,baud_ticks
     rcall   timer_delay
 
     dec     r16
-    brne    next_bit
+    brne    write_bit
 
     ;  Stop bit
     sbi     PORTB, SOFT_TX_PIN
@@ -124,12 +126,42 @@ next:
     rcall   timer_delay
     ret
 
+; soft_char_read - receive one char into r17 (8N1, LSB first)
+soft_char_read:
+;   Wait for start bit: idle is HIGH, start bit is LOW
+;   while (PINB & (1 << SOFT_RX_PIN)) {} ;
+wait_start:
+    in      r16, PINB
+    sbrc    r16, SOFT_RX_PIN    ; skip rjmp when RX is LOW = start bit
+    rjmp    wait_start
+
+;   Wait ~1.5 bit periods so bit0 is sampled mid-bit
+    ldi     r24, start_ticks
+    rcall   timer_delay
+
+;   Read 8 data bits, LSB first, into r17
+    ldi     r16, 8              ; bit counter
+
+read_bit:
+    in      r18, PINB           ; scratch read - do not clobber r17
+    clc                         ; assume bit is 0
+    sbrc    r18, SOFT_RX_PIN    ; skip sec when RX is LOW
+    sec                         ; RX HIGH -> bit is 1
+    ror     r17                 ; shift carry into MSB (LSB-first)
+
+    ldi     r24, baud_ticks
+    rcall   timer_delay
+
+    dec     r16
+    brne    read_bit
+    ret
+
 ; ====================================================================
 ;  DATA SECTION  (initialized variables in SRAM)
 ;  Declare with:  my_var: .byte 0
 ; ====================================================================
 .section .data
-ticks_ctr:  .word   1
+
 ; ====================================================================
 ;  BSS SECTION  (zero-initialized / uninitialized variables in SRAM)
 ;  Declare with:  my_buf: .skip 16

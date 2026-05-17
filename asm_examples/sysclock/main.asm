@@ -1,5 +1,5 @@
 ; =============================================================
-; softserial  –  serial program and library
+; sysclock  –  provides non-blocking 1kHz timer
 ; Target : ATtiny13A (1.2 MHz default internal RC oscillator)
 ; Toolchain: avr-as / avr-ld  (GNU Binutils for AVR)
 ; =============================================================
@@ -33,11 +33,9 @@
 ; R25:R24 reserved as global 16-bit ISR counter
 ; Do NOT use R24 or R25 anywhere else in your code
 
+.equ    COUNTER,  300           ; 299@1.2MHZ => 1ms delay
 .equ    SYS_CLOCK, PB0          ; OC0A, fires every interrupt, use to measure SYS_CLOCK
-.equ    SOFT_TX_PIN, PB1        ; transmit pin, output
-.equ    SOFT_RX_PIN, PB2        ; receive pin, input pullup
 .equ    TRIM, 0x65              ; OSCCAL trim value, typically x6n
-.equ    baud_ticks, 156         ; number of ticks for 1200 baud
 ; --------------------------------------------------------------------
 ; reset_handler – entry point after RESET
 ; --------------------------------------------------------------------
@@ -50,8 +48,6 @@ reset_handler:
     ; r1 = 0 by convention (zero register); clear status flags
     eor     r1, r1
     out     SREG, r1
-    eor     r24, r24        ; clear counter low byte
-    eor     r25, r25        ; clear counter high byte
 
     rjmp    main_setup
 
@@ -64,7 +60,16 @@ main_setup:
     rcall     init_sysclock_1k
 
 main_loop:
-    ; Put your program logic here
+    ldi     r27,hi8(COUNTER)    ; 1 clock cycle, executed once
+    ldi     r26,lo8(COUNTER)    ; 1 clock cycle, executed once
+    movw    r16, r24    ; get clock start
+    ; ~1ms delay at 1.2MHz
+    ; TODO: cycles = 2 × (3×189 + 3) + 4) ~= 1ms (.998ms measured)
+delay_1ms:
+    sbiw r26,1
+    brne delay_1ms
+
+    movw    r18, r24
     rjmp    main_loop
 
 ; ====================================================================
@@ -87,7 +92,11 @@ init_sysclock_1k:
 ;      Initialize timer 0 to CTC Mode using OCR0A, with a chip clock of 1.2Mhz
 ;      The values below will result in a 1kHz counter (1000 ticks = 1 second)
 
-;   WGM01 CTC mode, OCR0A is TOP, toggle PB0 on Compare Match
+    ; clear counter register
+    eor     r24, r24        ; clear counter low byte
+    eor     r25, r25        ; clear counter high byte
+
+    ;   WGM01 CTC mode, OCR0A is TOP, toggle PB0 on Compare Match
     ldi     r16, (1<<COM0A0) | (1<<WGM01)
     out     TCCR0A,R16
 
@@ -100,57 +109,17 @@ init_sysclock_1k:
     out     TIMSK0,r16          ;
 
     ; OCR0A: adjust for a 1kHz signal (998.8kHz measured)
-    ldi     r18,0x47       ;
+    ldi     r18,0x95       ;
     out     OCR0A,r18           ;
     sei
     sbi     DDRB, PB0           ; PB0 as output, for checking SYS_CLOCK
     ret
-
-init_soft_serial:
-;   Set TX pin as output, set RX pin as input pullup
-;   DDRB |= _BV(SOFT_TX_PIN);
-;   DDRB &= ~_BV(SOFT_RX_PIN);
-;   PORTB |= _BV(SOFT_RX_PIN);
-;   OSCCAL = 0x73;  use ../osscal routine to determine optimal value
-;   TCCR0B = (1 << CS01);   Prescaler /8
-    sbi     DDRB, SOFT_TX_PIN
-    cbi     DDRB, SOFT_RX_PIN
-    sbi     PORTB, SOFT_RX_PIN
-    ldi     r16, TRIM           ; osc trim value
-    out     OSCCAL, r16         ; nudge oscillator toward true 1.2MHz (maybe)
-
-    ret
-
-soft_char_write:
-        ; Start bit
-        ; PORTB &= ~(1 << SOFT_TX_PIN);
-        ; TIMER_DELAY(baud_ticks);
-
-        ;  Data bits
-        ; for (uint8_t i = 0; i < 8; i++)
-        ; {
-        ;     if (data & (1 << i))
-        ;     {
-        ;         PORTB |= (1 << SOFT_TX_PIN);
-        ;     }
-        ;     else
-        ;     {
-        ;         PORTB &= ~(1 << SOFT_TX_PIN);
-        ;     }
-        ;     TIMER_DELAY(baud_ticks);
-        ; }
-
-        ;  Stop bit
-        ; PORTB |= (1 << SOFT_TX_PIN);
-        ; TIMER_DELAY(baud_ticks);
-
 
 ; ====================================================================
 ;  DATA SECTION  (initialized variables in SRAM)
 ;  Declare with:  my_var: .byte 0
 ; ====================================================================
 .section .data
-ticks_ctr:  .word   1
 ; ====================================================================
 ;  BSS SECTION  (zero-initialized / uninitialized variables in SRAM)
 ;  Declare with:  my_buf: .skip 16

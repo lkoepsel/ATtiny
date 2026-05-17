@@ -60,7 +60,8 @@ reset_handler:
 ; --------------------------------------------------------------------
 main_setup:
 
-    rcall     init_soft_serial
+    ; rcall     init_soft_serial
+    rcall     init_sysclock_1k
 
 main_loop:
     ; Put your program logic here
@@ -85,20 +86,12 @@ TIM0_COMPA_handler:
 init_sysclock_1k:
 ;      Initialize timer 0 to CTC Mode using OCR0A, with a chip clock of 1.2Mhz
 ;      The values below will result in a 1kHz counter (1000 ticks = 1 second)
-;      CTC mode (WGM0[2:0] = 2)
-;      Set clock select to /8 CS => 010
-;      Bit 2 – OCIE0A: Timer/Counter0 Output Compare Match A Interrupt Enable
-;      COM0A0 - set to view OC0A on PB0 with scope
-;      OCR0A = x9c or ~150
 
-;     OCR0A = 0x79;
-;     sei();
-
-;   WGM01 CTC mode, OCR0A is TOP
-    ldi     r16, (1<<COM0A1) | (1<<WGM01)
+;   WGM01 CTC mode, OCR0A is TOP, toggle PB0 on Compare Match
+    ldi     r16, (1<<COM0A0) | (1<<WGM01)
     out     TCCR0A,R16
 
-;   TCCR0B |= ( _BV(CS01) ) ;
+;   / 8 prescalar
     ldi     r16, (1<<CS01)      ;
     out     TCCR0B,r16          ;
 
@@ -106,8 +99,8 @@ init_sysclock_1k:
     ldi     r16, (1<<OCIE0A)      ;
     out     TIMSK0,r16          ;
 
-    ; OCR0A: adjust for a 1kHz signal
-    ldi     r18,0x79       ;
+    ; OCR0A: adjust for a 1kHz signal (998.8kHz measured)
+    ldi     r18,0x47       ;
     out     OCR0A,r18           ;
     sei
     sbi     DDRB, PB0           ; PB0 as output, for checking SYS_CLOCK

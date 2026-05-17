@@ -26,7 +26,7 @@
 
 .section .text
 
-; ---------- Registers ----------------
+; ---------- Registers and Values ----------------
 ; R18                           ; Multi purpose register
 
 .equ    DC, 25                  ; duty cycle (%)
@@ -49,7 +49,7 @@ main_setup:                  ; also serves as main_setup
 
     ; OCR0A: Use DC_FACTOR to adjust duty cycle
     ldi     r18,DC_FACTOR       ;
-    out     OCR0A,R18           ;
+    out     OCR0A,r18           ;
 
 main_loop:
     rjmp main_loop

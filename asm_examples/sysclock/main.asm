@@ -64,21 +64,24 @@ main_loop:
     ldi     r17, HEX_BEG
     rcall   char_write
 
-    ldi     r27,hi8(COUNTER)    ; 1 clock cycle, executed once
-    ldi     r26,lo8(COUNTER)    ; 1 clock cycle, executed once
-    movw    r4, r24            ; get clock start
+    ldi     r27,hi8(COUNTER)
+    ldi     r26,lo8(COUNTER)
 
-    ; ~1ms delay at 1.2MHz
-    ; TODO: cycles = 2 × (3×189 + 3) + 4) ~= 1ms (.998ms measured)
+    ; get clock start
+    movw    r4, r24
+
 delay_1ms:
     sbiw    r26,1
     brne    delay_1ms
 
+    ; get clock end
     movw    r6, r24
-    mov     r17, r4
-    rcall   char_write
-    mov     r17, r5
-    rcall   char_write
+
+    ; delta = end - start
+    sub     r6, r4
+    sbc     r7, r5
+
+    ; print delta
     mov     r17, r6
     rcall   char_write
     mov     r17, r7

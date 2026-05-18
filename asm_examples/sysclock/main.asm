@@ -32,8 +32,9 @@
 ; ---------- Registers and Values ----------------
 ; r15                           ; temp register, saved in ISR
 ; r16                           ; temp register
-; R25:R24 reserved as global 16-bit ISR counter
-; Do NOT use R24 or R25 anywhere else in your code
+; ---------- Reserved registers ----------
+; r2        ISR scratch (SREG save) — do NOT use elsewhere
+; R25:R24   global 16-bit ISR counter — do NOT use elsewhere
 
 .equ    COUNTER,  30000         ; 30,000@1.2MHZ => 100ms delay
 .equ    TRIM, 0x65              ; OSCCAL trim value, typically x6n
@@ -96,15 +97,9 @@ delay_1ms:
 ;  Subroutines SECTION
 ; ====================================================================
 TIM0_COMPA_handler:
-    push    r16             ; save temp register
-    in      r16, SREG       ; save status flags
-    push    r16
-
-    adiw    R24, 1          ; increment global counter — NOT saved/restored
-
-    pop     r16
-    out     SREG, r16
-    pop     r16
+    in      r2, SREG      ; save status flags
+    adiw    r24, 1           ; increment global counter — NOT saved/restored
+    out     SREG, r2      ; restore status flags
     reti
 
 

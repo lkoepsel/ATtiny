@@ -30,14 +30,15 @@
 .section .text
 
 ; ---------- Registers and Values ----------------
+; r15                           ; temp register, saved in ISR
 ; r16                           ; temp register
 ; R25:R24 reserved as global 16-bit ISR counter
 ; Do NOT use R24 or R25 anywhere else in your code
 
 .equ    COUNTER,  30000         ; 299@1.2MHZ => 1ms delay
 .equ    TRIM, 0x65              ; OSCCAL trim value, typically x6n
-.equ    NUM_START, 0x3c             ; "<"
-.equ    NUM_END, 0x3e               ; ">"
+.equ    HEX_BEG, 0xBB           ; beginning of hex print
+.equ    HEX_END, 0xEE           ; end of hex print
 ; --------------------------------------------------------------------
 ; reset_handler – entry point after RESET
 ; --------------------------------------------------------------------
@@ -60,12 +61,12 @@ main_setup:
     rcall   init_serial
 
 main_loop:
-    ldi     r17, NUM_START
+    ldi     r17, HEX_BEG
     rcall   char_write
 
     ldi     r27,hi8(COUNTER)    ; 1 clock cycle, executed once
     ldi     r26,lo8(COUNTER)    ; 1 clock cycle, executed once
-    movw    r14, r24            ; get clock start
+    movw    r4, r24            ; get clock start
 
     ; ~1ms delay at 1.2MHz
     ; TODO: cycles = 2 × (3×189 + 3) + 4) ~= 1ms (.998ms measured)
@@ -73,17 +74,17 @@ delay_1ms:
     sbiw    r26,1
     brne    delay_1ms
 
-    movw    r18, r24
-    mov     r17, r14
+    movw    r6, r24
+    mov     r17, r4
     rcall   char_write
-    mov     r17, r15
+    mov     r17, r5
     rcall   char_write
-    mov     r17, r18
+    mov     r17, r6
     rcall   char_write
-    mov     r17, r19
+    mov     r17, r7
     rcall   char_write
 
-    ldi     r17, NUM_END
+    ldi     r17,  HEX_END
     rcall   char_write
 
     rjmp    main_loop

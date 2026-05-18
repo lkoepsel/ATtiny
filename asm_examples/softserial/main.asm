@@ -32,7 +32,7 @@
 ; r16                           ; temp register
 ; r17                           ; char register
 ; r18                           ; temp register
-; r24                           ; timer delay register
+; r19                           ; timer delay register
 
 .equ    TX_PIN, PB1             ; transmit pin, output
 .equ    RX_PIN, PB2             ; receive pin, input pullup
@@ -70,9 +70,9 @@ main_loop:
 ; ====================================================================
 ;  Subroutines SECTION
 ; ====================================================================
-; blocking delay, enter with r24 as 8-bit counter value
+; blocking delay, enter with r19 as 8-bit counter value
 timer_delay:
-    dec    r24
+    dec    r19
     brne   timer_delay
     ret
 ; --------------------------------------------------------------------
@@ -94,7 +94,7 @@ char_write:
 
     ; Start bit
     cbi     PORTB, TX_PIN
-    ldi     r24,period
+    ldi     r19,period
     rcall   timer_delay
 
 
@@ -112,7 +112,7 @@ write_one:
     sbi     PORTB, TX_PIN
 
 next_write:
-    ldi     r24,period
+    ldi     r19,period
     rcall   timer_delay
 
     dec     r16
@@ -120,7 +120,7 @@ next_write:
 
     ;  Stop bit
     sbi     PORTB, TX_PIN
-    ldi     r24,period
+    ldi     r19,period
     rcall   timer_delay
     ret
 ; --------------------------------------------------------------------
@@ -137,7 +137,7 @@ wait_start:
     rjmp    wait_start
 
 ;   Wait a .5 bit period so bit0 is sampled mid-bit
-    ldi     r24, half_period
+    ldi     r19, half_period
     rcall   timer_delay
 
     in      r16, PINB
@@ -145,7 +145,7 @@ wait_start:
     rjmp    wait_start
 
 ;   Wait a 1 bit period for a total of 1.5 bit periods
-    ldi     r24, period
+    ldi     r19, period
     rcall   timer_delay
 
 ;   Read 8 data bits, LSB first, into r17
@@ -158,7 +158,7 @@ read_bit:
     sec                         ; RX HIGH -> bit is 1
     ror     r17                 ; shift carry into MSB (LSB-first)
 
-    ldi     r24, period
+    ldi     r19, period
     rcall   timer_delay
 
     dec     r16

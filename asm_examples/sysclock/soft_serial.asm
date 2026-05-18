@@ -12,10 +12,10 @@
 .section .text
 
 ; ---------- Registers and Values ----------------
-; r16                           ; temp register
+; r20                           ; temp register
 ; r17                           ; char register
 ; r18                           ; temp register
-; r24                           ; timer delay register
+; r19                           ; timer delay register
 
 .equ    TX_PIN, PB1             ; transmit pin, output
 .equ    RX_PIN, PB2             ; receive pin, input pullup
@@ -25,9 +25,9 @@
 ; ====================================================================
 ;  Subroutines SECTION
 ; ====================================================================
-; blocking delay, enter with r24 as 8-bit counter value
+; blocking delay, enter with r19 as 8-bit counter value
 timer_delay:
-    dec    r24
+    dec    r19
     brne   timer_delay
     ret
 ; --------------------------------------------------------------------
@@ -49,12 +49,12 @@ char_write:
 
     ; Start bit
     cbi     PORTB, TX_PIN
-    ldi     r24,period
+    ldi     r19,period
     rcall   timer_delay
 
 
     ;  8 data bits and preserve char
-    ldi     r16, 8
+    ldi     r20, 8
     mov     r18, r17
 
 write_bit:
@@ -67,15 +67,15 @@ write_one:
     sbi     PORTB, TX_PIN
 
 next_write:
-    ldi     r24,period
+    ldi     r19,period
     rcall   timer_delay
 
-    dec     r16
+    dec     r20
     brne    write_bit
 
     ;  Stop bit
     sbi     PORTB, TX_PIN
-    ldi     r24,period
+    ldi     r19,period
     rcall   timer_delay
     ret
 ; --------------------------------------------------------------------
@@ -87,24 +87,24 @@ char_read:
 ;   Wait for start bit: idle is HIGH, start bit is LOW
 ;   while (PINB & (1 << RX_PIN)) {} ;
 wait_start:
-    in      r16, PINB
-    sbrc    r16, RX_PIN    ; skip rjmp when RX is LOW = start bit
+    in      r20, PINB
+    sbrc    r20, RX_PIN    ; skip rjmp when RX is LOW = start bit
     rjmp    wait_start
 
 ;   Wait a .5 bit period so bit0 is sampled mid-bit
-    ldi     r24, half_period
+    ldi     r19, half_period
     rcall   timer_delay
 
-    in      r16, PINB
-    sbrc    r16, RX_PIN    ; confirm start bit remains low
+    in      r20, PINB
+    sbrc    r20, RX_PIN    ; confirm start bit remains low
     rjmp    wait_start
 
 ;   Wait a 1 bit period for a total of 1.5 bit periods
-    ldi     r24, period
+    ldi     r19, period
     rcall   timer_delay
 
 ;   Read 8 data bits, LSB first, into r17
-    ldi     r16, 8              ; bit counter
+    ldi     r20, 8              ; bit counter
 
 read_bit:
     in      r18, PINB           ; scratch read - do not clobber r17
@@ -113,10 +113,10 @@ read_bit:
     sec                         ; RX HIGH -> bit is 1
     ror     r17                 ; shift carry into MSB (LSB-first)
 
-    ldi     r24, period
+    ldi     r19, period
     rcall   timer_delay
 
-    dec     r16
+    dec     r20
     brne    read_bit
 
 ;   Stop bit check - line must be HIGH (mark); loop fall-through is ~mid stop bit.

@@ -35,7 +35,7 @@
 ; R25:R24 reserved as global 16-bit ISR counter
 ; Do NOT use R24 or R25 anywhere else in your code
 
-.equ    COUNTER,  30000         ; 299@1.2MHZ => 1ms delay
+.equ    COUNTER,  30000         ; 30,000@1.2MHZ => 100ms delay
 .equ    TRIM, 0x65              ; OSCCAL trim value, typically x6n
 .equ    HEX_BEG, 0xBB           ; beginning of hex print
 .equ    HEX_END, 0xEE           ; end of hex print
@@ -82,9 +82,9 @@ delay_1ms:
     sbc     r7, r5
 
     ; print delta
-    mov     r17, r6
-    rcall   char_write
     mov     r17, r7
+    rcall   char_write
+    mov     r17, r6
     rcall   char_write
 
     ldi     r17,  HEX_END

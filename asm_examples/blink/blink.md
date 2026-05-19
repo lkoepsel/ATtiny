@@ -70,16 +70,16 @@ The ATtiny13A only has `SPL` (Stack Pointer Low) — no `SPH` — because 64 byt
 
 ```asm
     eor     r1, r1
-    out     SREG, r1
+    out     STATUS, r1
 ```
 
-**Register and status flag initialization.** `eor r1, r1` XORs r1 with itself, producing zero (2 birds, 1 stone: zeros r1 *and* sets the Zero flag). Then that zero is written to the Status Register (`SREG`), clearing all flags (Carry, Zero, Negative, Overflow, Sign, Half-carry, Transfer, Interrupt). `r1` is conventionally reserved as the "zero register" in AVR-GCC ABI — zeroing it here respects that convention.
+**Register and status flag initialization.** `eor r1, r1` XORs r1 with itself, producing zero (2 birds, 1 stone: zeros r1 *and* sets the Zero flag). Then that zero is written to the Status Register (`STATUS`), clearing all flags (Carry, Zero, Negative, Overflow, Sign, Half-carry, Transfer, Interrupt). `r1` is conventionally reserved as the "zero register" in AVR-GCC ABI — zeroing it here respects that convention.
 
 ```asm
-    sbi     DDRB, PB0           ; PB0 as output
+    sbi     IO_DDR, LED         ; PB0 as output
 ```
 
-**GPIO direction configuration.** `sbi` (Set Bit in I/O register) sets bit `PB0` (bit 0) of the Data Direction Register for Port B. A `1` in DDRB means output; `0` means input. After this instruction, PB0 is configured as a digital output. All other PORTB pins remain inputs (DDRB defaults to `0x00` on reset).
+**GPIO direction configuration.** `sbi` (Set Bit in I/O register) sets bit `LED` (PB0, bit 0) of `IO_DDR`, the Data Direction Register for Port B. A `1` in `IO_DDR` means output; `0` means input. After this instruction, PB0 is configured as a digital output. All other PORTB pins remain inputs (`IO_DDR` defaults to `0x00` on reset).
 
 ---
 
@@ -87,21 +87,21 @@ The ATtiny13A only has `SPL` (Stack Pointer Low) — no `SPH` — because 64 byt
 
 ```asm
 main_loop:
-    sbi     PINB, PB0           ; toggle PB0
+    sbi     IO_PIN, LED         ; toggle LED
     rcall   delay_1ms
     rjmp    main_loop
 ```
 
 This is an infinite loop — the AVR equivalent of `while(1)` in C.
 
-**The toggle trick — `sbi PINB, PB0`:**
+**The toggle trick — `sbi IO_PIN, LED`:**
 This is a non-obvious but well-documented AVR feature. On most AVRs you'd toggle an output by XORing PORTB. But the ATtiny13A (and other modern AVRs) implement a hardware shortcut: **writing a `1` to a bit in the PIN register toggles the corresponding PORTB output bit** atomically in a single instruction. This is faster and more concise than the read-modify-write sequence:
 ```asm
 ; The "old" way to toggle:
-in  r16, PORTB
-ldi r17, (1 << PB0)
+in  r16, IO_PORT
+ldi r17, (1 << LED)
 eor r16, r17
-out PORTB, r16          ; 4 instructions vs 1
+out IO_PORT, r16        ; 4 instructions vs 1
 ```
 
 **`rcall delay_1ms`** — calls the delay subroutine (discussed below).  

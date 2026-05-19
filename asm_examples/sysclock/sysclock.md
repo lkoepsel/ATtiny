@@ -1,19 +1,18 @@
 # Claude analysis of sysclock timing loop
 
-* Count = 30,000 => 100ms
+* Count = 30,000 => ~100 ms window
 * OCR0A = 0x95 or 149
-* Prescalar = /8
+* Prescaler = /8
 
-Result = 0x66 or 102
+Result = 0x65 or 101
 
-**Update:** Reduced ISR overhead by 10bytes, by using r2 as a constant ISR temp register.
-New Result = 0x65 or 101
-
-Remaining analysis is the same.
+The ISR uses `r2` as a dedicated scratch register (reserved globally — see the
+register notes at the top of `main.S`), so it needs no `push`/`pop`. That keeps
+the per-interrupt overhead to 14 cycles.
 
 ## Analysis
 
-Confirmed — 0x66 (102) is the right number. Here's why it's 102 and not the "obvious" 100.
+Confirmed — 0x65 (101) is the right number. Here's why it's 101 and not the "obvious" 100.
 
   Tick period (how often r24:r25 increments)
 
@@ -47,7 +46,7 @@ Confirmed — 0x66 (102) is the right number. Here's why it's 102 and not the "o
   │ Total: 29,999 × 4 + 3                │ 119,999   │
   └──────────────────────────────────────┴───────────┘
 
-  Naïvely: 119,999 / 1200 = 99.99 ≈ 100 ticks. So where do the extra ~2 come from?
+  Naïvely: 119,999 / 1200 = 99.99 ≈ 100 ticks. So where does the extra ~1 come from?
 
   ISR cost per invocation
 
@@ -60,47 +59,41 @@ Confirmed — 0x66 (102) is the right number. Here's why it's 102 and not the "o
   ├──────────────────────────────────────┼────────┤
   │ rjmp TIM0_COMPA_handler              │ 2      │
   ├──────────────────────────────────────┼────────┤
-  │ push r16                             │ 2      │
-  ├──────────────────────────────────────┼────────┤
-  │ in r16, SREG                         │ 1      │
-  ├──────────────────────────────────────┼────────┤
-  │ push r16                             │ 2      │
+  │ in r2, STATUS                        │ 1      │
   ├──────────────────────────────────────┼────────┤
   │ adiw r24,1                           │ 2      │
   ├──────────────────────────────────────┼────────┤
-  │ pop r16                              │ 2      │
-  ├──────────────────────────────────────┼────────┤
-  │ out SREG, r16                        │ 1      │
-  ├──────────────────────────────────────┼────────┤
-  │ pop r16                              │ 2      │
+  │ out STATUS, r2                       │ 1      │
   ├──────────────────────────────────────┼────────┤
   │ reti                                 │ 4      │
   ├──────────────────────────────────────┼────────┤
-  │ Total per ISR                        │ 22     │
+  │ Total per ISR                        │ 14     │
   └──────────────────────────────────────┴────────┘
+
+  Because `r2` and the counter `r24:r25` are reserved registers, the handler skips the usual `push`/`pop` pair — an r16-based handler that saved/restored on the stack would cost 22 cycles; this one costs 14.
 
   Putting it together
 
   Wall-clock time of the loop = loop instructions + every ISR that fires during it:
 
-  T_wall = 119,999 + 22 · n      where  n = T_wall / 1200
+  T_wall = 119,999 + 14 · n      where  n = T_wall / 1200
 
   Solving the fixed point:
 
-  T_wall = 119,999 / (1 − 22/1200) = 119,999 × 1200/1178 ≈ 122,240 cycles
-  n      = 122,240 / 1200 ≈ 101.9 ticks
+  T_wall = 119,999 / (1 − 14/1200) = 119,999 × 1200/1186 ≈ 121,415 cycles
+  n      = 121,415 / 1200 ≈ 101.2 ticks
 
   ┌──────────────────────────┬──────────┬───────────────┐
   │                          │  Cycles  │     Ticks     │
   ├──────────────────────────┼──────────┼───────────────┤
   │ Delay loop instructions  │ 119,999  │ 100.0         │
   ├──────────────────────────┼──────────┼───────────────┤
-  │ ISR overhead (~102 × 22) │ ~2,240   │ ~1.9          │
+  │ ISR overhead (~101 × 14) │ ~1,414   │ ~1.2          │
   ├──────────────────────────┼──────────┼───────────────┤
-  │ Total measured window    │ ~122,240 │ ≈ 101.9 → 102 │
+  │ Total measured window    │ ~121,415 │ ≈ 101.2 → 101 │
   └──────────────────────────┴──────────┴───────────────┘
 
-  The count of compare-matches inside a 122,240-cycle window is 101–102 depending on phase; since the loop starts deterministically relative to the timer, you get a consistent 102 = 0x66. ✓
+  The count of compare-matches inside a ~121,415-cycle window is 101–102 depending on phase; since the loop starts deterministically relative to the timer, you get a consistent 101 = 0x65. ✓
 
-  Note r7 (delta high byte) prints as 0x00 — correct, since 102 fits in one byte. And the inline comment ; 299@1.2MHZ => 1ms delay is now stale: 
-  COUNTER = 30000 is deliberately a ~100 ms window so the delta is visible. If you ever want delta ≈ exactly 100, you'd need to shave the loop to compensate for the 22-cycle-per-tick ISR tax.
+  Note r7 (delta high byte) prints as 0x00 — correct, since 101 fits in one byte.
+  COUNTER = 30000 is deliberately a ~100 ms window so the delta is visible. If you ever want delta ≈ exactly 100, you'd need to shave the loop to compensate for the 14-cycle-per-tick ISR tax.

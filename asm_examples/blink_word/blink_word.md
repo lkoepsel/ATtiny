@@ -6,7 +6,7 @@ Here's the full cycle accounting for one complete pass through `main_loop`:
 
 | Instruction | Cycles | Notes |
 |---|---|---|
-| `sbi PINB, PB0` | 2 | Toggle the pin |
+| `sbi IO_PIN, LED` | 2 | Toggle the pin |
 | `ldi R25, hi8(counter)` | 1 | Reload high byte |
 | `ldi R24, lo8(counter)` | 1 | Reload low byte |
 | `sbiw R24, 1` | 2 | 16-bit decrement (×N iterations) |
@@ -128,7 +128,7 @@ Let me re-examine the AVR instruction timing more carefully:
 
 | Instruction | Actual Cycles | Previously Listed |
 |---|---|---|
-| `sbi PINB, PB0` | 2 | 2 ✓ |
+| `sbi IO_PIN, LED` | 2 | 2 ✓ |
 | `ldi R25, hi8(counter)` | 1 | 1 ✓ |
 | `ldi R24, lo8(counter)` | 1 | 1 ✓ |
 | `sbiw R24, 1` | 2 | 2 ✓ |
@@ -216,10 +216,10 @@ That matches what I had. So the loop body at 4 cycles per iteration should be ri
 
 ## Re-examining Overhead More Carefully
 
-What does the Analog Discovery 2 actually see? It measures **pin-high or pin-low time** — the time from one `sbi PINB` to the next. Let's retrace exactly what executes between two successive toggles:
+What does the Analog Discovery 2 actually see? It measures **pin-high or pin-low time** — the time from one `sbi IO_PIN` to the next. Let's retrace exactly what executes between two successive toggles:
 
 ```
-sbi  PINB, PB0          ; 2 cycles  ← AD2 starts timing here
+sbi  IO_PIN, LED        ; 2 cycles  ← AD2 starts timing here
 ldi  R25, hi8(counter)  ; 1 cycle
 ldi  R24, lo8(counter)  ; 1 cycle
 sbiw R24, 1             ; 2 cycles  ─┐
@@ -256,7 +256,7 @@ If you need precise 1ms timing for your students' labs, the fix is to write a ca
 ```asm
 reset_handler:
     ldi     r16, 0x6F       ; example trim value — yours will differ
-    out     OSCCAL, r16     ; nudge oscillator toward true 1.2MHz
+    out     RCCAL, r16      ; nudge oscillator toward true 1.2MHz
 ```
 
 The correct `OSCCAL` value is found empirically using the Analog Discovery 2 — adjust until the measured period matches the expected value. Each unit needs its own calibration value, which is why Microchip factory-programs a default into the signature row at address `0x000001`.

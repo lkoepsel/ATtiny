@@ -32,7 +32,7 @@ Because the source is named `main.S` (uppercase) and assembled by `avr-gcc`, the
 
 `avr/io.h` is the avr-libc device-definition header. It provides symbolic names for every special-purpose register and bit position — `DDRB`, `PORTB`, `PINB`, `PB0`, `RAMEND`, `SPL`, `SREG`, etc. Without it, you'd have to use raw I/O addresses.
 
-`registers.h` is a small project-local header that layers logical, application-specific names on top — `LED`, `LED_DDR`, `LED_PIN`, `STACK_LOW`, `STATUS` — each wrapping its register in the `_SFR_IO_ADDR()` macro so it can be used with the `in`/`out`/`sbi`/`cbi` instructions.
+`registers.h` is a small Library header that layers logical, application-specific names on top — `LED`, `IO_DDR`, `IO_PIN`, `STACK_LOW`, `STATUS` — each wrapping its register in the `_SFR_IO_ADDR()` macro so it can be used with the `in`/`out`/`sbi`/`cbi` instructions.
 
 ---
 

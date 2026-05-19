@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a framework for programming the **ATtiny13A** microcontroller in C (gnu99), using avr-gcc, avr-gdb, and avrdude. The ATtiny13A has 1KB Flash, 64 bytes RAM, and no bootloader — it requires an external ISP programmer (ATMEL-ICE or Microchip SNAP).
+This is a framework for programming the **ATtiny13A** microcontroller in C (gnu99) and AVR assembly, using avr-gcc, avr-gdb, and avrdude. The ATtiny13A has 1KB Flash, 64 bytes RAM, and no bootloader — it requires an external ISP programmer (ATMEL-ICE or Microchip SNAP).
 
 ## Build System
 
@@ -13,7 +13,7 @@ C and assembly examples share the same `make` targets but use separate root Make
 | | C examples (`examples/`) | Assembly examples (`asm_examples/`) |
 |---|---|---|
 | Root Makefile | `Makefile` | `Makefile.asm` |
-| Source file | `main.c` | `main.asm` |
+| Source file | `main.c` | `main.S` |
 | Local Makefile | `DEPTH = ../../`<br>`include $(DEPTH)Makefile` | `DEPTH = ../../`<br>`include $(DEPTH)Makefile.asm` |
 
 **Key targets (run from within any example directory):**
@@ -63,10 +63,36 @@ See `docs/env_make.md` for full documentation.
 
 ## Compilation Flags
 
+These flags apply to **C examples**. Assembly examples use a separate pipeline — see below.
+
 - Standard: `-std=gnu99`
 - Debug: `-Og -ggdb3` (default); use `-Os` for production
 - Warnings: `-Wall -Wundef -Werror`
 - Size optimization: `-ffunction-sections -fdata-sections -Wl,--gc-sections`
+
+## Assembly Examples
+
+Assembly examples in `asm_examples/` are written as **`main.S`** (uppercase `.S`) and built
+with `avr-gcc`, not `avr-as`. The uppercase extension makes `avr-gcc` run the C preprocessor
+before assembling, so `#include`, `#define`, and `-D` definitions all work.
+
+- **Includes:** every `main.S` starts with `#include <avr/io.h>` (avr-libc register/bit
+  names) and `#include "registers.h"` (project-defined *logical* names).
+- **Shared headers:** `registers.h` and `softserial.S` live in `Library/` and are found via
+  the `-I$(DEPTH)Library` flag in `Makefile.asm`. An example may also keep a local
+  `registers.h` to override them — unlike C examples, asm examples do not duplicate these.
+- **`_SFR_IO_ADDR()`:** inside a `.S` file, `avr/io.h` defines register names as *data-space*
+  addresses. The `in`/`out`/`sbi`/`cbi` instructions need *I/O-space* addresses, so operands
+  must be wrapped in `_SFR_IO_ADDR()`. `registers.h` applies this wrapping for the names it
+  defines (e.g. `IO_DDR`, `STATUS`).
+- **Build:** `Makefile.asm` assembles with `avr-gcc -mmcu=... -MMD -MP` (automatic header
+  dependency tracking) and links with `avr-gcc -nostartfiles -nostdlib`, keeping the
+  hand-written vector table and reset code authoritative (no C runtime is linked).
+- **New example:** copy `asm_examples/skeleton/` — a minimal template with the vector table
+  and reset handler already in place.
+
+See `docs/assembly.md` for the full toolchain walkthrough and `asm_examples/README.md` for a
+per-example index.
 
 ## Architecture
 

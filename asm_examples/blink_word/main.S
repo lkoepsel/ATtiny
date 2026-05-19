@@ -23,9 +23,9 @@
 .section .text
 
 ; to dial in close to 1ms, use both TRIM and counter
-; in this case, counter = 300 and OSCCAL = x65 => 1.003ms
-.equ    COUNTER,  300           ; 299@1.2MHZ => 1ms delay
-.equ    TRIM, 0x65              ; OSCCAL trim value, typically x6n
+; in this case, counter = 300 and OSCCAL = x64 => 1.003ms
+.equ    COUNTER,  300           ; 300@1.2MHZ => 1ms delay
+.equ    TRIM, 0x64              ; OSCCAL trim value, typically x6n
 
 reset_handler:                  ; also serves as main_setup
     ldi     r16, TRIM           ; osc trim value

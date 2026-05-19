@@ -53,6 +53,7 @@ main_setup:
 
 main_loop:
     ; Put your program logic here
+    sbi     IO_PORT, LED        ; turn LED on
     rjmp    main_loop
 
 ; ====================================================================

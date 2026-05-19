@@ -31,11 +31,15 @@
 .section .text
 
 ; ---------- Registers and Values ----------------
+; r5:r4                         ; initial ticks count
+; r7:r6                         ; final ticks count and delta
 ; r15                           ; temp register, saved in ISR
 ; r16                           ; temp register
+; r17                           ; char register (softserial)
+; r27                           ; delay word
 ; ---------- Reserved registers ----------
 ; r2        ISR scratch (STATUS save) — do NOT use elsewhere
-; R25:R24   global 16-bit ISR counter — do NOT use elsewhere
+; r25:r24   global 16-bit ISR ticks counter — do NOT use elsewhere
 
 .equ    COUNTER,  30000         ; 30,000@1.2MHZ => 100ms delay
 .equ    TRIM, 0x65              ; OSCCAL trim value, typically x6n
@@ -99,7 +103,7 @@ delay_1ms:
 ; ====================================================================
 TIM0_COMPA_handler:
     in      r2, STATUS      ; save status flags
-    adiw    r24, 1           ; increment global counter — NOT saved/restored
+    adiw    r24, 1          ; increment ticks counter
     out     STATUS, r2      ; restore status flags
     reti
 
@@ -129,8 +133,8 @@ init_sysclock_1k:
     out     TIMSK,r16          ;
 
     ; OCR0A: adjust for a 1kHz signal (998.8kHz measured)
-    ldi     r18,0x95       ;
-    out     OCRA,r18           ;
+    ldi     r16,0x95       ;
+    out     OCRA,r16           ;
     sei
     sbi     IO_DDR, LED           ; PB0 as output, for checking SYS_CLOCK
     ret

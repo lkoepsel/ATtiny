@@ -1,5 +1,5 @@
 ; =============================================================
-; main.asm  –  Blink LED on PB0 at 500Hz (1ms on, 1ms off)
+; main  –  Blink LED on PB0 at 500Hz (1ms on, 1ms off)
 ; Target : ATtiny13A at 1.2MHz (factory default clock)
 ; Circuit: LED + 220Ω resistor from PB0 (pin 5) to GND
 ; =============================================================
@@ -26,15 +26,15 @@ reset_handler:                  ; also serves as main_setup
     out     STACK_LOW, r16      ; ATtiny13A has no SPH
     eor     r1, r1
     out     STATUS, r1          ; clear status register
-    sbi     LED_DDRB, PB0       ; PB0 as output
+    sbi     LED_DDR, LED        ; PB0 as output
 
 main_loop:
-    sbi     LED_PINB, PB0       ; toggle PB0 — writing 1 to PINB flips PORTB output
+    sbi     LED_PIN, LED       ; toggle LED — writing 1 to PIN flips PORT output
     rcall   delay_1ms
     rjmp    main_loop
 
 ; ~1ms delay at 1.2MHz
-; cycles = 2 × (3×189 + 3) + 4) ~= 1ms (1.004ms measured)
+; cycles = 2 × ((3×189 + 3) + 4) ~= 1ms (1.004ms measured)
 delay_1ms:
     ldi     r17, 2
 outer:

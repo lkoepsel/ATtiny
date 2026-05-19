@@ -1,6 +1,6 @@
 name = "AVR Assembly"
 grammar = "asm"
-path_suffixes = ["asm", "inc"]
+path_suffixes = ["asm", "inc", "S"]
 line_comments = ["; "]
 autoclose_before = ",)]"
 tab_size = 4

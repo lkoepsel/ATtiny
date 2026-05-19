@@ -17,7 +17,7 @@ compile: $(TARGET).hex
 
 ## Pattern rules
 $(TARGET).o: $(TARGET).S
-	avr-gcc -mmcu=$(MCU) -DF_CPU=$(F_CPU) -I$(DEPTH)Library -g -Wa,--gdwarf-2 -c -o $@ $<
+	avr-gcc -mmcu=$(MCU) -DF_CPU=$(F_CPU) -I$(DEPTH)Library -g -Wa,--gdwarf-2 -MMD -MP -c -o $@ $<
 
 $(TARGET).elf: $(TARGET).o
 	avr-gcc -mmcu=$(MCU) -nostartfiles -nostdlib -o $@ $^
@@ -27,6 +27,12 @@ $(TARGET).hex: $(TARGET).elf
 
 $(TARGET).lst: $(TARGET).elf
 	$(OBJDUMP) -S $< > $@
+
+## Auto-generated header dependencies: -MMD writes $(TARGET).d during
+## assembly, listing every #include'd file (registers.h, avr/io.h, ...).
+## -include pulls it back in so edits to those headers force a rebuild.
+## The leading dash makes it silent when the file does not exist yet.
+-include $(TARGET).d
 
 .PHONY: compile flash verbose disasm size complete clean clean_all show_fuses avrdude_terminal env help
 
@@ -47,7 +53,7 @@ size: $(TARGET).elf
 complete: clean compile size
 
 clean:
-	rm -f $(TARGET).elf $(TARGET).hex $(TARGET).o $(TARGET).lst
+	rm -f $(TARGET).elf $(TARGET).hex $(TARGET).o $(TARGET).lst $(TARGET).d
 
 ## Run clean in every example folder under asm_examples/
 clean_all:

@@ -4,7 +4,8 @@
 ; Toolchain: avr-as / avr-ld  (GNU Binutils for AVR)
 ; =============================================================
 
-.include "tn13Adef.inc"
+#include <avr/io.h>
+#include "registers.h"
 
 ; ====================================================================
 ;  INTERRUPT VECTOR TABLE
@@ -45,11 +46,11 @@ reset_handler:
 
     ; ATtiny13A has only SPL (no SPH) — RAMEND = 0x9F fits in 8 bits
     ldi     r16, lo8(RAMEND)
-    out     SPL, r16
+    out     STACK_LOW, r16
 
     ; r1 = 0 by convention (zero register); clear status flags
     eor     r1, r1
-    out     SREG, r1
+    out     STATUS, r1
 
     rjmp    main_setup
 

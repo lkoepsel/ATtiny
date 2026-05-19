@@ -56,7 +56,7 @@ The ATtiny13A has **10 interrupt vectors**, each occupying one 16-bit word at th
 ```asm
 reset_handler:
     ldi     r16, lo8(RAMEND)
-    out     SPL, r16            ; ATtiny13A has no SPH
+    out     STACK_LOW, r16            ; ATtiny13A has no SPH
 ```
 
 **Stack pointer initialization.** `RAMEND` on the ATtiny13A is `0x9F` (the last byte of its 64-byte SRAM). `lo8()` extracts the low byte (the full value fits in 8 bits here anyway). The Stack Pointer is set to the top of SRAM so `rcall`/`ret` work correctly.

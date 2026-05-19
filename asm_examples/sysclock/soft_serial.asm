@@ -4,7 +4,8 @@
 ; Toolchain: avr-as / avr-ld  (GNU Binutils for AVR)
 ; =============================================================
 
-.include "tn13Adef.inc"
+#include <avr/io.h>
+#include "registers.h"
 
 ; ====================================================================
 ;  TEXT SECTION  (executable code lives here)

@@ -4,3 +4,6 @@
 #define LED_PIN     _SFR_IO_ADDR(PINB)
 #define STACK_LOW   _SFR_IO_ADDR(SPL)
 #define STATUS      _SFR_IO_ADDR(SREG)
+#define OCRA       _SFR_IO_ADDR(OCR0A)
+#define TCCRA      _SFR_IO_ADDR(TCCR0A)
+#define TCCRB      _SFR_IO_ADDR(TCCR0B)

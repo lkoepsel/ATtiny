@@ -4,7 +4,8 @@
 ; Toolchain: avr-as / avr-ld  (GNU Binutils for AVR)
 ; =============================================================
 
-.include "tn13Adef.inc"
+#include <avr/io.h>
+#include "registers.h"
 .include "soft_serial.asm"
 
 ; ====================================================================
@@ -33,7 +34,7 @@
 ; r15                           ; temp register, saved in ISR
 ; r16                           ; temp register
 ; ---------- Reserved registers ----------
-; r2        ISR scratch (SREG save) — do NOT use elsewhere
+; r2        ISR scratch (STATUS save) — do NOT use elsewhere
 ; R25:R24   global 16-bit ISR counter — do NOT use elsewhere
 
 .equ    COUNTER,  30000         ; 30,000@1.2MHZ => 100ms delay
@@ -47,11 +48,11 @@ reset_handler:
 
     ; ATtiny13A has only SPL (no SPH) — RAMEND = 0x9F fits in 8 bits
     ldi     r16, lo8(RAMEND)
-    out     SPL, r16
+    out     STACK_LOW, r16
 
     ; r1 = 0 by convention (zero register); clear status flags
     eor     r1, r1
-    out     SREG, r1
+    out     STATUS, r1
 
 ; --------------------------------------------------------------------
 ; main – application logic starts here
@@ -97,9 +98,9 @@ delay_1ms:
 ;  Subroutines SECTION
 ; ====================================================================
 TIM0_COMPA_handler:
-    in      r2, SREG      ; save status flags
+    in      r2, STATUS      ; save status flags
     adiw    r24, 1           ; increment global counter — NOT saved/restored
-    out     SREG, r2      ; restore status flags
+    out     STATUS, r2      ; restore status flags
     reti
 
 
@@ -111,7 +112,7 @@ init_sysclock_1k:
     eor     r24, r24        ; clear counter low byte
     eor     r25, r25        ; clear counter high byte
 
-    ;   WGM01 CTC mode, OCR0A is TOP, toggle PB0 on Compare Match
+    ;   WGM01 CTC mode, OCR0A is TOP, toggle LED on Compare Match
     ldi     r16, (1<<COM0A0) | (1<<WGM01)
     out     TCCR0A,R16
 
@@ -127,7 +128,7 @@ init_sysclock_1k:
     ldi     r18,0x95       ;
     out     OCR0A,r18           ;
     sei
-    sbi     DDRB, PB0           ; PB0 as output, for checking SYS_CLOCK
+    sbi     LED_DDR, LED           ; PB0 as output, for checking SYS_CLOCK
     ret
 
 ; ====================================================================

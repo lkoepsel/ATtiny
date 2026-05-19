@@ -17,7 +17,7 @@
 // soft_int8_write - write a int8 number
 // void soft_pgmtext_write(const char* pgm_text) - write PROGMEM string
 
-// Adafruit Blue USB Type A to 4 Wire 
+// Adafruit Blue USB Type A to 4 Wire
 // USB to TTL Serial Cable - Debug / Console Cable for Raspberry Pi
 // https://www.adafruit.com/product/954?gad_source=1
 // * Wires: Red/Black/Green/White
@@ -36,9 +36,9 @@
 #include <avr/pgmspace.h>
 #include "ATtiny.h"
 
-#define SOFT_RX_PIN PINB4 // Define the RX pin
-#define SOFT_TX_PIN PINB3 // Define the TX pin
-#define baud_ticks 156    // For 1200 baud
+#define SOFT_TX_PIN PB1
+#define SOFT_RX_PIN PB2
+#define BIT_DURATION 104  // For 9600 baud
 
 #define CR 13		// carriage return
 #define LF 10		// line feed

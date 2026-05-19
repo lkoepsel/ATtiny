@@ -2,8 +2,8 @@
 #include <util/delay.h>
 
 // Your existing UART definitions
-#define SOFT_TX_PIN PB3
-#define SOFT_RX_PIN PB4
+#define SOFT_TX_PIN PB1
+#define SOFT_RX_PIN PB2
 #define BIT_DURATION 104  // For 9600 baud
 
 // Your existing write function

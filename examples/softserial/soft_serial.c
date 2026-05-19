@@ -1,3 +1,4 @@
+#include <util/delay.h>
 #include "soft_serial.h"
 
 char num_string[6] = {};
@@ -17,7 +18,7 @@ void soft_char_write(char data)
 {
     // Start bit
     PORTB &= ~(1 << SOFT_TX_PIN);
-    TIMER_DELAY(baud_ticks);
+    _delay_us(BIT_DURATION);
 
     // Data bits
     for (uint8_t i = 0; i < 8; i++)
@@ -30,12 +31,12 @@ void soft_char_write(char data)
         {
             PORTB &= ~(1 << SOFT_TX_PIN);
         }
-        TIMER_DELAY(baud_ticks);
+        _delay_us(BIT_DURATION);
     }
 
     // Stop bit
     PORTB |= (1 << SOFT_TX_PIN);
-    TIMER_DELAY(baud_ticks);
+    _delay_us(BIT_DURATION);
 
 }
 
@@ -48,8 +49,8 @@ int8_t soft_char_read()
     while (PINB & (1 << SOFT_RX_PIN)) {} ;
 
     // Wait 1.5 bit periods to sample first data bit in the middle
-    TIMER_DELAY(baud_ticks + baud_ticks / 2);
-    
+    TIMER_DELAY(BIT_DURATION + BIT_DURATION / 2);
+
     // Read each bit
     for (int8_t i = 0; i < 8; i++)
     {
@@ -57,7 +58,7 @@ int8_t soft_char_read()
         {
             data |= (1 << i);
         }
-        TIMER_DELAY(baud_ticks);
+        _delay_us(BIT_DURATION);
     }
 
     return data;

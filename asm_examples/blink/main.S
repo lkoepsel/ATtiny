@@ -4,7 +4,8 @@
 ; Circuit: LED + 220Ω resistor from PB0 (pin 5) to GND
 ; =============================================================
 
-.include "tn13Adef.inc"
+#include <avr/io.h>
+#include "registers.h"
 
 .section .vectors, "ax", @progbits
     rjmp    reset_handler       ; 0x000  RESET
@@ -22,13 +23,13 @@
 
 reset_handler:                  ; also serves as main_setup
     ldi     r16, lo8(RAMEND)    ; init stack
-    out     SPL, r16            ; ATtiny13A has no SPH
+    out     STACK_LOW, r16      ; ATtiny13A has no SPH
     eor     r1, r1
-    out     SREG, r1            ; clear status register
-    sbi     DDRB, PB0           ; PB0 as output
+    out     STATUS, r1          ; clear status register
+    sbi     LED_DDRB, PB0       ; PB0 as output
 
 main_loop:
-    sbi     PINB, PB0           ; toggle PB0 — writing 1 to PINB flips PORTB output
+    sbi     LED_PINB, PB0       ; toggle PB0 — writing 1 to PINB flips PORTB output
     rcall   delay_1ms
     rjmp    main_loop
 

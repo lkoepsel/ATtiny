@@ -6,6 +6,11 @@
 
 Result = 0x66 or 102
 
+**Update:** Reduced ISR overhead by 10bytes, by using r2 as a constant ISR temp register.
+New Result = 0x65 or 101
+
+Remaining analysis is the same.
+
 ## Analysis
 
 Confirmed — 0x66 (102) is the right number. Here's why it's 102 and not the "obvious" 100.

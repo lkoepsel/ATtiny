@@ -6,7 +6,6 @@
 include $(DEPTH)env.make
 
 TARGET  = main
-ARCH    = avr25
 
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
@@ -17,11 +16,11 @@ AVRDUDE = avrdude
 compile: $(TARGET).hex
 
 ## Pattern rules
-$(TARGET).o: $(TARGET).asm
-	avr-as -mmcu=$(MCU) -I$(DEPTH)Library --gdwarf-2 -o $@ $<
+$(TARGET).o: $(TARGET).S
+	avr-gcc -mmcu=$(MCU) -DF_CPU=$(F_CPU) -I$(DEPTH)Library -g -Wa,--gdwarf-2 -c -o $@ $<
 
 $(TARGET).elf: $(TARGET).o
-	avr-ld -m $(ARCH) $^ -o $@
+	avr-gcc -mmcu=$(MCU) -nostartfiles -nostdlib -o $@ $^
 
 $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
@@ -76,7 +75,7 @@ env:
 	@echo "PROGRAMMER_TYPE:" $(PROGRAMMER_TYPE)
 	@echo "PROGRAMMER_ARGS:" $(PROGRAMMER_ARGS)
 	@echo
-	@echo "Source file:"     $(TARGET).asm
+	@echo "Source file:"     $(TARGET).S
 
 help:
 	@echo "make compile      - assemble only"

@@ -15,15 +15,15 @@
 ; ====================================================================
 .section .vectors, "ax", @progbits
     rjmp    reset_handler         ; 0x000  RESET
-    ; reti                        ; 0x001  INT0       - External Interrupt 0
-    ; reti                        ; 0x002  PCINT0     - Pin Change Interrupt 0
-    ; reti                        ; 0x003  TIM0_OVF   - Timer/Counter0 Overflow
-    ; reti                        ; 0x004  EE_RDY     - EEPROM Ready
-    ; reti                        ; 0x005  ANA_COMP   - Analog Comparator
+    reti                        ; 0x001  INT0       - External Interrupt 0
+    reti                        ; 0x002  PCINT0     - Pin Change Interrupt 0
+    reti                        ; 0x003  TIM0_OVF   - Timer/Counter0 Overflow
+    reti                        ; 0x004  EE_RDY     - EEPROM Ready
+    reti                        ; 0x005  ANA_COMP   - Analog Comparator
     rjmp    TIM0_COMPA_handler    ; 0x006  TIM0_COMPA - Timer0 Compare Match A
-    ; reti                        ; 0x007  TIM0_COMPB - Timer0 Compare Match B
-    ; reti                        ; 0x008  WDT        - Watchdog Time-out
-    ; reti                        ; 0x009  ADC        - ADC Conversion Complete
+    reti                        ; 0x007  TIM0_COMPB - Timer0 Compare Match B
+    reti                        ; 0x008  WDT        - Watchdog Time-out
+    reti                        ; 0x009  ADC        - ADC Conversion Complete
 
 ; ====================================================================
 ;  TEXT SECTION  (executable code lives here)
@@ -105,10 +105,14 @@ TIM0_COMPA_handler:
 
 
 init_sysclock_1k:
-;      Initialize timer 0 to CTC Mode using OCR0A, with a chip clock of 1.2Mhz
-;      The values below will result in a 1kHz counter (1000 ticks = 1 second)
+;   Initialize timer 0 to CTC Mode using OCR0A, with a chip clock of 1.2Mhz
+;   The values below will result in a 1kHz counter (1000 ticks = 1 second)
+;   TCRR0A 0b01000010 0x42
+;   TCRR0B 0b00000010 0x02
+;   TIMS0K 0b00000100 0x04
+;   OCR0A  0b.        0x95
 
-    ; clear counter register
+; clear counter register
     eor     r24, r24        ; clear counter low byte
     eor     r25, r25        ; clear counter high byte
 

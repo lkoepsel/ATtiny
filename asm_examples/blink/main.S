@@ -26,10 +26,10 @@ reset_handler:                  ; also serves as main_setup
     out     STACK_LOW, r16      ; ATtiny13A has no SPH
     eor     r1, r1
     out     STATUS, r1          ; clear status register
-    sbi     LED_DDR, LED        ; PB0 as output
+    sbi     IO_DDR, LED        ; PB0 as output
 
 main_loop:
-    sbi     LED_PIN, LED       ; toggle LED — writing 1 to PIN flips PORT output
+    sbi     IO_PORT, LED       ; toggle LED — writing 1 to PIN flips PORT output
     rcall   delay_1ms
     rjmp    main_loop
 

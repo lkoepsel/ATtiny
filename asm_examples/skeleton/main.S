@@ -1,5 +1,5 @@
 ; =============================================================
-; main.asm  –  Minimal AVR Assembly Skeleton
+; main  –  Minimal AVR Assembly Skeleton
 ; Target : ATtiny13A (1.2 MHz default internal RC oscillator)
 ; Toolchain: avr-as / avr-ld  (GNU Binutils for AVR)
 ; =============================================================
@@ -49,7 +49,7 @@ reset_handler:
 ; --------------------------------------------------------------------
 main_setup:
     ; Configure LED (pin 5) as OUTPUT — avoid PB5 (pin 1, RESET)
-    sbi     LED_DDR, LED
+    sbi     IO_DDR, LED
 
 main_loop:
     ; Put your program logic here

@@ -1,5 +1,5 @@
 ; =============================================================
-; main.asm  –  Blink LED on LED at 500Hz (1ms on, 1ms off)
+; main  –  Blink LED on LED at 500Hz (1ms on, 1ms off)
 ; Use 16-bit counter, minimal size by not setting vectors
 ; Target : ATtiny13A at 1.2MHz (factory default clock)
 ; Circuit: LED + 220Ω resistor from LED (pin 5) to GND
@@ -29,15 +29,15 @@
 
 reset_handler:                  ; also serves as main_setup
     ldi     r16, TRIM           ; osc trim value
-    out     OSCCAL, r16         ; nudge oscillator toward true 1.2MHz (maybe)
+    out     RCCAL, r16         ; nudge oscillator toward true 1.2MHz (maybe)
     eor     r1, r1
     out     STATUS, r1            ; clear status register
-    sbi     LED_DDR, LED           ; LED as output
+    sbi     IO_DDR, LED           ; LED as output
 
 main_loop:
     ldi     R25,hi8(COUNTER)    ; 1 clock cycle, executed once
     ldi     R24,lo8(COUNTER)    ; 1 clock cycle, executed once
-    sbi     PINB, LED           ; toggle LED — writing 1 to PINB flips PORTB output
+    sbi     IO_PIN, LED           ; toggle LED — writing 1 to IO_PIN flips IO_PORT output
 
     ; ~1ms delay at 1.2MHz
     ; TODO: cycles = 2 × (3×189 + 3) + 4) ~= 1ms (.998ms measured)

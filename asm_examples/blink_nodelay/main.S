@@ -1,5 +1,5 @@
 ; =============================================================
-; main.asm  –  Output 100ms signal on LED
+; main  –  Output 100ms signal on LED
 ; Target : ATtiny13A at 1.2MHz (factory default clock)
 ; Circuit: LED + 220Ω resistor from LED (pin 5) to GND
 ; ---------- Timer setup -------------------
@@ -37,17 +37,17 @@ main_setup:                  ; also serves as main_setup
     out     STACK_LOW, r16            ; ATtiny13A has no SPH
     eor     r1, r1
     out     STATUS, r1            ; clear status register
-    sbi     LED_DDR, LED           ; LED as output
+    sbi     IO_DDR, LED           ; LED as output
 
-    ; OCR0A: Use COUNT_A for Compare Match
+    ; OCRA: Use COUNT_A for Compare Match
     ldi     r18,COUNT_A         ; Match at COUNT_A
     out     OCRA,R18           ;
 
-    ; TCCR0A: Toggle LED at Compare Match to OCR0A (CTC mode)
+    ; TCCRA: Toggle LED at Compare Match to OCRA (CTC mode)
     ldi     r18,(1<<COM0A0) |(1<<WGM01)
     out     TCCRA,R18
 
-    ; TCCR0B: 1/1024 prescaler
+    ; TCCRB: 1/1024 prescaler
     ldi     r18,(1<<CS02)|(1<<CS00) ; prescaler 1024
     out     TCCRB,R18          ; to control port B
 

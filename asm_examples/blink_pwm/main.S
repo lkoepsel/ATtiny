@@ -1,5 +1,5 @@
 ; =============================================================
-; main.asm  –  PWM Output, no prescalar 4.51kHz, signal on LED
+; main  –  PWM Output, no prescalar 4.51kHz, signal on LED
 ; Target : ATtiny13A at 1.2MHz (factory default clock)
 ; Circuit: LED + 220Ω resistor from LED (pin 5) to GND
 ; ---------- Timer setup -------------------
@@ -38,19 +38,19 @@ main_setup:                  ; also serves as main_setup
     out     STACK_LOW, r16            ; ATtiny13A has no SPH
     eor     r1, r1
     out     STATUS, r1            ; clear status register
-    sbi     LED_DDR, LED           ; LED as output
+    sbi     IO_DDR, LED           ; LED as output
 
-    ; TCCR0A: Fast PWM, use DC_FACTOR to adjust
+    ; TCCRA: Fast PWM, use DC_FACTOR to adjust
     ldi     r18,(1<<COM0A1) | (1<<WGM01) | (1<<WGM00)
-    out     TCCR0A,R18
+    out     TCCRA,R18
 
-    ; TCCR0B: no prescaler, 4.51kHz
+    ; TCCRB: no prescaler, 4.51kHz
     ldi     r18, (1<<CS00)      ;
-    out     TCCR0B,R18          ;
+    out     TCCRB,R18          ;
 
-    ; OCR0A: Use DC_FACTOR to adjust duty cycle
+    ; OCRA: Use DC_FACTOR to adjust duty cycle
     ldi     r18,DC_FACTOR       ;
-    out     OCR0A,r18           ;
+    out     OCRA,r18           ;
 
 main_loop:
     rjmp main_loop

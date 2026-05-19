@@ -6,7 +6,7 @@
 
 #include <avr/io.h>
 #include "registers.h"
-.include "soft_serial.asm"
+.include "soft_serial.S"
 
 ; ====================================================================
 ;  INTERRUPT VECTOR TABLE
@@ -14,13 +14,13 @@
 ;  Must live at flash address 0x0000.
 ; ====================================================================
 .section .vectors, "ax", @progbits
-    rjmp    reset_handler       ; 0x000  RESET
+    rjmp    reset_handler         ; 0x000  RESET
     ; reti                        ; 0x001  INT0       - External Interrupt 0
     ; reti                        ; 0x002  PCINT0     - Pin Change Interrupt 0
     ; reti                        ; 0x003  TIM0_OVF   - Timer/Counter0 Overflow
     ; reti                        ; 0x004  EE_RDY     - EEPROM Ready
     ; reti                        ; 0x005  ANA_COMP   - Analog Comparator
-    rjmp    TIM0_COMPA_handler  ; 0x006  TIM0_COMPA - Timer0 Compare Match A
+    rjmp    TIM0_COMPA_handler    ; 0x006  TIM0_COMPA - Timer0 Compare Match A
     ; reti                        ; 0x007  TIM0_COMPB - Timer0 Compare Match B
     ; reti                        ; 0x008  WDT        - Watchdog Time-out
     ; reti                        ; 0x009  ADC        - ADC Conversion Complete
@@ -114,21 +114,21 @@ init_sysclock_1k:
 
     ;   WGM01 CTC mode, OCR0A is TOP, toggle LED on Compare Match
     ldi     r16, (1<<COM0A0) | (1<<WGM01)
-    out     TCCR0A,R16
+    out     TCCRA,R16
 
 ;   / 8 prescalar
     ldi     r16, (1<<CS01)      ;
-    out     TCCR0B,r16          ;
+    out     TCCRB,r16          ;
 
 ;   w/ sei and OCIE0A set, Timer/Counter0 Compare Match A interrupt is enabled
     ldi     r16, (1<<OCIE0A)      ;
-    out     TIMSK0,r16          ;
+    out     TIMSK,r16          ;
 
     ; OCR0A: adjust for a 1kHz signal (998.8kHz measured)
     ldi     r18,0x95       ;
-    out     OCR0A,r18           ;
+    out     OCRA,r18           ;
     sei
-    sbi     LED_DDR, LED           ; PB0 as output, for checking SYS_CLOCK
+    sbi     IO_DDR, LED           ; PB0 as output, for checking SYS_CLOCK
     ret
 
 ; ====================================================================

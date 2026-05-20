@@ -35,10 +35,12 @@ TARGET = main
 
 ifeq ($(LIBRARY),no_lib)
 	SOURCES=$(wildcard *.c )
+	ASM_SOURCES=$(wildcard *.S )
 	CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD)
 
 else
     SOURCES=$(wildcard *.c $(LIBDIR)/*.c)
+    ASM_SOURCES=$(wildcard *.S )
     CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD)   -I. \
 	-I$(LIBDIR)
 endif
@@ -53,8 +55,8 @@ endif
 # require AVR_C Library (and comment LIB)
 # SOURCES=$(wildcard *.c )
 
-OBJECTS=$(SOURCES:.c=.o)
-HEADERS=$(SOURCES:.c=.h)
+OBJECTS=$(SOURCES:.c=.o) $(ASM_SOURCES:.S=.o)
+HEADERS=$(wildcard *.h)
 
 ## Compilation options, type man avr-gcc if you're curious.
 
@@ -88,6 +90,10 @@ TARGET_ARCH = -mmcu=$(MCU)
 ##  To make .o files from .c files
 %.o: %.c $(HEADERS) Makefile
 	 $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c -o $@ $<;
+
+## Assemble .S files (uppercase S runs the C preprocessor first)
+%.o: %.S Makefile
+	$(CC) $(CPPFLAGS) $(TARGET_ARCH) -g -c -o $@ $<
 
 $(TARGET).elf: $(OBJECTS)
 	$(CC) $(LDFLAGS) $(TARGET_ARCH) $^ $(LDLIBS) -o $@

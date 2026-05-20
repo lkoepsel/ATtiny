@@ -36,7 +36,7 @@ main_loop:
 ; ~1ms delay at 1.2MHz
 ; cycles = 2 × ((3×189 + 3) + 4) ~= 1ms (1.004ms measured)
 delay_1ms:
-    ldi     r17, 2
+    ldi     r17, 1
 outer:
     ldi     r16, 189
 inner:

@@ -632,12 +632,15 @@ digitalWrite(ADC_PIN, HIGH);    // LED on
 ### .gdbinit - place in home folder
 
 ```
+set confirm off
+set pagination off
 set history save on
 set history size 10000
 set history filename ~/.gdb_history
 
 file main.elf
 target remote :1442
+load
 set listsize 0
 set tui compact-source on
 tui focus cmd
@@ -645,7 +648,7 @@ tui focus cmd
 define cll
 make
 load
-l 
+l
 end
 
 define td
@@ -847,3 +850,48 @@ Register written
 - ```info functions``` - List all functions
 - ```help command``` - Get help for specific command
 - ```quit``` or ```q``` - Exit gdb
+
+## tio setup
+
+For the ATtiny13A using hexadecimal data, use `tio hex`, to see ASCII data, use `tio ascii`
+
+```
+# default is for AVR_C Uno-type boards
+[default]
+baudrate = 250000
+databits = 8
+parity = none
+stopbits = 1
+local-echo = false
+color = 11
+
+[acm]
+device = /dev/ttyACM0
+color = 12
+
+[usb]
+device = /dev/ttyUSB0
+color = 15
+
+[usb-devices]
+pattern = ^usb([0-9]*)
+device = /dev/ttyUSB%m1
+color = 14
+
+# flashforth ATmega328P at 250000
+[forth]
+device = /dev/ttyUSB0
+color = 12
+auto-connect = latest
+
+# ATtiny13A boards/circuits, hex output
+[hex]
+device = /dev/ttyUSB0
+output-mode = hex
+baudrate = 9600
+
+# ATtiny13A boards/circuits, ascii output
+[ascii]
+device = /dev/ttyUSB0
+baudrate = 9600
+```

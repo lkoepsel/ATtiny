@@ -4,6 +4,11 @@
 ########## 	edit to change local/board/project parameters       ##########
 ##########------------------------------------------------------##########
 include $(DEPTH)env.make
+
+## Repo-relative paths (not per-developer). Kept here so every machine sees
+## the same layout — env.make is for things that genuinely vary by machine.
+LIBDIR = $(DEPTH)Library
+
 ##########------------------------------------------------------##########
 ##########                  Program Locations                   ##########
 ##########------------------------------------------------------##########
@@ -29,31 +34,12 @@ TARGET = main
 ## Or name it automatically after the enclosing directory
 # TARGET = $(lastword $(subst /, ,$(CURDIR)))
 
-# Object files: will find all .c/.h files in current directory
-#  and in LIBDIR.  If you have any other (sub-)directories with code,
-#  you can add them in to SOURCES below in the wildcard statement.
-
-ifeq ($(LIBRARY),no_lib)
-	SOURCES=$(wildcard *.c )
-	ASM_SOURCES=$(wildcard *.S) $(ASM_LIBS)
-	CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD) -I. -I$(LIBDIR)
-
-else
-    SOURCES=$(wildcard *.c $(LIBDIR)/*.c)
-    ASM_SOURCES=$(wildcard *.S) $(ASM_LIBS)
-    CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD)   -I. \
-	-I$(LIBDIR)
-endif
-
-# TODO: Confirm then delete, this appears to be deprecated with the addition of the LIBRARY ['' | no_lib] parameter
-# See Note re: CPPFLAGS if using/not using LIBDIR, pick only one LIB or NO_LIB
-# LIB - Uncomment if the AVR_C Library is required (default), also
-# uncomment LIB below in CPPFLAGS (and comment NO_LIB)
-# SOURCES=$(wildcard *.c $(LIBDIR)/*.c)
-
-# NO_LIB - Uncomment if you wish the smallest code size and DON'T
-# require AVR_C Library (and comment LIB)
-# SOURCES=$(wildcard *.c )
+# Sources: all .c in the current example directory; .S files in the current
+# directory plus anything the example's local Makefile lists in ASM_LIBS
+# (typically a shared assembly source from $(LIBDIR), e.g. softserial.S).
+SOURCES     = $(wildcard *.c)
+ASM_SOURCES = $(wildcard *.S) $(ASM_LIBS)
+CPPFLAGS    = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD) -I. -I$(LIBDIR)
 
 OBJECTS=$(SOURCES:.c=.o) $(ASM_SOURCES:.S=.o)
 HEADERS=$(wildcard *.h)
@@ -127,7 +113,6 @@ env:
 	@echo "F_CPU:" $(F_CPU)
 	@echo "USB_BAUD:"  $(USB_BAUD)
 	@echo "LIB_DIR:"  $(LIBDIR)
-	@echo "LIBRARY:"  $(LIBRARY)
 	@echo "PROGRAMMER_TYPE:"  $(PROGRAMMER_TYPE)
 	@echo "PROGRAMMER_ARGS:"  $(PROGRAMMER_ARGS)
 	@echo

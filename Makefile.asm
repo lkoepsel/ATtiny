@@ -5,6 +5,10 @@
 ##########------------------------------------------------------##########
 include $(DEPTH)env.make
 
+## Repo-relative paths (not per-developer). Same value on every machine —
+## env.make is for things that genuinely vary by machine.
+LIBDIR = $(DEPTH)Library
+
 TARGET  = main
 
 OBJCOPY = avr-objcopy
@@ -23,7 +27,7 @@ compile: $(TARGET).hex
 
 ## Pattern rules
 %.o: %.S
-	avr-gcc -mmcu=$(MCU) -DF_CPU=$(F_CPU) -I$(DEPTH)Library -g -Wa,--gdwarf-2 -MMD -MP -c -o $@ $<
+	avr-gcc -mmcu=$(MCU) -DF_CPU=$(F_CPU) -I$(LIBDIR) -g -Wa,--gdwarf-2 -MMD -MP -c -o $@ $<
 
 $(TARGET).elf: $(OBJECTS)
 	avr-gcc -mmcu=$(MCU) -nostartfiles -nostdlib -o $@ $^

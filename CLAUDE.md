@@ -51,15 +51,15 @@ F_CPU = 1200000UL          # Default clock; up to 9600000UL available
 SERIAL = /dev/ttyACM0      # Adjust per system
 PROGRAMMER_TYPE = atmelice_isp   # or snap_isp
 PROGRAMMER_ARGS = -F -V -P usb -b 115200
-LIBDIR = $(DEPTH)Library
-LIBRARY = no_lib           # Required for ATtiny13A — many AVR_C lib functions incompatible
 USB_BAUD = 250000UL
 SOFT_BAUD = 28800UL
 ```
 
-See `docs/env_make.md` for full documentation.
+`env.make` is for values that genuinely vary by machine. Repo-structure paths
+like `LIBDIR = $(DEPTH)Library` live in the tracked root `Makefile` /
+`Makefile.asm`, so every developer sees the same layout automatically.
 
-**LIBRARY variable:** When set to `no_lib`, only `*.c` files in the current example directory are compiled (no LIBDIR). This is the correct default for ATtiny13A. When omitted or set to any other value, `$(LIBDIR)/*.c` is also compiled and `-I$(LIBDIR)` is added to include paths.
+See `docs/env_make.md` for full documentation.
 
 ## Compilation Flags
 

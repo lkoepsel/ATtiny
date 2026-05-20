@@ -12,13 +12,10 @@ Copy and paste the text below. Be sure to go to step 3!
 
 ### env.make
 ```make
-# ATtiny13A, be sure to set LIBRARY = no_lib as many AVR_C library functions are not compatible
 MCU = attiny13a
 SERIAL = /dev/ttyACM0
 F_CPU = 1200000UL
 USB_BAUD = 250000UL
-LIBDIR = $(DEPTH)ATtiny13A
-LIBRARY = no_lib
 PROGRAMMER_TYPE = atmelice_isp
 PROGRAMMER_ARGS = -F -V -P usb -b 115200
 SOFT_BAUD = 28800UL

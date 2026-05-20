@@ -58,7 +58,8 @@ reset_handler:
     out     STATUS, r1
 
 ; --------------------------------------------------------------------
-; main – application logic starts here
+; main – delay COUNT times and compare to number of elapsed ticks
+;        display the number of elapsed ticks on the serial port
 ; --------------------------------------------------------------------
 main_setup:
 
@@ -72,21 +73,21 @@ main_loop:
     ldi     r27,hi8(COUNTER)
     ldi     r26,lo8(COUNTER)
 
-    ; get clock start
+    ; get ticks start
     movw    r4, ticks_lo
 
 delay_1ms:
     sbiw    r26,1
     brne    delay_1ms
 
-    ; get clock end
+    ; get ticks end
     movw    r6, ticks_lo
 
-    ; delta = end - start
+    ; delta ticks = end - start
     sub     r6, r4
     sbc     r7, r5
 
-    ; print delta
+    ; print delta ticks in hex
     mov     r24, r7
     rcall   char_write
     mov     r24, r6
@@ -101,10 +102,10 @@ delay_1ms:
 ;  Subroutines SECTION
 ; ====================================================================
 TIM0_COMPA_handler:
-    in      ISR_temp, STATUS      ; save status flags
-    inc     ticks_lo              ; r8++
-    brne    done            ; no carry → done
-    inc     ticks_hi              ; carry → bump high byte
+    in      ISR_temp, STATUS        ; save status flags
+    inc     ticks_lo                ; r8++
+    brne    done                    ; no carry → done
+    inc     ticks_hi                ; carry → bump high byte
 done:
     out     STATUS, ISR_temp
     reti

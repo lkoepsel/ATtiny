@@ -8,7 +8,7 @@ Result = 0x65 or 101
 
 The ISR uses `r2` as a dedicated scratch register (reserved globally — see the
 register notes at the top of `main.S`), so it needs no `push`/`pop`. That keeps
-the per-interrupt overhead to 14 cycles.
+the per-interrupt overhead to 15 cycles.
 
 ## Analysis
 
@@ -61,16 +61,20 @@ Confirmed — 0x65 (101) is the right number. Here's why it's 101 and not the "o
   ├──────────────────────────────────────┼────────┤
   │ in r2, STATUS                        │ 1      │
   ├──────────────────────────────────────┼────────┤
-  │ adiw r24,1                           │ 2      │
+  │ inc r8                               │ 1      │
+  ├──────────────────────────────────────┼────────┤
+  │ brne                                 │ 1      │
+  ├──────────────────────────────────────┼────────┤
+  │ inc r9                               │ 1      │
   ├──────────────────────────────────────┼────────┤
   │ out STATUS, r2                       │ 1      │
   ├──────────────────────────────────────┼────────┤
   │ reti                                 │ 4      │
   ├──────────────────────────────────────┼────────┤
-  │ Total per ISR                        │ 14     │
+  │ Total per ISR                        │ 15     │
   └──────────────────────────────────────┴────────┘
 
-  Because `r2` and the counter `r24:r25` are reserved registers, the handler skips the usual `push`/`pop` pair — an r16-based handler that saved/restored on the stack would cost 22 cycles; this one costs 14.
+  Because `r2` and the counter `r8:r9` are reserved registers, the handler skips the usual `push`/`pop` pair — an r16-based handler that saved/restored on the stack would cost 22 cycles; this one costs 14.
 
   Putting it together
 

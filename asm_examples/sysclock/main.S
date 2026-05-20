@@ -6,7 +6,6 @@
 
 #include <avr/io.h>
 #include "registers.h"
-#include "softserial.S"
 
 ; ====================================================================
 ;  INTERRUPT VECTOR TABLE

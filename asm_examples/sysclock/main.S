@@ -35,7 +35,7 @@
 ; r7:r6                         ; final ticks count and delta
 ; r15                           ; temp register, saved in ISR
 ; r16                           ; temp register
-; r17                           ; char register (softserial)
+; r24                           ; char register (softserial)
 ; r27                           ; delay word
 ; ---------- Reserved registers ----------
 ; r2        ISR_temp - ISR scratch (STATUS save) — do NOT use elsewhere
@@ -67,7 +67,7 @@ main_setup:
     rcall   init_serial
 
 main_loop:
-    ldi     r17, HEX_BEG
+    ldi     r24, HEX_BEG
     rcall   char_write
 
     ldi     r27,hi8(COUNTER)
@@ -88,12 +88,12 @@ delay_1ms:
     sbc     r7, r5
 
     ; print delta
-    mov     r17, r7
+    mov     r24, r7
     rcall   char_write
-    mov     r17, r6
+    mov     r24, r6
     rcall   char_write
 
-    ldi     r17,  HEX_END
+    ldi     r24,  HEX_END
     rcall   char_write
 
     rjmp    main_loop

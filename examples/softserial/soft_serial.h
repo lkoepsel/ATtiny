@@ -1,8 +1,7 @@
-// soft serial - adds a software defined serial port
+// soft serial - adds a defined serial port in assembly
 // Slow serial port, use for non-intensive serial interaction
 // Set serial pins below: SOFT_RX_PIN/SOFT_TX_PIN
 // Set baud ticks below for baud rate
-// Tested baud rate is 1200, due to freq fluctuations of internal clock
 //
 
 // API:
@@ -36,18 +35,10 @@
 #include <avr/pgmspace.h>
 #include "softserial_asm.h"
 
-// #define SOFT_TX_PIN PB1
-// #define SOFT_RX_PIN PB2
-// #define BIT_DURATION 104  // For 9600 baud
-
 #define CR 13		// carriage return
 #define LF 10		// line feed
 #define BL 32		// blank or space (SP is taken for stack pointer)
 #define ASCII_INTEGER 0x30 // constant added to an integer(0-9) to make ASCII
-
-// void init_soft_serial() ;
-// void soft_char_write(char data) ;
-// int8_t soft_char_read() ;
 
 void soft_string_write(const char *s);
 int8_t soft_readLine(char *buffer, int8_t SIZE) ;

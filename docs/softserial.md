@@ -1,6 +1,9 @@
 # Serial Communication Issues with ATtiny13A
 ## Introduction
 
+Much of this has been deprecated by moving to an assembly language version of *char_read()* and *char_write()*. These new versions are more precise due to their ability to use an assembly instruction (*ror*) which matches the need precisely. The serial programs (both *C* and *assembly*), have been tested extensively using the assembly language versions, and at 9600 baud, appear to be rock-solid.
+
+The OSCCAL explanation and program are quite helpful in dialing in the exact RC constant, so continue to use that program. 
 ### Explanation
 This page covers the issues creating a soft serial port on an ATtiny13A. There are several issues:
 

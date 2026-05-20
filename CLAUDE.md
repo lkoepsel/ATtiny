@@ -102,7 +102,6 @@ The core library provides inline assembly macros to avoid compiler optimization 
 
 - `SBI(port, bit)` — set bit (maps to AVR `sbi` instruction)
 - `CBI(port, bit)` — clear bit (maps to AVR `cbi` instruction)
-- `TIMER_DELAY(ticks)` — busy-wait using TCNT0
 
 The `"I"` constraint enforces compile-time constants (0–63) required by the `sbi`/`cbi` AVR instructions.
 
@@ -114,7 +113,7 @@ Each example in `examples/` is self-contained: a `main.c`, a local `Makefile`, a
 
 ### Key Modules (copy both `.h` and `.c` into example directory when needed)
 
-- `ATtiny.h` — SBI/CBI/TIMER_DELAY macros (header only)
+- `ATtiny.h` — SBI/CBI macros (header only)
 - `sysclock.h` / `sysclock.c` — `init_sysclock_1k()`, `ticks()` for 1kHz system clock using Timer0 CTC interrupt; **both files must be copied** to use in an example
 - `soft_serial.h` / `soft_serial.c` — Software UART at 1200 baud: `init_soft_serial()`, `soft_char_write()`, `soft_char_read()`, `soft_readLine()`, `soft_int16_write()`, `soft_pgmtext_write()`; **both files must be copied**
 

@@ -8,12 +8,12 @@
 
     register uint16_t ticks asm("r8");
 
-  #define SBI(port, bit) \
+    #define SBI(port, bit) \
     __asm__ __volatile__ ( \
         "sbi %0, %1" \
         : \
         : "I" (_SFR_IO_ADDR(port)), \
-          "I" (bit) \
+            "I" (bit) \
     )
 
     #define CBI(port, bit) \
@@ -21,13 +21,7 @@
         "cbi %0, %1" \
         : \
         : "I" (_SFR_IO_ADDR(port)), \
-          "I" (bit) \
+            "I" (bit) \
     )
-
-  #define TIMER_DELAY(ticks) do { \
-      TCNT0 = 0; \
-      while (TCNT0 < (ticks)) {} ; \
-  } while(0)
-
 
     #endif

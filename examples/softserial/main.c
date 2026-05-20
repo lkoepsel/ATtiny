@@ -4,6 +4,7 @@
 // Set baud rate in soft_serial.h: SOFT_BAUD
 
 #include <stdio.h>
+#include "softserial_asm.h"
 #include "soft_serial.h"
 
 const char prompt[] PROGMEM = "13A";
@@ -19,20 +20,20 @@ int main(void) {
     // char soft_out[N_out] = {""};
 
     // Example: Send and receive data
-    init_soft_serial();
+    init_serial();
 
-    soft_char_write(CR);
-    soft_char_write(LF);
+    char_write(CR);
+    char_write(LF);
     soft_pgmtext_write(prompt);
-    soft_char_write(CR);
-    soft_char_write(LF);
+    char_write(CR);
+    char_write(LF);
     soft_pgmtext_write(waiting);
 
-    while (1) 
-    {    
+    while (1)
+    {
         // echo code reads->writes char
-        uint8_t char_r = soft_char_read();
-        soft_char_write(char_r);
+        uint8_t char_r = char_read();
+        char_write(char_r);
 
         // Receive line data and echo back
         // uint8_t received = soft_readLine(soft_in, N_in - 1);

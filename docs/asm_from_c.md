@@ -553,14 +553,7 @@ void soft_uint16_write(uint16_t n)
 }
 ```
 
-All the timing-critical work is in the assembly; the C code only sequences
-bytes through the primitives. Compiler-generated overhead lives in the *gap*
-between characters (inside the stop bit + idle), not inside a bit period,
-so it can't break the protocol.
+All the timing-critical work is in the assembly; the C code only sequences bytes through the primitives. Compiler-generated overhead lives in the *gap* between characters (inside the stop bit + idle), not inside a bit period, so it can't break the protocol.
 
-A longer-term cleanup, once this works: have `asm_examples/softserial/main.S`
-*link* `Library/softserial.S` as a separate object instead of `#include`-ing
-it. Then there is one shared library object, used identically by asm and C
-callers. That requires teaching `Makefile.asm` to pick up `$(LIBDIR)/*.S`
-and add it to the link line — a mirror of Step 7 on the asm side. Worth
-doing eventually; not required to get the C example working.
+A longer-term cleanup, once this works: have `asm_examples/softserial/main.S` *link* `Library/softserial.S` as a separate object instead of `#include`-ing it. Then there is one shared library object, used identically by asm and C
+callers. That requires teaching `Makefile.asm` to pick up `$(LIBDIR)/*.S` and add it to the link line — a mirror of Step 7 on the asm side. Worth doing eventually; not required to get the C example working.

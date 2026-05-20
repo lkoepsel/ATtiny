@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <avr/io.h>
 
+    register uint16_t ticks asm("r8");
+
   #define SBI(port, bit) \
     __asm__ __volatile__ ( \
         "sbi %0, %1" \

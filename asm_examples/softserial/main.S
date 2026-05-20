@@ -63,7 +63,6 @@ main_setup:
 ; simple echo loop to test read/write char
 main_loop:
     rcall   char_read
-    brts    main_loop          ; framing error -> discard, wait for next char
     rcall   char_write
     rjmp    main_loop
 

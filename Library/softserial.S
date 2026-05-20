@@ -13,7 +13,7 @@
 .section .text
 
 ; ---------- Registers and Values ----------------
-; r17                           ; char register
+; r24                           ; char register
 ; r18                           ; temp register
 ; r19                           ; timer delay register
 ; r20                           ; temp register
@@ -32,6 +32,7 @@ timer_delay:
 ; --------------------------------------------------------------------
 
 ;initialize serial port, must be called before using char_read and char_write
+.global init_serial
 init_serial:
 ;   Set TX pin as output, set RX pin as input pullup
     sbi     IO_DDR, TX
@@ -43,7 +44,8 @@ init_serial:
     ret
 ; --------------------------------------------------------------------
 
-; write a char in r17 to serial port, r17 is preserved
+; write a char (passed in r24, per AVR-GCC ABI) to the serial port
+.global char_write
 char_write:
 
     ; Start bit
@@ -54,7 +56,7 @@ char_write:
 
     ;  8 data bits and preserve char
     ldi     r20, 8
-    mov     r18, r17
+    mov     r18, r24
 
 write_bit:
     ror     r18
@@ -80,8 +82,8 @@ next_write:
 ; --------------------------------------------------------------------
 
 
-; char_read - receive one char into r17 (8N1, LSB first)
-;   Returns status in T flag:  T=0 frame OK,  T=1 framing error.
+; char_read - receive one char into r24 (8N1, LSB first), per AVR-GCC ABI
+.global char_read
 char_read:
 ;   Wait for start bit: idle is HIGH, start bit is LOW
 ;   while (IO_PIN & (1 << RX)) {} ;
@@ -102,15 +104,15 @@ wait_start:
     ldi     r19, period
     rcall   timer_delay
 
-;   Read 8 data bits, LSB first, into r17
+;   Read 8 data bits, LSB first, into r24
     ldi     r20, 8              ; bit counter
 
 read_bit:
-    in      r18, IO_PIN           ; scratch read - do not clobber r17
+    in      r18, IO_PIN           ; scratch read - do not clobber r24
     clc                         ; assume bit is 0
     sbrc    r18, RX         ; skip sec when RX is LOW
     sec                         ; RX HIGH -> bit is 1
-    ror     r17                 ; shift carry into MSB (LSB-first)
+    ror     r24                 ; shift carry into MSB (LSB-first)
 
     ldi     r19, period
     rcall   timer_delay
@@ -120,10 +122,10 @@ read_bit:
 
 ;   Stop bit check - line must be HIGH (mark); loop fall-through is ~mid stop bit.
 ;   Status returned in T flag:  T=0 frame OK,  T=1 framing error.
-    clt                         ; assume frame OK
-    in      r18, IO_PIN
-    sbrs    r18, RX         ; skip 'set' when stop bit is HIGH (valid)
-    set                         ; stop bit LOW -> framing error
+    ; clt                         ; assume frame OK
+    ; in      r18, IO_PIN
+    ; sbrs    r18, RX         ; skip 'set' when stop bit is HIGH (valid)
+    ; set                         ; stop bit LOW -> framing error
     ret
 ; --------------------------------------------------------------------
 

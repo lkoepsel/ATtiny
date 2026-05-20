@@ -112,8 +112,6 @@
   - Call-clobbered pair with ISR save/restore. Defeats the purpose — every ISR pays a stack round-trip to "hold" a value that was never threatened
    in the first place. Use call-saved.
 
-  TL;DR
+  **Summary:**
 
-  ▎ Reserve r8:r9 (or any unused call-saved pair). Document the reservation in your asm header comment. Use movw for atomic snapshots from the
-  ▎ ISR-written pair. Pay 1 extra ISR cycle for losing adiw. When you add C, gate it behind -ffixed-r8 -ffixed-r9 and declare register uint16_t 
-  ▎ ticks asm("r8"); so both sides share the same physical pair.
+Reserve r8:r9 (or any unused call-saved pair). Document the reservation in your asm header comment. Use movw for atomic snapshots from the ISR-written pair. Pay 1 extra ISR cycle for losing adiw. When you add C, gate it behind -ffixed-r8 -ffixed-r9 and declare register uint16_t ticks asm("r8"); so both sides share the same physical pair.

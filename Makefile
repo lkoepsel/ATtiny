@@ -35,17 +35,17 @@ TARGET = main
 
 ifeq ($(LIBRARY),no_lib)
 	SOURCES=$(wildcard *.c )
-	CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD)  
+	CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD)
 
 else
     SOURCES=$(wildcard *.c $(LIBDIR)/*.c)
     CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD)   -I. \
-	-I$(LIBDIR) 
+	-I$(LIBDIR)
 endif
 
 # TODO: Confirm then delete, this appears to be deprecated with the addition of the LIBRARY ['' | no_lib] parameter
 # See Note re: CPPFLAGS if using/not using LIBDIR, pick only one LIB or NO_LIB
-# LIB - Uncomment if the AVR_C Library is required (default), also 
+# LIB - Uncomment if the AVR_C Library is required (default), also
 # uncomment LIB below in CPPFLAGS (and comment NO_LIB)
 # SOURCES=$(wildcard *.c $(LIBDIR)/*.c)
 
@@ -56,23 +56,25 @@ endif
 OBJECTS=$(SOURCES:.c=.o)
 HEADERS=$(SOURCES:.c=.h)
 
-## Compilation options, type man avr-gcc if you're curious. 
+## Compilation options, type man avr-gcc if you're curious.
 
 # use below to setup gdb and debugging
 CFLAGS = -Og -ggdb3 -std=gnu99 -Wall -Wundef -Werror -Wno-aggressive-loop-optimizations
+# added to ensure C does not use r9:r8, as it is the assembly sys_clock ticks counter (see ./docs/sysclock_regpair.md)
+CFLAGS += -ffixed-r8 -ffixed-r9
 # Use below to optimize size
 # CFLAGS = -Os -g -std=gnu99 -Wall
-## Use short (8-bit) data types 
-CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums 
+## Use short (8-bit) data types
+CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 ## Splits up object files per function
 CFLAGS += -ffunction-sections -fdata-sections
 # if attempting to use %S format specification (strings in progmem), uncomment next line
 CFLAGS += -Wno-format
-LDFLAGS = -Wl,-Map,$(TARGET).map 
+LDFLAGS = -Wl,-Map,$(TARGET).map
 ## Uncomment line to remove interrupt vectors for smallest code size
 ## LDFLAGS += -nostartfiles
 ## Optional, but often ends up with smaller code
-LDFLAGS += -Wl,--gc-sections 
+LDFLAGS += -Wl,--gc-sections
 # Uncomment line below to add timestamp wrapper to printf() OR
 # Comment line below, if  undefined reference to `__wrap_printf'
 # LDFLAGS += -Wl,--wrap=printf
@@ -83,7 +85,7 @@ LDFLAGS += -Wl,--gc-sections
 TARGET_ARCH = -mmcu=$(MCU)
 
 ## Explicit pattern rules:
-##  To make .o files from .c files 
+##  To make .o files from .c files
 %.o: %.c $(HEADERS) Makefile
 	 $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c -o $@ $<;
 
@@ -94,7 +96,7 @@ $(TARGET).elf: $(OBJECTS)
 	 $(OBJCOPY) -j .text -j .data -O ihex $< $@
 
 %.eeprom: %.elf
-	$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O ihex $< $@ 
+	$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O ihex $< $@
 
 %.lst: %.elf
 	$(OBJDUMP) -S $< > $@
@@ -105,12 +107,12 @@ $(TARGET).elf: $(OBJECTS)
 
 complete: all_clean compile size
 
-compile: $(TARGET).hex 
+compile: $(TARGET).hex
 
 stack: CFLAGS += -fstack-usage
 stack: $(TARGET).hex
 
-static: 
+static:
 	cppcheck --std=c99 --platform=avr8 --enable=all --suppressions-list=$(DEPTH)suppressions.txt . 2> cppcheck.txt
 
 env:
@@ -124,7 +126,7 @@ env:
 	@echo "PROGRAMMER_ARGS:"  $(PROGRAMMER_ARGS)
 	@echo
 	@echo "Source files:"   $(SOURCES)
-	@echo	
+	@echo
 
 help:
 	@echo "make compile - compile only (Arduino verify)"
@@ -139,13 +141,13 @@ help:
 
 # Optionally create listing file from .elf
 # This creates approximate assembly-language equivalent of your code.
-# Useful for debugging time-sensitive bits, 
+# Useful for debugging time-sensitive bits,
 # or making sure the compiler does what you want.
 disassemble: $(TARGET).lst
 
 disasm: disassemble
 
-# Optionally show how big the resulting program is 
+# Optionally show how big the resulting program is
 size:  $(TARGET).elf
 # 	$(AVRSIZE) -G --mcu=$(MCU) $(TARGET).elf
 	$(OBJDUMP) -Pmem-usage $(TARGET).elf
@@ -183,7 +185,7 @@ verbose: $(TARGET).hex $(TARGET).lst size
 ## An alias
 program: flash
 
-flash_eeprom: $(TARGET).eeprom 
+flash_eeprom: $(TARGET).eeprom
 	$(AVRDUDE) $(AVRDUDECONF) -c $(PROGRAMMER_TYPE) -p $(MCU) $(PROGRAMMER_ARGS) -U eeprom:w:$<
 
 avrdude_terminal:
@@ -198,23 +200,23 @@ LFUSE = 0x62
 HFUSE = 0xdf
 EFUSE = 0x00
 
-## Generic 
-FUSE_STRING = -U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m -U efuse:w:$(EFUSE):m 
+## Generic
+FUSE_STRING = -U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m -U efuse:w:$(EFUSE):m
 
-fuses: 
+fuses:
 	$(AVRDUDE) -c $(PROGRAMMER_TYPE) -p $(MCU) \
 	           $(PROGRAMMER_ARGS) $(FUSE_STRING)
 show_fuses:
-	$(AVRDUDE) -c $(PROGRAMMER_TYPE) -p $(MCU) $(PROGRAMMER_ARGS) -nv	
+	$(AVRDUDE) -c $(PROGRAMMER_TYPE) -p $(MCU) $(PROGRAMMER_ARGS) -nv
 
 ## Called with no extra definitions, sets to defaults
-set_default_fuses:  FUSE_STRING = -U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m -U efuse:w:$(EFUSE):m 
+set_default_fuses:  FUSE_STRING = -U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m -U efuse:w:$(EFUSE):m
 set_default_fuses:  fuses
 
 ## Set the fuse byte for full-speed mode
 ## Note: can also be set in firmware for modern chips
 set_fast_fuse: LFUSE = 0xE2
-set_fast_fuse: FUSE_STRING = -U lfuse:w:$(LFUSE):m 
+set_fast_fuse: FUSE_STRING = -U lfuse:w:$(LFUSE):m
 set_fast_fuse: fuses
 
 ## Set the EESAVE fuse byte to preserve EEPROM across flashes

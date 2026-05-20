@@ -28,7 +28,7 @@
   What this looks like in sysclock/main.S
 
   Two changes plus a third caveat:
-
+```asm
    ; ---------- Reserved registers ----------
    ; r2        ISR scratch (STATUS save) — do NOT use elsewhere
   -; r25:r24   global 16-bit ISR ticks counter — do NOT use elsewhere
@@ -57,7 +57,7 @@
        ; get clock end
   -    movw    r6, r24
   +    movw    r6, r8
-
+```
   The adiw caveat
 
   adiw (Add Immediate to Word) only works on r25:r24, r27:r26, r29:r28, r31:r30 — the four "upper" pointer pairs. r8:r9 isn't one of them, so the

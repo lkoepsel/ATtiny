@@ -11,3 +11,6 @@
 #define TCCRB       _SFR_IO_ADDR(TCCR0B)
 #define TIMSK       _SFR_IO_ADDR(TIMSK0)
 #define RCCAL       _SFR_IO_ADDR(OSCCAL)
+#define ISR_temp    r2
+#define ticks_lo    r8
+#define ticks_hi    r9

@@ -38,8 +38,8 @@
 ; r17                           ; char register (softserial)
 ; r27                           ; delay word
 ; ---------- Reserved registers ----------
-; r2        ISR scratch (STATUS save) — do NOT use elsewhere
-; r25:r24   global 16-bit ISR ticks counter — do NOT use elsewhere
+; r2        ISR_temp - ISR scratch (STATUS save) — do NOT use elsewhere
+; r9:r8     ticks_hi/lo - global 16-bit ISR ticks counter — do NOT use elsewhere
 
 .equ    COUNTER,  30000         ; 30,000@1.2MHZ => 100ms delay
 .equ    TRIM, 0x65              ; OSCCAL trim value, typically x6n
@@ -74,14 +74,14 @@ main_loop:
     ldi     r26,lo8(COUNTER)
 
     ; get clock start
-    movw    r4, r24
+    movw    r4, ticks_lo
 
 delay_1ms:
     sbiw    r26,1
     brne    delay_1ms
 
     ; get clock end
-    movw    r6, r24
+    movw    r6, ticks_lo
 
     ; delta = end - start
     sub     r6, r4
@@ -102,9 +102,12 @@ delay_1ms:
 ;  Subroutines SECTION
 ; ====================================================================
 TIM0_COMPA_handler:
-    in      r2, STATUS      ; save status flags
-    adiw    r24, 1          ; increment ticks counter
-    out     STATUS, r2      ; restore status flags
+    in      ISR_temp, STATUS      ; save status flags
+    inc     ticks_lo              ; r8++
+    brne    done            ; no carry → done
+    inc     ticks_hi              ; carry → bump high byte
+done:
+    out     STATUS, ISR_temp
     reti
 
 
@@ -117,8 +120,8 @@ init_sysclock_1k:
 ;   OCR0A  0b.        0x95
 
 ; clear counter register
-    eor     r24, r24        ; clear counter low byte
-    eor     r25, r25        ; clear counter high byte
+    eor     r8, r8        ; clear counter low byte
+    eor     r9, r9        ; clear counter high byte
 
     ;   WGM01 CTC mode, OCR0A is TOP, toggle LED on Compare Match
     ldi     r16, (1<<COM0A0) | (1<<WGM01)

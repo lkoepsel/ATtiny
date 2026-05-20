@@ -35,12 +35,12 @@ TARGET = main
 
 ifeq ($(LIBRARY),no_lib)
 	SOURCES=$(wildcard *.c )
-	ASM_SOURCES=$(wildcard *.S )
-	CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD)
+	ASM_SOURCES=$(wildcard *.S) $(ASM_LIBS)
+	CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD) -I. -I$(LIBDIR)
 
 else
     SOURCES=$(wildcard *.c $(LIBDIR)/*.c)
-    ASM_SOURCES=$(wildcard *.S )
+    ASM_SOURCES=$(wildcard *.S) $(ASM_LIBS)
     CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD)   -I. \
 	-I$(LIBDIR)
 endif

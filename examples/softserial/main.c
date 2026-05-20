@@ -1,49 +1,36 @@
-// soft serial - adds a software defined serial port
+// soft serial - software-defined serial port using assembly primitives
 // Slow serial port, use for non-intensive serial interaction
-// Change serial pins in soft_serial.h: SOFT_RX_PIN/SOFT_TX_PIN
-// Set baud rate in soft_serial.h: SOFT_BAUD
+// Change serial pins and timing in Library/registers.h and Library/softserial.S
 
-#include <stdio.h>
+#include <avr/pgmspace.h>
 #include "softserial_asm.h"
-#include "soft_serial.h"
 
-const char prompt[] PROGMEM = "13A";
+#define CR 13
+#define LF 10
+
+const char prompt[]  PROGMEM = "13A";
 const char waiting[] PROGMEM = "W:";
-const char chr_recd[] PROGMEM = " R:";
 
-#define N_in 7
-#define N_out 7
+// Write a PROGMEM-resident, null-terminated string to the serial port.
+static void pgmtext_write(const char *p)
+{
+    for (uint8_t c; (c = pgm_read_byte(p)); p++)
+        char_write(c);
+}
 
-int main(void) {
-    // used for line read/write, comment of for char echo
-    // char soft_in[N_in] = {""};
-    // char soft_out[N_out] = {""};
-
-    // Example: Send and receive data
+int main(void)
+{
     init_serial();
 
     char_write(CR);
     char_write(LF);
-    soft_pgmtext_write(prompt);
+    pgmtext_write(prompt);
     char_write(CR);
     char_write(LF);
-    soft_pgmtext_write(waiting);
+    pgmtext_write(waiting);
 
-    while (1)
-    {
-        // echo code reads->writes char
-        uint8_t char_r = char_read();
-        char_write(char_r);
-
-        // Receive line data and echo back
-        // uint8_t received = soft_readLine(soft_in, N_in - 1);
-        // soft_pgmtext_write(chr_recd);
-        // soft_char_write(received + ASCII_INTEGER);
-        // soft_char_write(BL);
-        // soft_string_write(soft_in, received + 1);
-        // soft_char_write(CR);
-        // soft_char_write(LF);
+    // Echo each received character back over the serial port.
+    for (;;) {
+        char_write(char_read());
     }
-
-    return 0;
 }

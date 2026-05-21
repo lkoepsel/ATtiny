@@ -14,7 +14,7 @@ the per-interrupt overhead to 15 cycles.
 
 Confirmed — 0x65 (101) is the right number. Here's why it's 101 and not the "obvious" 100.
 
-  Tick period (how often r24:r25 increments)
+  Tick period (how often r9:r8 — `ticks_hi:ticks_lo` — increments)
 
   ┌─────────────────────────┬─────────────────────────────┐
   │          Item           │            Value            │
@@ -63,9 +63,9 @@ Confirmed — 0x65 (101) is the right number. Here's why it's 101 and not the "o
   ├──────────────────────────────────────┼────────┤
   │ inc r8                               │ 1      │
   ├──────────────────────────────────────┼────────┤
-  │ brne                                 │ 1      │
+  │ brne done (taken, common case)       │ 2      │
   ├──────────────────────────────────────┼────────┤
-  │ inc r9                               │ 1      │
+  │ inc r9 (carry only — skipped here)   │ 0      │
   ├──────────────────────────────────────┼────────┤
   │ out STATUS, r2                       │ 1      │
   ├──────────────────────────────────────┼────────┤
@@ -74,30 +74,34 @@ Confirmed — 0x65 (101) is the right number. Here's why it's 101 and not the "o
   │ Total per ISR                        │ 15     │
   └──────────────────────────────────────┴────────┘
 
-  Because `r2` and the counter `r8:r9` are reserved registers, the handler skips the usual `push`/`pop` pair — an r16-based handler that saved/restored on the stack would cost 22 cycles; this one costs 14.
+  On the rare carry path (once every 256 ticks, when `r8` wraps from 0xFF to
+  0x00), `brne` falls through (1 cycle) and `inc r9` executes (1 cycle) — the
+  same 15-cycle total.
+
+  Because `r2` and the counter `r9:r8` are reserved registers, the handler skips the usual `push`/`pop` pair — an r16-based handler that saved/restored r16 on the stack would add 4 cycles (push + pop) for a total of 19 cycles; this one costs 15.
 
   Putting it together
 
   Wall-clock time of the loop = loop instructions + every ISR that fires during it:
 
-  T_wall = 119,999 + 14 · n      where  n = T_wall / 1200
+  T_wall = 119,999 + 15 · n      where  n = T_wall / 1200
 
   Solving the fixed point:
 
-  T_wall = 119,999 / (1 − 14/1200) = 119,999 × 1200/1186 ≈ 121,415 cycles
-  n      = 121,415 / 1200 ≈ 101.2 ticks
+  T_wall = 119,999 / (1 − 15/1200) = 119,999 × 1200/1185 ≈ 121,518 cycles
+  n      = 121,518 / 1200 ≈ 101.3 ticks
 
   ┌──────────────────────────┬──────────┬───────────────┐
   │                          │  Cycles  │     Ticks     │
   ├──────────────────────────┼──────────┼───────────────┤
   │ Delay loop instructions  │ 119,999  │ 100.0         │
   ├──────────────────────────┼──────────┼───────────────┤
-  │ ISR overhead (~101 × 14) │ ~1,414   │ ~1.2          │
+  │ ISR overhead (~101 × 15) │ ~1,515   │ ~1.3          │
   ├──────────────────────────┼──────────┼───────────────┤
-  │ Total measured window    │ ~121,415 │ ≈ 101.2 → 101 │
+  │ Total measured window    │ ~121,518 │ ≈ 101.3 → 101 │
   └──────────────────────────┴──────────┴───────────────┘
 
-  The count of compare-matches inside a ~121,415-cycle window is 101–102 depending on phase; since the loop starts deterministically relative to the timer, you get a consistent 101 = 0x65. ✓
+  The count of compare-matches inside a ~121,518-cycle window is 101–102 depending on phase; since the loop starts deterministically relative to the timer, you get a consistent 101 = 0x65. ✓
 
   Note r7 (delta high byte) prints as 0x00 — correct, since 101 fits in one byte.
   COUNTER = 30000 is deliberately a ~100 ms window so the delta is visible. If you ever want delta ≈ exactly 100, you'd need to shave the loop to compensate for the 14-cycle-per-tick ISR tax.

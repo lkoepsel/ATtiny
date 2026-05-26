@@ -35,6 +35,7 @@
 ; r19                           ; timer delay register
 ; r24                           ; char register
 
+#define     prompt  0x3F        ; ASCII ? for a initial prompt
 ; --------------------------------------------------------------------
 ; reset_handler – entry point after RESET
 ; --------------------------------------------------------------------
@@ -56,6 +57,10 @@ reset_handler:
 main_setup:
 
     rcall   init_serial
+
+    ; prompt to show terminal is live
+    ldi     r24, prompt
+    rcall   char_write
 
 ; simple echo loop to test read/write char
 main_loop:

@@ -31,12 +31,6 @@
 ; ====================================================================
 ;  Subroutines SECTION
 ; ====================================================================
-; blocking delay, enter with r19 as 8-bit counter value
-; timer_delay:
-;     dec    r19
-;     brne   timer_delay
-;     ret
-; --------------------------------------------------------------------
 
 ;initialize serial port, must be called before using char_read and char_write
 .global init_serial
@@ -61,8 +55,6 @@ char_write:
 
     ; Start bit
     cbi     IO_PORT, TX
-    ; ldi     r19,period
-    ; rcall   timer_delay
     delay_ticks period
 
     ;  8 data bits and preserve char
@@ -79,8 +71,6 @@ write_one:
     sbi     IO_PORT, TX
 
 next_write:
-    ; ldi     r19,period
-    ; rcall   timer_delay
     delay_ticks period
 
     dec     r20
@@ -88,8 +78,6 @@ next_write:
 
     ;  Stop bit
     sbi     IO_PORT, TX
-    ; ldi     r19,period
-    ; rcall   timer_delay
     delay_ticks period
     ret
 ; --------------------------------------------------------------------
@@ -106,8 +94,6 @@ wait_start:
     rjmp    wait_start
 
 ;   Wait a .5 bit period so bit0 is sampled mid-bit
-    ; ldi     r19, half_period
-    ; rcall   timer_delay
     delay_ticks half_period
 
     in      r20, IO_PIN
@@ -115,8 +101,6 @@ wait_start:
     rjmp    wait_start
 
 ;   Wait a 1 bit period for a total of 1.5 bit periods
-    ; ldi     r19, period
-    ; rcall   timer_delay
     delay_ticks period
 
 ;   Read 8 data bits, LSB first, into r24
@@ -129,19 +113,11 @@ read_bit:
     sec                         ; RX HIGH -> bit is 1
     ror     r24                 ; shift carry into MSB (LSB-first)
 
-    ; ldi     r19, period
-    ; rcall   timer_delay
     delay_ticks period
 
     dec     r20
     brne    read_bit
 
-;   Stop bit check - line must be HIGH (mark); loop fall-through is ~mid stop bit.
-;   Status returned in T flag:  T=0 frame OK,  T=1 framing error.
-    ; clt                         ; assume frame OK
-    ; in      r18, IO_PIN
-    ; sbrs    r18, RX         ; skip 'set' when stop bit is HIGH (valid)
-    ; set                         ; stop bit LOW -> framing error
     ret
 ; --------------------------------------------------------------------
 

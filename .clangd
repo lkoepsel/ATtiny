@@ -1,12 +1,8 @@
 # clangd configuration for the AVR / ATtiny13A C examples (examples/*/main.c).
 #
-# Without this, Zed's clangd parses the sources for the host machine and
-# fails with "'avr/io.h' file not found" plus cascading syntax errors.
-#
 # clangd uses avr-gcc as the reference compiler to discover the AVR system
 # headers automatically (no version-pinned paths to maintain). This requires
-# clangd to be launched with --query-driver permitting avr-gcc — see the
-# lsp.clangd block in Zed's settings.json (~/.config/zed/settings.json).
+# clangd to be launched with --query-driver permitting avr-gcc 
 CompileFlags:
   Compiler: /usr/bin/avr-gcc
   Add:
@@ -15,7 +11,11 @@ CompileFlags:
     - -D__AVR_ATtiny13A__
     - -std=gnu99
     - -DF_CPU=1200000UL
-    - -I/usr/lib/avr/include
+    # Absolute path: clangd resolves relative -I entries against the source
+    # file's directory, not against .clangd's directory, so a relative path
+    # would only work for files at the repo root.
+    - -I/home/lkoepsel/Documents/ATtiny/Library
+    - -I/usr/avr/include
  
 
 # clangd's Include Cleaner flags #include lines it judges "unused" — it

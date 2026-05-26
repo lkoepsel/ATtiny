@@ -26,7 +26,7 @@
 
 #define    period       37      ; # of ticks for 1 bit period (9600 baud @ 1.2MHz)
 #define    half_period  20      ; # of ticks for  a .5 bit period
-#define    TRIM         0x62    ; OSCCAL trim value, use examples/osccal to determine
+#define    TRIM         0x60    ; OSCCAL trim value, use examples/osccal to determine
 
 ; ====================================================================
 ;  Subroutines SECTION

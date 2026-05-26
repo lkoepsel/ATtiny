@@ -1,108 +1,73 @@
+// osccal - sweep OSCCAL and transmit a test pattern via the asm softserial
+// library so the value that yields clean output is the value to put in
+// Library/softserial.S (TRIM).
+//
+// Chip OSCCAL will be printed and the starting OSCCAL value
+// will be initially low, to ensure sweep doesn't miss good value.
+// Watch the terminal; the OSCCAL=HH lines that read cleanly identify the
+// correct trim for this particular chip with this library.
+
 #include <avr/io.h>
+#include <avr/pgmspace.h>
 #include <util/delay.h>
+#include "softserial_asm.h"
 
-// Your existing UART definitions
-#define SOFT_TX_PIN PB1
-#define SOFT_RX_PIN PB2
-#define BIT_DURATION 104  // For 9600 baud
+static const char chip[] PROGMEM = "chip ";
+static const char osccal_label[] PROGMEM = "OSCCAL=";
+static const char sep[]          PROGMEM = ": ";
+static const char pattern[]      PROGMEM = "ABC123\r\n";
 
-// Your existing write function
-void soft_char_write(char data)
+static void pgmtext_write(const char *p)
 {
-    // Start bit
-    PORTB &= ~(1 << SOFT_TX_PIN);
-    _delay_us(BIT_DURATION);
-
-    // Data bits
-    for (uint8_t i = 0; i < 8; i++)
-    {
-        if (data & (1 << i))
-        {
-            PORTB |= (1 << SOFT_TX_PIN);
-        }
-        else
-        {
-            PORTB &= ~(1 << SOFT_TX_PIN);
-        }
-        _delay_us(BIT_DURATION);
-    }
-
-    // Stop bit
-    PORTB |= (1 << SOFT_TX_PIN);
-    _delay_us(BIT_DURATION);
+    for (uint8_t c; (c = pgm_read_byte(p)); p++)
+        char_write(c);
 }
 
-// Send a string
-void soft_string_write(const char* str)
-{
-    while (*str)
-    {
-        soft_char_write(*str++);
-    }
-}
-
-// Send a hex byte value
-void send_hex_byte(uint8_t value)
+static void send_hex_byte(uint8_t value)
 {
     uint8_t high = (value >> 4) & 0x0F;
-    uint8_t low = value & 0x0F;
+    uint8_t low  = value & 0x0F;
+    char_write(high < 10 ? '0' + high : 'A' + high - 10);
+    char_write(low  < 10 ? '0' + low  : 'A' + low  - 10);
+}
 
-    soft_char_write(high < 10 ? '0' + high : 'A' + high - 10);
-    soft_char_write(low < 10 ? '0' + low : 'A' + low - 10);
+static void emit_line(void)
+{
+    pgmtext_write(osccal_label);
+    send_hex_byte(OSCCAL);
+    pgmtext_write(sep);
+    pgmtext_write(pattern);
 }
 
 int main(void)
 {
-    // Setup TX pin as output, high (idle state)
-    DDRB |= (1 << SOFT_TX_PIN);
-    PORTB |= (1 << SOFT_TX_PIN);
+    init_serial();
 
-    // Setup RX pin as input with pull-up
-    DDRB &= ~(1 << SOFT_RX_PIN);
-    PORTB |= (1 << SOFT_RX_PIN);
-
-    uint8_t osccal_start = OSCCAL;  // Save factory value
+    // print OSCCAL value currently on chip for reference
+    // start with a low OSCCAL to ensure low values are checked
+    pgmtext_write(chip);
+    pgmtext_write(osccal_label);
+    send_hex_byte(OSCCAL);
+    uint8_t osccal_start = 0x55;
 
     while (1)
     {
-        // Test ascending OSCCAL values
         for (uint8_t i = 0; i < 128; i++)
         {
             OSCCAL = osccal_start + i;
-
-            // Send current OSCCAL value
-            soft_string_write("OSCCAL=");
-            send_hex_byte(OSCCAL);
-            soft_string_write(": ");
-
-            // Send test pattern
-            soft_string_write("ABC123\r\n");
-
-            _delay_ms(500);  // Delay between tests
-
-            // Stop if we reach max value
+            emit_line();
+            _delay_ms(500);
             if (OSCCAL == 0xFF) break;
         }
 
-        // Test descending OSCCAL values
         for (uint8_t i = 1; i < 128; i++)
         {
-            if (osccal_start < i) break;  // Don't go negative
-
+            if (osccal_start < i) break;
             OSCCAL = osccal_start - i;
-
-            // Send current OSCCAL value
-            soft_string_write("OSCCAL=");
-            send_hex_byte(OSCCAL);
-            soft_string_write(": ");
-
-            // Send test pattern
-            soft_string_write("ABC123\r\n");
-
-            _delay_ms(500);  // Delay between tests
+            emit_line();
+            _delay_ms(500);
         }
 
-        // Return to factory value and pause
         OSCCAL = osccal_start;
         _delay_ms(2000);
     }

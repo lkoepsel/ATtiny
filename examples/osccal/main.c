@@ -48,6 +48,8 @@ int main(void)
     pgmtext_write(chip);
     pgmtext_write(osccal_label);
     send_hex_byte(OSCCAL);
+    char_write('\r'); 
+    char_write('\n');
     uint8_t osccal_start = 0x55;
 
     while (1)
@@ -57,7 +59,6 @@ int main(void)
             OSCCAL = osccal_start + i;
             emit_line();
             _delay_ms(500);
-            if (OSCCAL == 0xFF) break;
         }
 
         for (uint8_t i = 1; i < 128; i++)

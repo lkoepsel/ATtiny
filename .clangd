@@ -8,11 +8,15 @@
 # clangd to be launched with --query-driver permitting avr-gcc — see the
 # lsp.clangd block in Zed's settings.json (~/.config/zed/settings.json).
 CompileFlags:
-  Compiler: /opt/homebrew/bin/avr-gcc
+  Compiler: /usr/bin/avr-gcc
   Add:
+    - --target=avr
     - -mmcu=attiny13a
     - -D__AVR_ATtiny13A__
     - -std=gnu99
+    - -DF_CPU=1200000UL
+    - -I/usr/lib/avr/include
+ 
 
 # clangd's Include Cleaner flags #include lines it judges "unused" — it
 # misfires on embedded headers included for side effects (e.g. <stdio.h>).

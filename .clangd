@@ -6,6 +6,10 @@
 CompileFlags:
   Compiler: /usr/bin/avr-gcc
   Add:
+    # Force C language. Without this, clangd treats standalone .h files
+    # as Objective-C (its default guess for headers), then rejects
+    # `-std=gnu99` with "invalid argument not allowed with ObjectiveC".
+    - -xc
     - --target=avr
     - -mmcu=attiny13a
     - -D__AVR_ATtiny13A__

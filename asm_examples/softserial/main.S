@@ -35,8 +35,6 @@
 ; r19                           ; timer delay register
 ; r24                           ; char register
 
-#define    period       35      ; # of ticks for 1 bit period (9600 baud @ 1.2MHz)
-#define    half_period  18      ; # of ticks for  a .5 bit period
 ; --------------------------------------------------------------------
 ; reset_handler – entry point after RESET
 ; --------------------------------------------------------------------

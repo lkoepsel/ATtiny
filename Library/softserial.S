@@ -7,6 +7,12 @@
 #include <avr/io.h>
 #include "registers.h"
 
+.macro  delay_ticks  ticks
+    ldi     r19, \ticks
+9:  dec     r19
+    brne    9b
+.endm
+
 ; ====================================================================
 ;  TEXT SECTION  (executable code lives here)
 ; ====================================================================
@@ -18,22 +24,27 @@
 ; r19                           ; timer delay register
 ; r20                           ; temp register
 
-#define    period       35      ; # of ticks for 1 bit period (9600 baud @ 1.2MHz)
-#define    half_period  18      ; # of ticks for  a .5 bit period
+#define    period       37      ; # of ticks for 1 bit period (9600 baud @ 1.2MHz)
+#define    half_period  20      ; # of ticks for  a .5 bit period
+#define    TRIM         0x62    ; OSCCAL trim value, use examples/osccal to determine
 
 ; ====================================================================
 ;  Subroutines SECTION
 ; ====================================================================
 ; blocking delay, enter with r19 as 8-bit counter value
-timer_delay:
-    dec    r19
-    brne   timer_delay
-    ret
+; timer_delay:
+;     dec    r19
+;     brne   timer_delay
+;     ret
 ; --------------------------------------------------------------------
 
 ;initialize serial port, must be called before using char_read and char_write
 .global init_serial
 init_serial:
+
+    ldi     r18, TRIM           ; osc trim value
+    out     RCCAL, r18          ; apply measured OSCCAL trim (via examples/osccal)
+
 ;   Set TX pin as output, set RX pin as input pullup
     sbi     IO_DDR, TX
     cbi     IO_DDR, RX
@@ -50,9 +61,9 @@ char_write:
 
     ; Start bit
     cbi     IO_PORT, TX
-    ldi     r19,period
-    rcall   timer_delay
-
+    ; ldi     r19,period
+    ; rcall   timer_delay
+    delay_ticks period
 
     ;  8 data bits and preserve char
     ldi     r20, 8
@@ -68,16 +79,18 @@ write_one:
     sbi     IO_PORT, TX
 
 next_write:
-    ldi     r19,period
-    rcall   timer_delay
+    ; ldi     r19,period
+    ; rcall   timer_delay
+    delay_ticks period
 
     dec     r20
     brne    write_bit
 
     ;  Stop bit
     sbi     IO_PORT, TX
-    ldi     r19,period
-    rcall   timer_delay
+    ; ldi     r19,period
+    ; rcall   timer_delay
+    delay_ticks period
     ret
 ; --------------------------------------------------------------------
 
@@ -93,16 +106,18 @@ wait_start:
     rjmp    wait_start
 
 ;   Wait a .5 bit period so bit0 is sampled mid-bit
-    ldi     r19, half_period
-    rcall   timer_delay
+    ; ldi     r19, half_period
+    ; rcall   timer_delay
+    delay_ticks half_period
 
     in      r20, IO_PIN
     sbrc    r20, RX    ; confirm start bit remains low
     rjmp    wait_start
 
 ;   Wait a 1 bit period for a total of 1.5 bit periods
-    ldi     r19, period
-    rcall   timer_delay
+    ; ldi     r19, period
+    ; rcall   timer_delay
+    delay_ticks period
 
 ;   Read 8 data bits, LSB first, into r24
     ldi     r20, 8              ; bit counter
@@ -114,8 +129,9 @@ read_bit:
     sec                         ; RX HIGH -> bit is 1
     ror     r24                 ; shift carry into MSB (LSB-first)
 
-    ldi     r19, period
-    rcall   timer_delay
+    ; ldi     r19, period
+    ; rcall   timer_delay
+    delay_ticks period
 
     dec     r20
     brne    read_bit

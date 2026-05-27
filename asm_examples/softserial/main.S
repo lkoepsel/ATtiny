@@ -31,8 +31,6 @@
 
 ; ---------- Registers and Values ----------------
 ; r16                           ; temp register
-; r18                           ; temp register
-; r19                           ; timer delay register
 ; r24                           ; char register
 
 #define     prompt  0x3F        ; ASCII ? for a initial prompt

@@ -117,7 +117,7 @@ init_sysclock_1k:
 ;   TCRR0A 0b01000010 0x42
 ;   TCRR0B 0b00000010 0x02
 ;   TIMS0K 0b00000100 0x04
-;   OCR0A  0b.        0x95
+;   OCR0A  0b10010101 0x95
 
 ; clear counter register
     eor     r8, r8        ; clear counter low byte

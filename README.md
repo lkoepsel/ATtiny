@@ -14,15 +14,31 @@ There are two examples folders, one for [C](./examples) and one for [assembly](.
 
 ## Local Documentation (in the repo folder [documentation](./documentation))
 
+### AVR and ATtiny13A Details
 * [ATTiny13A Datasheet](./documentation/ATtiny13A-Data-Sheet-DS40002307A.pdf)
-* [Getting Started Writing C for AVR](./documentation/AVR1000b-Getting-Started-Writing-C-Code-for-AVR-DS90003262B.pdf)
 * [AVR Instruction Set](./documentation/Atmel-0856-avr-instruction-set-manual.pdf)
-* [AVR Software User Guide](./documentation/Atmel-42787-AVR-Software-User-Guide.pdf)
+* [AVR C Library User Manual](./documentation/avr-libc-user-manual-2.2.0.pdf)
+
+### Compilers, Debuggers
+* [GNU gcc User Manual (C Compiler)](./documentation/gcc_15.pdf)
+* [GNU gdb User Manual (Debugger)](./documentation/gdb_17.0.50.20250617-git.pdf)
+* [GNU as User Manual (Assembler)](./gnu_as.pdf)
+
+### Chip Programming
+* [avrdude - AVR Downloader Uploader](./avrdude.pdf)
+* [Atmel ICE User Guide](./Atmel-ICE_UserGuide.pdf)
+* [Microchip SNAP User Guide](./SNAPUsersGuide.pdf)
+
+### Tutorials
+* [Beginners Introduction to the Assembly Language of AVR Microprocessors](./BeginnersIntroductiontotheAssemblyLanguageofAVRMicroprocessors)
+* [AVR 14 Lectures](./AVR14Lectures.pdf)
+* [AVR Assembler by example](./AVRAssemblerbyexample.pdf)
+* [AVR Inline Assembly](./documentation/arduinoinlineassembly.pdf)
+
+### Application Notes
+* [Getting Started Writing C for AVR](./documentation/AVR1000b-Getting-Started-Writing-C-Code-for-AVR-DS90003262B.pdf)
 * [AVR Efficient C Coding](./documentation/Atmel-AVR035-Efficient%20C%20Coding%20for%20AVR.pdf)
-* [AVR_LibC User Manual](./documentation/avr-libc-user-manual-2.2.0.pdf)
-* [Avrdude User Manual](./documentation/avrdude.pdf)
-* [GCC User Manual](./documentation/gcc_15.pdf)
-* [GDB User Manual](./documentation/gdb_17.0.50.20250617-git.pdf)
+* [AVR Accessing the EEPROM](./AVR100_doc0932.pdf)
 
 ## Online Documentation
 
@@ -53,9 +69,6 @@ If you want to use a Raspberry Pi (3/4/5) as a C development platform, this page
 
 #### [bloom and gdb.md](./docs/bloomandgdb.md)
 Given the ATtiny13A requires a hardware interface to load software, I recommend using *bloom* as the interface to avr-gdb. This provides loading and debugging capability, which is required to be successful. 
-
-#### [PWM and ADC.md](./docs/PWMandADC.md)
-Page under development to explain PWM and ADC interaction. 
 
 ## Steps to Use
 1. Install the AVR toolchain which consists of *avr-gcc*, *avr-gdb*, and *avrdude* as well as *make* and *git*. The **best** method is to use a [Raspberry Pi as your development platform.](./docs/RPi_build.md). If you wish to use *Windows* or *macOS*, some instruction is provided [here](https://www.wellys.com/posts/avr_c_setup/).
@@ -892,4 +905,80 @@ baudrate = 9600
 [ascii]
 device = /dev/ttyUSB0
 baudrate = 9600
+```
+
+## Sublime Text Requirements
+
+### .clangd (macOS)
+
+```
+# clangd configuration for the AVR / ATtiny13A C examples (examples/*/main.c).
+#
+# clangd uses avr-gcc as the reference compiler to discover the AVR system
+# headers automatically (no version-pinned paths to maintain). This requires
+# clangd to be launched with --query-driver permitting avr-gcc 
+CompileFlags:
+  Compiler: /opt/homebrew/bin/avr-gcc
+  Add:
+    # Force C language. Without this, clangd treats standalone .h files
+    # as Objective-C (its default guess for headers), then rejects
+    # `-std=gnu99` with "invalid argument not allowed with ObjectiveC".
+    - -xc
+    - --target=avr
+    - -mmcu=attiny13a
+    - -D__AVR_ATtiny13A__
+    - -std=gnu99
+    - -DF_CPU=1200000UL
+    # Absolute path: clangd resolves relative -I entries against the source
+    # file's directory, not against .clangd's directory, so a relative path
+    # would only work for files at the repo root.
+    - -I/Users/lkoepsel/Development/ATtiny/Library
+ 
+
+# clangd's Include Cleaner flags #include lines it judges "unused" — it
+# misfires on embedded headers included for side effects (e.g. <stdio.h>).
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None
+```
+
+  1. LSP-clangd --query-driver: Sublime's LSP-clangd needs to be allowed to query avr-gcc. In LSP-clangd settings, add to
+  the clangd args:
+  "--query-driver=/opt/homebrew/bin/avr-gcc"
+  1. Without this, clangd ignores Compiler: for security reasons and falls back to its built-in clang paths — which don't know about AVR.
+  2. Homebrew cellar path is version-pinned. When avr-gcc@9 updates from 9.5.0, that explicit -I breaks. Prefer letting Compiler: /opt/homebrew/bin/avr-gcc + --query-driver find it automatically, and drop the -I/usr/avr/include line.
+
+
+### .clangd (Linux)
+
+```
+# clangd configuration for the AVR / ATtiny13A C examples (examples/*/main.c).
+#
+# clangd uses avr-gcc as the reference compiler to discover the AVR system
+# headers automatically (no version-pinned paths to maintain). This requires
+# clangd to be launched with --query-driver permitting avr-gcc 
+CompileFlags:
+  Compiler: /usr/bin/avr-gcc
+  Add:
+    # Force C language. Without this, clangd treats standalone .h files
+    # as Objective-C (its default guess for headers), then rejects
+    # `-std=gnu99` with "invalid argument not allowed with ObjectiveC".
+    - -xc
+    - --target=avr
+    - -mmcu=attiny13a
+    - -D__AVR_ATtiny13A__
+    - -std=gnu99
+    - -DF_CPU=1200000UL
+    # Absolute path: clangd resolves relative -I entries against the source
+    # file's directory, not against .clangd's directory, so a relative path
+    # would only work for files at the repo root.
+    - -I/home/lkoepsel/Documents/ATtiny/Library
+    - -I/user/avr/include
+ 
+
+# clangd's Include Cleaner flags #include lines it judges "unused" — it
+# misfires on embedded headers included for side effects (e.g. <stdio.h>).
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None
 ```

@@ -24,5 +24,3 @@ bloom.yaml
 .gdbinit
 *.stc
 .clangd
-# Zed dev-extension build artifacts (grammar is pinned in extension.toml)
-zed-avr-asm/grammars/

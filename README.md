@@ -909,11 +909,11 @@ baudrate = 9600
 
 ## Sublime Text Requirements
 
-### .clangd (macOS)
+### .clangd (macOS version)
 
 ```
 # clangd configuration for the AVR / ATtiny13A C examples (examples/*/main.c).
-#
+# macOS version
 # clangd uses avr-gcc as the reference compiler to discover the AVR system
 # headers automatically (no version-pinned paths to maintain). This requires
 # clangd to be launched with --query-driver permitting avr-gcc 
@@ -933,6 +933,11 @@ CompileFlags:
     # file's directory, not against .clangd's directory, so a relative path
     # would only work for files at the repo root.
     - -I/Users/lkoepsel/Development/ATtiny/Library
+    # AVR system headers (avr/io.h, avr/pgmspace.h, etc.). Listed explicitly
+    # because --query-driver isn't reliable with Apple's clangd; this path is
+    # version-pinned and will need updating after `brew upgrade avr-gcc@9`.
+    - -isystem
+    - /opt/homebrew/Cellar/avr-gcc@9/9.5.0/avr/include
  
 
 # clangd's Include Cleaner flags #include lines it judges "unused" — it
@@ -942,18 +947,32 @@ Diagnostics:
   MissingIncludes: None
 ```
 
-  1. LSP-clangd --query-driver: Sublime's LSP-clangd needs to be allowed to query avr-gcc. In LSP-clangd settings, add to
-  the clangd args:
-  "--query-driver=/opt/homebrew/bin/avr-gcc"
-  1. Without this, clangd ignores Compiler: for security reasons and falls back to its built-in clang paths — which don't know about AVR.
-  2. Homebrew cellar path is version-pinned. When avr-gcc@9 updates from 9.5.0, that explicit -I breaks. Prefer letting Compiler: /opt/homebrew/bin/avr-gcc + --query-driver find it automatically, and drop the -I/usr/avr/include line.
+### LSP-clangd settings
+{
+    // Whitelist avr-gcc so clangd can query it for system header paths.
+    // Without this, the project's .clangd "Compiler: /usr/bin/avr-gcc"
+    // line is silently ignored and <avr/io.h> can't be found.
+      "command": [
+          "${server_path}",
+          "--background-index",
+          "--header-insertion=never"
+      ]
+}
+
+### Notes
+
+1. LSP-clangd --query-driver: Sublime's LSP-clangd needs to be allowed to query avr-gcc. In LSP-clangd settings, add to
+the clangd args:
+"--query-driver=/opt/homebrew/bin/avr-gcc"
+1. Without this, clangd ignores Compiler: for security reasons and falls back to its built-in clang paths — which don't know about AVR.
+2. Homebrew cellar path is version-pinned. When avr-gcc@9 updates from 9.5.0, that explicit -I breaks. Prefer letting Compiler: /opt/homebrew/bin/avr-gcc + --query-driver find it automatically, and drop the -I/usr/avr/include line.
 
 
-### .clangd (Linux)
+### .clangd (Linux version)
 
 ```
 # clangd configuration for the AVR / ATtiny13A C examples (examples/*/main.c).
-#
+# Linux version
 # clangd uses avr-gcc as the reference compiler to discover the AVR system
 # headers automatically (no version-pinned paths to maintain). This requires
 # clangd to be launched with --query-driver permitting avr-gcc 

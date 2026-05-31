@@ -1,4 +1,6 @@
 ; Register and other definitions required for assembly files
+#ifndef REGISTERS_S
+#define REGISTERS_S
 #define LED         PB0                     ; LED
 #define TX          PB1                     ; transmit pin, output
 #define RX          PB2                     ; receive pin, input pullup
@@ -26,3 +28,5 @@
 9:  dec     r19
     brne    9b
 .endm
+
+#endif  /* REGISTERS_S */

@@ -4,6 +4,12 @@
 ; Toolchain: avr-as / avr-ld  (GNU Binutils for AVR)
 ; =============================================================
 
+; Dependencies — included here so this module assembles standalone
+; (C examples build serial.S on its own). Both are include-guarded /
+; idempotent, so it's safe when an asm main.S already included them.
+#include <avr/io.h>
+#include "registers.S"
+
 ; ====================================================================
 ;  TEXT SECTION  (executable code lives here)
 ; ====================================================================

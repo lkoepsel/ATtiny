@@ -1,3 +1,4 @@
+; Register and other definitions required for assembly files
 #define LED         PB0                     ; LED
 #define TX          PB1                     ; transmit pin, output
 #define RX          PB2                     ; receive pin, input pullup

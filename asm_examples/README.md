@@ -15,15 +15,15 @@ Every `main.S` begins with:
 
 ```asm
 #include <avr/io.h>      ; avr-libc register & bit names (DDRB, PB0, RAMEND, ...)
-#include "registers.h"   ; project logical names (LED, IO_DDR, STATUS, ...)
+#include "registers.S"   ; project logical names (LED, IO_DDR, STATUS, ...)
 ```
 
-`registers.h` and `softserial.S` are shared from `Library/` and located via the `-I` flag in
+`registers.S` and `softserial.S` are shared from `Library/` and located via the `-I` flag in
 `Makefile.asm`, so an example only needs its own `main.S` and `Makefile`.
 
 One rule when reading or writing these files: the `in`, `out`, `sbi`, and `cbi` instructions
 need their register operand wrapped in `_SFR_IO_ADDR()`, because `avr/io.h` defines register
-names as data-space addresses. `registers.h` already does this for its logical names — so
+names as data-space addresses. `registers.S` already does this for its logical names — so
 prefer `sbi IO_DDR, LED` over `sbi DDRB, PB0`.
 
 Build chain (`Makefile.asm`): `avr-gcc` assembles `main.S` → `main.o`, links with
@@ -56,8 +56,8 @@ cd asm_examples/myprogram
 Then:
 
 1. Edit `main.S` — add setup code under `main_setup` and loop logic under `main_loop`.
-2. Need a register or pin name that isn't in `Library/registers.h`? Add it there, or drop a
-   local `registers.h` in the example folder to override the shared one.
+2. Need a register or pin name that isn't in `Library/registers.S`? Add it there, or drop a
+   local `registers.S` in the example folder to override the shared one.
 3. `make compile` to assemble, `make flash` to upload.
 
 The `Makefile` is the standard 2-liner and needs no editing:

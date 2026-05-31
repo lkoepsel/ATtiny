@@ -11,7 +11,7 @@
 ; =============================================================
 
 #include <avr/io.h>
-#include "registers.h"
+#include "registers.S"
 
 .section .vectors, "ax", @progbits
     rjmp    main_setup       ; 0x000  RESET

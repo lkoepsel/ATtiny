@@ -401,7 +401,7 @@ Below the existing `%.o: %.c` rule:
 Why those flags specifically:
 - **`$(CPPFLAGS)`** — provides `-DF_CPU=...` and (when `LIBRARY != no_lib`)
   `-I$(LIBDIR)`. The preprocessor needs these because `softserial.S` does
-  `#include "registers.h"`, and `registers.h` uses `_SFR_IO_ADDR(...)` which
+  `#include "registers.S"`, and `registers.S` uses `_SFR_IO_ADDR(...)` which
   expands to numeric I/O addresses derived from `<avr/io.h>`.
 - **`$(TARGET_ARCH)`** — `-mmcu=attiny13a`. Selects the correct device
   definitions.

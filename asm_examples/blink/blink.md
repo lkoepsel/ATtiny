@@ -25,14 +25,14 @@ The ATtiny13A is an 8-bit AVR with **64 bytes of SRAM**, **1KB of Flash**, and a
 
 ```asm
 #include <avr/io.h>
-#include "registers.h"
+#include "registers.S"
 ```
 
 Because the source is named `main.S` (uppercase) and assembled by `avr-gcc`, the C preprocessor runs first — so `#include` works exactly as it does in C.
 
 `avr/io.h` is the avr-libc device-definition header. It provides symbolic names for every special-purpose register and bit position — `DDRB`, `PORTB`, `PINB`, `PB0`, `RAMEND`, `SPL`, `SREG`, etc. Without it, you'd have to use raw I/O addresses.
 
-`registers.h` is a small Library header that layers logical, application-specific names on top — `LED`, `IO_DDR`, `IO_PIN`, `STACK_LOW`, `STATUS` — each wrapping its register in the `_SFR_IO_ADDR()` macro so it can be used with the `in`/`out`/`sbi`/`cbi` instructions.
+`registers.S` is a small Library header that layers logical, application-specific names on top — `LED`, `IO_DDR`, `IO_PIN`, `STACK_LOW`, `STATUS` — each wrapping its register in the `_SFR_IO_ADDR()` macro so it can be used with the `in`/`out`/`sbi`/`cbi` instructions.
 
 ---
 

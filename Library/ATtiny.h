@@ -1,4 +1,4 @@
-// ATtinylib: Library of macros and defines for ATtiny13A
+// ATtinylib: C Library of macros and defines for ATtiny13A
 
 #ifndef ATTINYLIB_H
 #define ATTINYLIB_H

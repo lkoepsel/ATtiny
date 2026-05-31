@@ -57,7 +57,7 @@ Good direction — the higher-level helpers (soft_string_write, soft_int16_write
         $(CC) $(CPPFLAGS) $(TARGET_ARCH) -c -o $@ $<
 
   A few things to note:
-  - The existing CPPFLAGS already adds -I$(LIBDIR), so #include "registers.h" resolves from inside softserial.S without further work.
+  - The existing CPPFLAGS already adds -I$(LIBDIR), so #include "registers.S" resolves from inside softserial.S without further work.
   - You don't want CFLAGS on the .S rule — -std=gnu99 -Wundef -Werror etc. don't apply to assembly. Use only CPPFLAGS + TARGET_ARCH.
   - The no_lib branch wildcard would skip $(LIBDIR)/*.S. Decide whether to make this example LIBRARY != no_lib (so the Library .S gets compiled)
   or copy softserial.S into the example directory the same way the C examples copy soft_serial.c. The "copy into example" route fits the existing

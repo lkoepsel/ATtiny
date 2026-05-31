@@ -1,6 +1,6 @@
 // soft serial - software-defined serial port using assembly primitives
 // Slow serial port, use for non-intensive serial interaction
-// Change serial pins and timing in Library/registers.h and Library/softserial.S
+// Change serial pins and timing in Library/registers.S and Library/softserial.S
 
 #include <avr/pgmspace.h>
 #include "softserial_asm.h"

@@ -1,12 +1,13 @@
 ; =============================================================
-; debug  –  simple transmit only serial program for debugging
+; debug  –  example serial program debugging, writes both
+; characters and program text characters
 ; Target : ATtiny13A (1.2 MHz default internal RC oscillator)
 ; Toolchain: avr-gcc  (GNU AVR toolchain)
 ; =============================================================
 
 #include <avr/io.h>
-#include "registers.h"
-#include "flash_w.S"
+#include "registers.S"
+#include "softserial.S"
 
 ; ====================================================================
 ;  INTERRUPT VECTOR TABLE

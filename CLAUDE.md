@@ -77,13 +77,13 @@ with `avr-gcc`, not `avr-as`. The uppercase extension makes `avr-gcc` run the C 
 before assembling, so `#include`, `#define`, and `-D` definitions all work.
 
 - **Includes:** every `main.S` starts with `#include <avr/io.h>` (avr-libc register/bit
-  names) and `#include "registers.h"` (project-defined *logical* names).
-- **Shared headers:** `registers.h` and `softserial.S` live in `Library/` and are found via
+  names) and `#include "registers.S"` (project-defined *logical* names).
+- **Shared headers:** `registers.S` and `softserial.S` live in `Library/` and are found via
   the `-I$(DEPTH)Library` flag in `Makefile.asm`. An example may also keep a local
-  `registers.h` to override them — unlike C examples, asm examples do not duplicate these.
+  `registers.S` to override them — unlike C examples, asm examples do not duplicate these.
 - **`_SFR_IO_ADDR()`:** inside a `.S` file, `avr/io.h` defines register names as *data-space*
   addresses. The `in`/`out`/`sbi`/`cbi` instructions need *I/O-space* addresses, so operands
-  must be wrapped in `_SFR_IO_ADDR()`. `registers.h` applies this wrapping for the names it
+  must be wrapped in `_SFR_IO_ADDR()`. `registers.S` applies this wrapping for the names it
   defines (e.g. `IO_DDR`, `STATUS`).
 - **Build:** `Makefile.asm` assembles with `avr-gcc -mmcu=... -MMD -MP` (automatic header
   dependency tracking) and links with `avr-gcc -nostartfiles -nostdlib`, keeping the

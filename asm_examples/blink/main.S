@@ -5,7 +5,7 @@
 ; =============================================================
 
 #include <avr/io.h>
-#include "registers.h"
+#include "registers.S"
 
 .section .vectors, "ax", @progbits
     rjmp    reset_handler       ; 0x000  RESET

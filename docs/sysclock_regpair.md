@@ -14,7 +14,7 @@
   1. Not in the argument/return registers (r25:r24, r23:r22, r21:r20, r19:r18) — these are touched on every call.
   2. Call-saved, so the contract says no function may mutate it. Range: r2–r17, r28, r29.
   3. Not already claimed elsewhere in your codebase (r2 is your ISR STATUS save; r4:r5 and r6:r7 are your snapshot pairs in main_loop; r16 is your
-   temp; r17 is the softserial char register).
+   temp; r17 is the serial char register).
   4. Even-numbered low byte, so movw works on it (movw operates on any even/odd pair, so r8:r9, r10:r11, … all qualify).
 
   The candidates that pass all four: r8:r9, r10:r11, r12:r13, r14:r15 (and the Y pair r28:r29 if you give up the C frame pointer — usually not

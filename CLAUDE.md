@@ -78,7 +78,7 @@ before assembling, so `#include`, `#define`, and `-D` definitions all work.
 
 - **Includes:** every `main.S` starts with `#include <avr/io.h>` (avr-libc register/bit
   names) and `#include "registers.S"` (project-defined *logical* names).
-- **Shared headers:** `registers.S` and `softserial.S` live in `Library/` and are found via
+- **Shared headers:** `registers.S` and `serial.S` live in `Library/` and are found via
   the `-I$(DEPTH)Library` flag in `Makefile.asm`. An example may also keep a local
   `registers.S` to override them — unlike C examples, asm examples do not duplicate these.
 - **`_SFR_IO_ADDR()`:** inside a `.S` file, `avr/io.h` defines register names as *data-space*

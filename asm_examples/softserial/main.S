@@ -1,5 +1,5 @@
 ; =============================================================
-; softserial  –  example serial program and library
+; serial  –  example serial program and library
 ; Target : ATtiny13A (1.2 MHz default internal RC oscillator)
 ; Toolchain: avr-gcc  (GNU AVR toolchain)
 ; =============================================================

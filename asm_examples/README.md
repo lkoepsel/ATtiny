@@ -18,7 +18,7 @@ Every `main.S` begins with:
 #include "registers.S"   ; project logical names (LED, IO_DDR, STATUS, ...)
 ```
 
-`registers.S` and `softserial.S` are shared from `Library/` and located via the `-I` flag in
+`registers.S` and `serial.S` are shared from `Library/` and located via the `-I` flag in
 `Makefile.asm`, so an example only needs its own `main.S` and `Makefile`.
 
 One rule when reading or writing these files: the `in`, `out`, `sbi`, and `cbi` instructions
@@ -76,8 +76,8 @@ include $(DEPTH)Makefile.asm
 | `blink_nodelay` | Blinks the LED with a **non-blocking** Timer0 poll instead of a busy-wait — Timer0 prescaler 1024, ~100 ms signal. |
 | `blink_word` | Blinks the LED at 500 Hz using a 16-bit (word) counter; trimmed to minimal flash size by omitting unused interrupt vectors. See `blink_word/blink_word.md`. |
 | `blink_pwm` | Drives the LED with a hardware **PWM** signal from Timer0 (~4.51 kHz, no prescaler). |
-| `softserial` | Software-UART demo; pulls in the shared `softserial.S` routines from `Library/`. |
-| `sysclock` | Non-blocking **1 kHz system clock** via a Timer0 CTC interrupt; uses softserial to report timing. See `sysclock/sysclock.md`. |
+| `serial` | Software-UART demo; pulls in the shared `serial.S` routines from `Library/`. |
+| `sysclock` | Non-blocking **1 kHz system clock** via a Timer0 CTC interrupt; uses serial to report timing. See `sysclock/sysclock.md`. |
 
 Per-example `.md` files (`blink.md`, `blink_word.md`, `sysclock.md`) contain deeper
 walkthroughs where present.

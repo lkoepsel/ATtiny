@@ -36,7 +36,7 @@ TARGET = main
 
 # Sources: all .c in the current example directory; .S files in the current
 # directory plus anything the example's local Makefile lists in ASM_LIBS
-# (typically a shared assembly source from $(LIBDIR), e.g. softserial.S).
+# (typically a shared assembly source from $(LIBDIR), e.g. serial.S).
 SOURCES     = $(wildcard *.c)
 ASM_SOURCES = $(wildcard *.S) $(ASM_LIBS)
 CPPFLAGS    = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD) -I. -I$(LIBDIR)

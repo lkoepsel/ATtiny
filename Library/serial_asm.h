@@ -1,5 +1,5 @@
-// softserial_asm.h
-// C declarations for the assembly routines in softserial.S
+// serial_asm.h
+// C declarations for the assembly routines in serial.S
 #pragma once
 #include <stdint.h>
 

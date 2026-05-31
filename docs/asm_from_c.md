@@ -1,7 +1,7 @@
-# Calling AVR Assembly from C — Using `softserial.S` from a C Program
+# Calling AVR Assembly from C — Using `serial.S` from a C Program
 
 This guide walks through the changes needed to call hand-written AVR assembly
-routines from C, using the existing `Library/softserial.S` as the working
+routines from C, using the existing `Library/serial.S` as the working
 example. By the end, the assembly `char_write` and `char_read` (with their
 cycle-deterministic timing) will be callable from any C program, and the
 higher-level helpers — `soft_string_write`, `soft_int16_write`,
@@ -10,7 +10,7 @@ primitives.
 
 ## Why this matters
 
-The C version of software serial (`examples/softserial/soft_serial.c`) is
+The C version of software serial (`examples/serial.Soft_serial.c`) is
 unreliable because a bit-banged UART is *hard real-time*: every bit period
 must be a uniform, exact number of CPU cycles. The C version's per-bit period
 is `_delay_us(BIT_DURATION)` plus a *variable* amount of compiler-generated
@@ -18,7 +18,7 @@ surrounding code (loop housekeeping, `1<<i` evaluated without a barrel
 shifter, optimization-level-dependent overhead) — so the bit period drifts
 and reception breaks.
 
-The assembly version in `Library/softserial.S` runs in a constant,
+The assembly version in `Library/serial.S` runs in a constant,
 hand-counted number of cycles per bit. By exposing it to C, we get the timing
 accuracy of hand-tuned assembly with the convenience of writing the
 application logic (string formatting, line buffering, integer-to-ASCII
@@ -69,9 +69,9 @@ Keep that contract in mind as you audit the assembly.
 
 ---
 
-## Step 1 — Audit `Library/softserial.S` against the ABI
+## Step 1 — Audit `Library/serial.S` against the ABI
 
-Open `Library/softserial.S` and check each routine against the table above.
+Open `Library/serial.S` and check each routine against the table above.
 
 **`char_write`**
 - Header comment says "char in r17". **r17 is call-saved** — passing a C
@@ -116,7 +116,7 @@ reporting" alternative appears in a callout in Step 2c.
 
 ---
 
-## Step 2 — Rework `Library/softserial.S` to the ABI
+## Step 2 — Rework `Library/serial.S` to the ABI
 
 Three concrete edits.
 
@@ -243,7 +243,7 @@ code.
 
 ## Step 4 — Update the existing asm caller
 
-`asm_examples/softserial/main.S` calls these routines directly. The echo loop
+`asm_examples/serial/main.S` calls these routines directly. The echo loop
 is:
 
 ```asm
@@ -289,7 +289,7 @@ longer the char register:
 Before touching anything on the C side, prove the asm side still works:
 
 ```bash
-cd asm_examples/softserial
+cd asm_examples/serial
 make complete
 make flash
 ```
@@ -308,10 +308,10 @@ example still works end-to-end.**
 
 Create a small header that C code can `#include`.
 
-**`softserial_asm.h`**
+**`serial_asm.h`**
 ```c
-// softserial_asm.h
-// C declarations for the assembly routines in softserial.S
+// serial_asm.h
+// C declarations for the assembly routines in serial.S
 #pragma once
 #include <stdint.h>
 
@@ -400,7 +400,7 @@ Below the existing `%.o: %.c` rule:
 
 Why those flags specifically:
 - **`$(CPPFLAGS)`** — provides `-DF_CPU=...` and (when `LIBRARY != no_lib`)
-  `-I$(LIBDIR)`. The preprocessor needs these because `softserial.S` does
+  `-I$(LIBDIR)`. The preprocessor needs these because `serial.S` does
   `#include "registers.S"`, and `registers.S` uses `_SFR_IO_ADDR(...)` which
   expands to numeric I/O addresses derived from `<avr/io.h>`.
 - **`$(TARGET_ARCH)`** — `-mmcu=attiny13a`. Selects the correct device
@@ -418,19 +418,19 @@ Why those flags specifically:
 
 ## Step 8 — Build a new C example that uses the asm primitives
 
-To avoid disturbing `examples/softserial/`, put the new code under
-`examples/softserial_asm/`. Following the project's "each C example is
+To avoid disturbing `examples/serial/`, put the new code under
+`examples/serial_asm/`. Following the project's "each C example is
 self-contained" convention, copy the asm file and header into the example
 folder rather than referencing them from `Library/`.
 
 ### Folder layout
 
 ```
-examples/softserial_asm/
+examples/serial_asm/
 ├── Makefile          # standard 2-line include
 ├── main.c            # application code
-├── softserial.S      # copied from Library/ (with Step 2/3 edits)
-└── softserial_asm.h  # the header you wrote in Step 6
+├── serial.S      # copied from Library/ (with Step 2/3 edits)
+└── serial_asm.h  # the header you wrote in Step 6
 ```
 
 ### Files
@@ -443,7 +443,7 @@ include $(DEPTH)Makefile
 
 **`main.c`** — a minimal echo program to start with:
 ```c
-#include "softserial_asm.h"
+#include "serial_asm.h"
 
 int main(void)
 {
@@ -455,10 +455,10 @@ int main(void)
 }
 ```
 
-**`softserial.S`** — a copy of `Library/softserial.S` with the Step 2/3
+**`serial.S`** — a copy of `Library/serial.S` with the Step 2/3
 edits applied.
 
-**`softserial_asm.h`** — the header from Step 6.
+**`serial_asm.h`** — the header from Step 6.
 
 ### `env.make` requirement
 
@@ -475,13 +475,13 @@ LIBRARY = no_lib
 ## Step 9 — Build, flash, verify
 
 ```bash
-cd examples/softserial_asm
+cd examples/serial_asm
 make complete
 make flash
 ```
 
 Inspect the build output and confirm:
-- A line like `avr-gcc ... -c -o softserial.o softserial.S` appears (proves
+- A line like `avr-gcc ... -c -o serial.o serial.S` appears (proves
   the new pattern rule fired).
 - Final flash size is small — a few hundred bytes; the asm primitives are
   tiny.
@@ -497,7 +497,7 @@ If reception is unreliable, see Step 10.
 
 ## Step 10 — Tuning timing if needed
 
-The `period` and `half_period` constants in `softserial.S` are CPU-cycle
+The `period` and `half_period` constants in `serial.S` are CPU-cycle
 counts for the bit period:
 
 ```c
@@ -524,13 +524,13 @@ Do not mix the two — pick one and stick with it for repeatability.
 
 | File | Change |
 |---|---|
-| `Library/softserial.S` | `mov r18, r17` → `mov r18, r24`; `ror r17` → `ror r24`; drop final T-flag block; add `.global init_serial` / `.global char_write` / `.global char_read`; update header comments |
-| `asm_examples/softserial/main.S` | Remove `brts main_loop`; update r17 → r24 in the register-usage comment |
+| `Library/serial.S` | `mov r18, r17` → `mov r18, r24`; `ror r17` → `ror r24`; drop final T-flag block; add `.global init_serial` / `.global char_write` / `.global char_read`; update header comments |
+| `asm_examples/serial/main.S` | Remove `brts main_loop`; update r17 → r24 in the register-usage comment |
 | `Makefile` (root C) | Add `ASM_SOURCES` wildcard in both `LIBRARY` branches; append `$(ASM_SOURCES:.S=.o)` to `OBJECTS`; add `%.o: %.S` pattern rule |
-| `examples/softserial_asm/Makefile` | New — standard 2-liner |
-| `examples/softserial_asm/main.c` | New — calls `init_serial` / `char_read` / `char_write` |
-| `examples/softserial_asm/softserial.S` | New — copy of edited `Library/softserial.S` |
-| `examples/softserial_asm/softserial_asm.h` | New — C declarations for the three exported functions |
+| `examples/serial_asm/Makefile` | New — standard 2-liner |
+| `examples/serial_asm/main.c` | New — calls `init_serial` / `char_read` / `char_write` |
+| `examples/serial_asm/serial.S` | New — copy of edited `Library/serial.S` |
+| `examples/serial_asm/serial_asm.h` | New — C declarations for the three exported functions |
 
 ---
 
@@ -555,5 +555,5 @@ void soft_uint16_write(uint16_t n)
 
 All the timing-critical work is in the assembly; the C code only sequences bytes through the primitives. Compiler-generated overhead lives in the *gap* between characters (inside the stop bit + idle), not inside a bit period, so it can't break the protocol.
 
-A longer-term cleanup, once this works: have `asm_examples/softserial/main.S` *link* `Library/softserial.S` as a separate object instead of `#include`-ing it. Then there is one shared library object, used identically by asm and C
+A longer-term cleanup, once this works: have `asm_examples/serial/main.S` *link* `Library/serial.S` as a separate object instead of `#include`-ing it. Then there is one shared library object, used identically by asm and C
 callers. That requires teaching `Makefile.asm` to pick up `$(LIBDIR)/*.S` and add it to the link line — a mirror of Step 7 on the asm side. Worth doing eventually; not required to get the C example working.

@@ -56,7 +56,7 @@ PIN = 1234
 ### BEST LINK FOR HC06 Documentation  
 [The Complete Guide To The HC-06 – Martyn Currey](https://www.martyncurrey.com/the-complete-guide-to-the-hc-06/)
 
-### Arduino softSerial Library  
+### Arduino serial Library  
 [SoftwareSerial Library | Arduino Documentation](https://docs.arduino.cc/learn/built-in-libraries/software-serial/)
 
 ### CoolTerm seems to work best  
@@ -73,12 +73,12 @@ https://freeware.the-meiers.org/
 ```c
 // PIN 2 is RX and PIN 3 is TX (remember to switch)  
 #include <SoftwareSerial.h>  
-SoftwareSerial softSerial(2, 3); // RX, TX
+SoftwareSerial serial(2, 3); // RX, TX
 
 char Incoming_value=0;
 
 void setup() {  
-  softSerial.begin(9600);  
+  serial.begin(9600);  
   Serial.begin(9600);  
   pinMode(13, OUTPUT);  
   digitalWrite(13, HIGH);  
@@ -88,9 +88,9 @@ void setup() {
 }
 
 void loop() {  
-  if(softSerial.available()\>0)  
+  if(serial.available()\>0)  
   {  
-    Incoming_value = softSerial.read();  
+    Incoming_value = serial.read();  
     Serial.print(Incoming_value);  
     Serial.print("\\n");
 
@@ -132,7 +132,7 @@ This code allows you to interact with the module using AT commands. The HC06 won
  */
 
 #include <SoftwareSerial.h>
-SoftwareSerial softSerial(2, 3); // RX, TX
+SoftwareSerial serial(2, 3); // RX, TX
  
 char c=' ';
 
@@ -142,8 +142,8 @@ void setup()
     Serial.begin(9600,SERIAL_8N1 );
    Serial.print("Sketch:   ");   Serial.println(__FILE__);
     Serial.print("Uploaded: ");   Serial.println(__DATE__);
-    softSerial.begin(9600);
-    Serial.println("softSerial started at 9600");
+    serial.begin(9600);
+    Serial.println("serial.Started at 9600");
     Serial.println("Ready");
 }
 
@@ -154,13 +154,13 @@ void loop()
     if (Serial.available())
     {
         c = Serial.read();
-         softSerial.write(c);
+         serial.write(c);
     }
 
     // Read from the UART module and send to the Serial Monitor
-    if (softSerial.available())
+    if (serial.available())
     {
-        c = softSerial.read();
+        c = serial.read();
         Serial.write(c); 
     }
     

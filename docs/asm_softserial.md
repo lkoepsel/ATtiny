@@ -14,7 +14,7 @@ Good direction — the higher-level helpers (soft_string_write, soft_int16_write
   - Call-clobbered (free for the callee): r18–r27, r30, r31, r0.
   - Zero register: r1 must equal 0 on entry and exit. Don't clobber it; if you must, restore with eor r1, r1 before returning.
 
-  Audit Library/softserial.S against that and you'll see the mismatches:
+  Audit Library/serial.S against that and you'll see the mismatches:
   - char_write reads the char from r17 → must read from r24 (or mov r24 into a scratch first thing).
   - char_read returns the char in r17 → must return in r24.
   - It uses r17, r18, r19, r20. r17 is call-saved under the ABI — either stop touching it (use r18 instead) or push/pop it. r18–r20 are
@@ -34,7 +34,7 @@ Good direction — the higher-level helpers (soft_string_write, soft_int16_write
 
   Then a header for C to import from:
 
-  // softserial_asm.h
+  // serial_asm.h
   #pragma once
   #include <stdint.h>
 
@@ -57,35 +57,35 @@ Good direction — the higher-level helpers (soft_string_write, soft_int16_write
         $(CC) $(CPPFLAGS) $(TARGET_ARCH) -c -o $@ $<
 
   A few things to note:
-  - The existing CPPFLAGS already adds -I$(LIBDIR), so #include "registers.S" resolves from inside softserial.S without further work.
+  - The existing CPPFLAGS already adds -I$(LIBDIR), so #include "registers.S" resolves from inside serial.S without further work.
   - You don't want CFLAGS on the .S rule — -std=gnu99 -Wundef -Werror etc. don't apply to assembly. Use only CPPFLAGS + TARGET_ARCH.
   - The no_lib branch wildcard would skip $(LIBDIR)/*.S. Decide whether to make this example LIBRARY != no_lib (so the Library .S gets compiled)
-  or copy softserial.S into the example directory the same way the C examples copy soft_serial.c. The "copy into example" route fits the existing
+  or copy serial.S into the example directory the same way the C examples copy soft_serial.c. The "copy into example" route fits the existing
   C-example convention.
 
   4. The existing asm caller has to switch to r24 too
 
-  This is the one part that affects code you've already got working. asm_examples/softserial/main.S calls char_write today with the char in r17
-  (and softserial.S is #included, not linked). Once softserial.S becomes ABI-compliant:
+  This is the one part that affects code you've already got working. asm_examples/serial/main.S calls char_write today with the char in r17
+  (and serial.S is #included, not linked). Once serial.S becomes ABI-compliant:
 
   - Every rcall char_write in main.S needs the char in r24 beforehand.
   - Every rcall char_read reads its result from r24 instead of r17.
 
   Small, mechanical change — but you'll want to do it in the same commit as the asm rework so the asm example doesn't break.
 
-  A bigger question lurking here: should asm_examples/softserial/main.S stop #include-ing softserial.S and instead let it be linked (the same way
-  the C build will)? That would make Library/softserial.S a true shared library object — one file, one build artifact, two callers. It needs
+  A bigger question lurking here: should asm_examples/serial/main.S stop #include-ing serial.S and instead let it be linked (the same way
+  the C build will)? That would make Library/serial.S a true shared library object — one file, one build artifact, two callers. It needs
   Makefile.asm to also pick up $(LIBDIR)/*.S and link the resulting .o. Worth it long-term; not required to start.
 
   A suggested order of attack
 
-  1. Branch first — this touches code that currently works in asm_examples/softserial/.
-  2. ABI-ify Library/softserial.S: change r17 → r24 at the entry/exit of char_write/char_read; swap any other call-saved usage for call-clobbered
+  1. Branch first — this touches code that currently works in asm_examples/serial/.
+  2. ABI-ify Library/serial.S: change r17 → r24 at the entry/exit of char_write/char_read; swap any other call-saved usage for call-clobbered
   registers; add the three .global lines.
-  3. Fix asm_examples/softserial/main.S to pass the char in r24, read it from r24. Rebuild and re-test the asm example — that confirms the asm
+  3. Fix asm_examples/serial/main.S to pass the char in r24, read it from r24. Rebuild and re-test the asm example — that confirms the asm
   side still works.
-  4. Pick a C example folder — easiest is a new examples/softserial_asm/ so you don't disturb the existing C one. Copy a main.c that calls
-  init_serial/char_write/char_read, plus the new softserial_asm.h, plus a copy of softserial.S (mirroring the C-example "duplicate files"
+  4. Pick a C example folder — easiest is a new examples/serial_asm/ so you don't disturb the existing C one. Copy a main.c that calls
+  init_serial/char_write/char_read, plus the new serial_asm.h, plus a copy of serial.S (mirroring the C-example "duplicate files"
   convention).
   5. Local Makefile: add the %.o: %.S rule and SOURCES_S lines either to the root Makefile (cleaner, helps every future example) or as a local
   override.
@@ -94,4 +94,4 @@ Good direction — the higher-level helpers (soft_string_write, soft_int16_write
   7. Once that works, the higher-level helpers (soft_string_write, soft_int16_write, etc.) can be rewritten in C against the new C-visible
   primitives — and they automatically inherit the cycle-deterministic timing.
 
-  Which piece do you want to start on — the ABI rework on softserial.S, or the Makefile changes to teach the C build about .S files?
+  Which piece do you want to start on — the ABI rework on serial.S, or the Makefile changes to teach the C build about .S files?

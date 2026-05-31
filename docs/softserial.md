@@ -18,8 +18,8 @@ The solution was to:
 3. Set the baud rate to 1200 baud, which is whole divider of the processor clock 1.2MHz. This last step worked quite well and given serial communications won't be high volume, it will be *fast enough*.
 
 ### What to do
-1. Default for *OSCCAL* is 68, set it in *softserial.c:init_soft_serial*
-2. Use the default value of 156 defined in *softserial.h:baud_ticks*, this is for 1200 baud
+1. Default for *OSCCAL* is 68, set it in *serial.c:init_soft_serial*
+2. Use the default value of 156 defined in *serial.h:baud_ticks*, this is for 1200 baud
 
 If the above two steps work for both **TX** and **RX**, great. If not, read below to attempt to solve.
 

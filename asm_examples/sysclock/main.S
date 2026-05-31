@@ -6,6 +6,7 @@
 
 #include <avr/io.h>
 #include "registers.S"
+#include "serial.S"
 
 ; ====================================================================
 ;  INTERRUPT VECTOR TABLE
@@ -34,14 +35,13 @@
 ; r7:r6                         ; final ticks count and delta
 ; r15                           ; temp register, saved in ISR
 ; r16                           ; temp register
-; r24                           ; char register (softserial)
+; r24                           ; char register (serial)
 ; r27                           ; delay word
 ; ---------- Reserved registers ----------
 ; r2        ISR_temp - ISR scratch (STATUS save) — do NOT use elsewhere
 ; r9:r8     ticks_hi/lo - global 16-bit ISR ticks counter — do NOT use elsewhere
 
 .equ    COUNTER,  30000         ; 30,000@1.2MHZ => 100ms delay
-.equ    TRIM, 0x65              ; OSCCAL trim value, typically x6n
 .equ    HEX_BEG, 0xBB           ; beginning of hex print
 .equ    HEX_END, 0xEE           ; end of hex print
 ; --------------------------------------------------------------------

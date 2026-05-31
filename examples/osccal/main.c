@@ -1,6 +1,6 @@
-// osccal - sweep OSCCAL and transmit a test pattern via the asm softserial
+// osccal - sweep OSCCAL and transmit a test pattern via the asm serial
 // library so the value that yields clean output is the value to put in
-// Library/softserial.S (TRIM).
+// Library/serial.S (TRIM).
 //
 // Chip OSCCAL will be printed and the starting OSCCAL value
 // will be initially low, to ensure sweep doesn't miss good value.
@@ -10,7 +10,7 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <util/delay.h>
-#include "softserial_asm.h"
+#include "serial_asm.h"
 
 static const char chip[] PROGMEM = "chip ";
 static const char osccal_label[] PROGMEM = "OSCCAL=";

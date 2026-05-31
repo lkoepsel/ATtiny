@@ -13,10 +13,9 @@
 .section .text
 
 ; ---------- Registers and Values ----------------
-; r24                           ; char register
-; r18                           ; temp register
-; r19                           ; timer delay register
-; r20                           ; temp register
+; r18                           ; temp register - temp_r18
+; r20                           ; temp register - bit_ctr
+; r24                           ; char register - char_reg
 
 #define    period       37      ; # of ticks for 1 bit period (9600 baud @ 1.2MHz)
 #define    half_period  20      ; # of ticks for  a .5 bit period
@@ -30,8 +29,8 @@
 .global init_serial
 init_serial:
 
-    ldi     r18, TRIM           ; osc trim value
-    out     RCCAL, r18          ; apply measured OSCCAL trim (via examples/osccal)
+    ldi     temp_r18, TRIM           ; osc trim value
+    out     RCCAL, temp_r18          ; apply measured OSCCAL trim (via examples/osccal)
 
 ;   Set TX pin as output, set RX pin as input pullup
     sbi     IO_DDR, TX
@@ -52,11 +51,11 @@ char_write:
     delay_ticks period
 
     ;  8 data bits and preserve char
-    ldi     r20, 8
-    mov     r18, r24
+    ldi     bit_ctr, 8
+    mov     temp_r18, char_reg
 
 write_bit:
-    ror     r18
+    ror     temp_r18
     brcs    write_one
     cbi     IO_PORT, TX
     rjmp     next_write
@@ -67,7 +66,7 @@ write_one:
 next_write:
     delay_ticks period
 
-    dec     r20
+    dec     bit_ctr
     brne    write_bit
 
     ;  Stop bit
@@ -83,38 +82,55 @@ char_read:
 ;   Wait for start bit: idle is HIGH, start bit is LOW
 ;   while (IO_PIN & (1 << RX)) {} ;
 wait_start:
-    in      r20, IO_PIN
-    sbrc    r20, RX    ; skip rjmp when RX is LOW = start bit
+    in      bit_ctr, IO_PIN
+    sbrc    bit_ctr, RX    ; skip rjmp when RX is LOW = start bit
     rjmp    wait_start
 
 ;   Wait a .5 bit period so bit0 is sampled mid-bit
     delay_ticks half_period
 
-    in      r20, IO_PIN
-    sbrc    r20, RX    ; confirm start bit remains low
+    in      bit_ctr, IO_PIN
+    sbrc    bit_ctr, RX    ; confirm start bit remains low
     rjmp    wait_start
 
 ;   Wait a 1 bit period for a total of 1.5 bit periods
     delay_ticks period
 
 ;   Read 8 data bits, LSB first, into r24
-    ldi     r20, 8              ; bit counter
+    ldi     bit_ctr, 8              ; bit counter
 
 read_bit:
-    in      r18, IO_PIN           ; scratch read - do not clobber r24
+    in      temp_r18, IO_PIN           ; scratch read - do not clobber r24
     clc                         ; assume bit is 0
-    sbrc    r18, RX         ; skip sec when RX is LOW
+    sbrc    temp_r18, RX         ; skip sec when RX is LOW
     sec                         ; RX HIGH -> bit is 1
-    ror     r24                 ; shift carry into MSB (LSB-first)
+    ror     char_reg                 ; shift carry into MSB (LSB-first)
 
     delay_ticks period
 
-    dec     r20
+    dec     bit_ctr
     brne    read_bit
 
     ret
 ; --------------------------------------------------------------------
 
+
+; void flash_write(uint8_t addr)
+;   Set the Z  r31/r30 address to PROGMEM text on entry
+;   Calling convention: AVR-GCC ABI (r31/r30 FLASH address, r24 out, r18 scratch).
+
+.global flash_write
+flash_write:
+        lpm     char_reg, Z+     ; load byte at Z into r24, the char_write register
+        tst     char_reg          ; exit if null byte
+        breq    print_done
+        rcall   char_write  ; write char to console
+        rjmp    flash_write
+
+print_done:
+    ret
+
+; --------------------------------------------------------------------
 
 ; ====================================================================
 ;  DATA SECTION  (initialized variables in SRAM)

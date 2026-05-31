@@ -19,6 +19,10 @@ void char_write(uint8_t c);
 // The result is returned in r24 per the AVR-GCC ABI.
 uint8_t char_read(void);
 
+// Write program memory text to console
+// The address is passed in r31/r30.
+void flash_write(uint16_t addr);
+
 #ifdef __cplusplus
 }
 #endif

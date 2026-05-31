@@ -15,13 +15,13 @@
 ; void flash_write(uint8_t addr)
 ;   Set the Z address to PROGMEM text on entry
 
-.global flash_write
-flash_write:
-        lpm     r24, Z+     ; load byte at Z into r24, the char_write register
-        tst     r24          ; exit if null byte
-        breq    print_done
-        rcall   char_write  ; write char to console
-        rjmp    flash_write
+; .global flash_write
+; flash_write:
+;         lpm     r24, Z+     ; load byte at Z into r24, the char_write register
+;         tst     r24          ; exit if null byte
+;         breq    print_done
+;         rcall   char_write  ; write char to console
+;         rjmp    flash_write
 
-print_done:
-    ret
+; print_done:
+;     ret

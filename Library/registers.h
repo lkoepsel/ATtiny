@@ -14,7 +14,11 @@
 #define ISR_temp    r2
 #define ticks_lo    r8
 #define ticks_hi    r9
-
+#define temp_r18    r18
+#define bit_ctr     r20
+#define char_reg    r24
+#define flash_lo    r30
+#define flash_hi    r31
 
 .macro  delay_ticks  ticks
     ldi     r19, \ticks

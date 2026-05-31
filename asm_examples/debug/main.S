@@ -6,6 +6,7 @@
 
 #include <avr/io.h>
 #include "registers.h"
+#include "flash_w.S"
 
 ; ====================================================================
 ;  INTERRUPT VECTOR TABLE
@@ -25,6 +26,14 @@
     reti                        ; 0x009  ADC        - ADC Conversion Complete
 
 ; ====================================================================
+;  TEXT CONSTANTS SECTION  (Constants for printing lives here)
+; ====================================================================
+.section .progmem.data
+
+prompt:  
+        .asciz  "13A:"
+
+; ====================================================================
 ;  TEXT SECTION  (executable code lives here)
 ; ====================================================================
 .section .text
@@ -33,7 +42,6 @@
 ; r16                           ; temp register
 ; r24                           ; char register
 
-#define     prompt  0x3F        ; ASCII ? for a initial prompt
 ; --------------------------------------------------------------------
 ; reset_handler – entry point after RESET
 ; --------------------------------------------------------------------
@@ -57,8 +65,9 @@ main_setup:
     rcall   init_serial
 
     ; prompt to show terminal is live
-    ldi     r24, prompt
-    rcall   char_write
+    ldi     r30, lo8(prompt)
+    ldi     r31, hi8(prompt)
+    rcall   flash_write
 
 ; simple echo loop to test read/write char
 main_loop:

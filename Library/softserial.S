@@ -7,12 +7,6 @@
 #include <avr/io.h>
 #include "registers.h"
 
-.macro  delay_ticks  ticks
-    ldi     r19, \ticks
-9:  dec     r19
-    brne    9b
-.endm
-
 ; ====================================================================
 ;  TEXT SECTION  (executable code lives here)
 ; ====================================================================

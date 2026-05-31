@@ -662,6 +662,11 @@ load
 l
 end
 
+define mrc
+mon reset
+continue
+end
+
 define td
 tui disable
 end

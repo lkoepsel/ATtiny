@@ -30,8 +30,7 @@
 ; ====================================================================
 .section .progmem.data
 
-prompt:  
-        .asciz  "13A:"
+prompt: .asciz  "13A:"
 
 ; ====================================================================
 ;  TEXT SECTION  (executable code lives here)
@@ -63,6 +62,9 @@ reset_handler:
 main_setup:
 
     rcall   init_serial
+
+    ; delay to allow for trim value to settle (stabilize)
+    delay_ticks 0x80            
 
     ; prompt to show terminal is live
     ldi     r30, lo8(prompt)

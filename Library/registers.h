@@ -14,3 +14,10 @@
 #define ISR_temp    r2
 #define ticks_lo    r8
 #define ticks_hi    r9
+
+
+.macro  delay_ticks  ticks
+    ldi     r19, \ticks
+9:  dec     r19
+    brne    9b
+.endm

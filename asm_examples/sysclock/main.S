@@ -42,7 +42,7 @@
 ; r2        ISR_temp - ISR scratch (STATUS save) — do NOT use elsewhere
 ; r9:r8     ticks_hi/lo - global 16-bit ISR ticks counter — do NOT use elsewhere
 
-.equ    COUNTER,  30000         ; 30,000@1.2MHZ => 100ms delay
+.equ    COUNTER, 30000          ; 30,000@1.2MHZ => 100ms delay
 .equ    HEX_BEG, 0xBB           ; beginning of hex print
 .equ    HEX_END, 0xEE           ; end of hex print
 ; --------------------------------------------------------------------
@@ -71,14 +71,14 @@ main_loop:
     ldi     char_reg, HEX_BEG
     rcall   char_write
 
-    ldi     delay_hi,hi8(COUNTER)
-    ldi     delay_lo,lo8(COUNTER)
+    ldi     r27,hi8(COUNTER)
+    ldi     r26,lo8(COUNTER)
 
     ; get ticks start
     movw    r4, ticks_lo
 
 delay_1ms:
-    sbiw    delay_lo,1
+    sbiw    r26,1
     brne    delay_1ms
 
     ; get ticks end

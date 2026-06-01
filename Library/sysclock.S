@@ -11,6 +11,21 @@
 #include <avr/io.h>
 #include "registers.S"
 
+
+; ====================================================================
+;  TEXT SECTION  (executable code lives here)
+; ====================================================================
+.section .text
+
+; ---------- Registers and Values ----------------
+; r16                           ; temp register - temp_r18
+; r20                           ; temp register - bit_ctr
+; r24                           ; char register - char_reg
+
+; ====================================================================
+;  Subroutines SECTION
+; ====================================================================
+
 TIM0_COMPA_handler:
     in      ISR_temp, STATUS        ; save status flags
     inc     ticks_lo                ; r8++
@@ -48,7 +63,21 @@ init_sysclock_1k:
     ; OCR0A: adjust for a 1kHz signal (998.8kHz measured)
     ldi     r16,0x95       ;
     out     OCRA,r16           ;
-    sei
     sbi     IO_DDR, LED           ; PB0 as output, for checking SYS_CLOCK
+    sei
     ret
+
+; --------------------------------------------------------------------
+
+; ====================================================================
+;  DATA SECTION  (initialized variables in SRAM)
+;  Declare with:  my_var: .byte 0
+; ====================================================================
+.section .data
+
+; ====================================================================
+;  BSS SECTION  (zero-initialized / uninitialized variables in SRAM)
+;  Declare with:  my_buf: .skip 16
+; ====================================================================
+.section .bss
 

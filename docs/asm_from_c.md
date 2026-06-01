@@ -1,37 +1,44 @@
 # Calling AVR Assembly from C — Using `serial.S` from a C Program
 
-This guide walks through the changes needed to call hand-written AVR assembly
-routines from C, using the existing `Library/serial.S` as the working
-example. By the end, the assembly `char_write` and `char_read` (with their
-cycle-deterministic timing) will be callable from any C program, and the
-higher-level helpers — `soft_string_write`, `soft_int16_write`,
-`soft_readLine`, `soft_pgmtext_write` — can be rewritten in C against those
-primitives.
+This guide explains how the hand-written AVR assembly in `Library/serial.S` is
+made callable from C, so that the cycle-deterministic `char_write` and
+`char_read` (plus `init_serial` and `flash_write`) can be used from any C
+program. The same shared `serial.S` is linked by both the C example
+(`examples/softserial/`) and the assembly example (`asm_examples/softserial/`).
+
+By the end you will understand:
+
+- why the bit-banged UART has to be assembly,
+- how `serial.S` satisfies the AVR-GCC calling convention,
+- how `Library/serial_asm.h` declares the routines for C, and
+- how the `ASM_LIBS` mechanism in the root `Makefile` / `Makefile.asm` links
+  one shared assembly object into either kind of example.
 
 ## Why this matters
 
-The C version of software serial (`examples/serial.Soft_serial.c`) is
-unreliable because a bit-banged UART is *hard real-time*: every bit period
-must be a uniform, exact number of CPU cycles. The C version's per-bit period
-is `_delay_us(BIT_DURATION)` plus a *variable* amount of compiler-generated
-surrounding code (loop housekeeping, `1<<i` evaluated without a barrel
-shifter, optimization-level-dependent overhead) — so the bit period drifts
-and reception breaks.
+A pure-C software UART is unreliable because a bit-banged UART is *hard real
+time*: every bit period must be a uniform, exact number of CPU cycles. A C
+per-bit period is `_delay_us(...)` plus a *variable* amount of
+compiler-generated surrounding code (loop housekeeping, `1<<i` evaluated
+without a barrel shifter, optimization-level-dependent overhead) — so the bit
+period drifts and reception breaks.
 
-The assembly version in `Library/serial.S` runs in a constant,
-hand-counted number of cycles per bit. By exposing it to C, we get the timing
-accuracy of hand-tuned assembly with the convenience of writing the
-application logic (string formatting, line buffering, integer-to-ASCII
-conversion) in plain C.
+`Library/serial.S` runs a constant, hand-counted number of cycles per bit (via
+the `delay_ticks` macro). Exposing it to C gives the timing accuracy of
+hand-tuned assembly with the convenience of writing the application logic
+(string formatting, line buffering, integer-to-ASCII conversion) in plain C.
+All the timing-critical work stays in assembly; the C code only sequences bytes
+through the primitives, and any compiler-generated overhead lands in the *gap*
+between characters (inside the stop bit + idle), where it cannot break the
+protocol.
 
 ---
 
 ## Background — the avr-gcc calling convention (ABI)
 
-To make an assembly function safely callable from C, the assembly has to
-follow the AVR-GCC ABI. This is a fixed contract about which registers carry
-arguments, which carry return values, and which must be preserved across a
-call. Five rules cover almost everything.
+To make an assembly function safely callable from C, the assembly has to follow
+the AVR-GCC ABI: a fixed contract about which registers carry arguments, which
+carry return values, and which must be preserved across a call.
 
 ### Register roles
 
@@ -56,259 +63,76 @@ call. Five rules cover almost everything.
 | 16-bit return value | `r25:r24` |
 
 > **Pattern:** byte arguments occupy even-numbered call-clobbered registers,
-> right-to-left from r24 down. Additional argument slots exist (r9:r8 etc.)
-> but ATtiny13A programs almost never push that many.
+> right-to-left from r24 down. A 16-bit pointer argument (used by
+> `flash_write`) arrives in `r25:r24`, but `flash_write` instead expects its
+> Z-pointer already loaded in `r31:r30` — see below.
 
 ### The contract, in one sentence
 
-> The caller may put anything in r0, r18–r27, r30, r31; the callee may use
-> them freely. Everything else (r1, r2–r17, r28, r29) must look the same
-> before and after the call.
-
-Keep that contract in mind as you audit the assembly.
+> The caller may put anything in r0, r18–r27, r30, r31; the callee may use them
+> freely. Everything else (r1, r2–r17, r28, r29) must look the same before and
+> after the call.
 
 ---
 
-## Step 1 — Audit `Library/serial.S` against the ABI
+## How `Library/serial.S` meets the ABI
 
-Open `Library/serial.S` and check each routine against the table above.
+`serial.S` uses **logical register names** defined in `Library/registers.S`
+rather than raw `rNN` numbers. The relevant aliases are:
 
-**`char_write`**
-- Header comment says "char in r17". **r17 is call-saved** — passing a C
-  argument there is non-standard, and clobbering it would violate the
-  contract. → The char must arrive in **r24**.
-- Uses `r17`, `r18`, `r19`, `r20`. r17 has to go; r18/r19/r20 are fine
-  (call-clobbered).
+```asm
+#define temp_r18    r18      ; scratch
+#define bit_ctr     r20      ; bit / loop counter
+#define char_reg    r24      ; the character (ABI arg/return register)
+#define flash_lo    r30      ; Z low  (PROGMEM pointer)
+#define flash_hi    r31      ; Z high
+```
 
-**`char_read`**
-- Returns the char in **r17** and a framing-error flag in **T**. The ABI
-  return register is **r24**. The T flag has no direct C equivalent.
-- Internally uses `r17`, `r18`, `r19`, `r20`. Same issue with r17.
+`registers.S` also defines the cycle-counting delay used for each bit period:
 
-**`init_serial`**
-- No arguments, no return. Touches only I/O registers. Already ABI-clean.
+```asm
+.macro  delay_ticks  ticks
+    ldi     r19, \ticks
+9:  dec     r19
+    brne    9b
+.endm
+```
 
-**`timer_delay`**
-- Internal helper called only by `char_write` and `char_read`. Stays private
-  to the file (no `.global`). Takes its count in `r19`; r19 is call-clobbered
-  anyway, so no ABI concern.
+Every register the routines touch — `r18`, `r19` (inside `delay_ticks`),
+`r20`, `r24`, and `r30`/`r31` — is **call-clobbered**, so the routines need no
+`push`/`pop` of call-saved registers, and `r1` is never disturbed. That is what
+makes them ABI-clean and directly callable from C.
 
-**r1**
-- None of the current routines touch r1. ✓
-- (If you ever add a `mul` instruction or call a C function from the asm,
-  remember `mul` writes to r1:r0 and you must zero r1 afterward.)
+### The four exported routines
 
-### Decision: what to do with the T-flag status
+Each is marked `.global` so the linker can find it from a C object file:
 
-`char_read` currently sets the T flag to indicate a framing error. C has no
-direct access to single SREG bits, so we need a different mechanism. Three
-options, in increasing complexity:
-
-| Option | Pros | Cons |
+| Routine | C prototype | ABI mapping |
 |---|---|---|
-| **Drop the status** | Simplest; matches the existing C `soft_char_read`, which ignores errors | Loses error detection |
-| Pack into a `uint16_t` return (low byte = char, high byte = status) | One return value, no extra arg | Slightly more code on both sides |
-| Status-pointer arg: `char_read(uint8_t *err)` | Idiomatic C | Extra arg, extra register, extra memory write |
+| `init_serial` | `void init_serial(void)` | No args/return. Applies the OSCCAL `TRIM`, sets TX/RX pin directions and idle state. Must be called first. |
+| `char_write` | `void char_write(uint8_t c)` | Character arrives in `char_reg` (r24); transmits 8N1. |
+| `char_read` | `uint8_t char_read(void)` | Blocks for one byte, returns it in `char_reg` (r24). |
+| `flash_write` | `void flash_write(uint16_t addr)` | Z-pointer (`r31:r30`) addresses a null-terminated PROGMEM string; each byte is sent via `char_write`. |
 
-**This guide uses the first option (drop the status).** It mirrors the
-existing C behaviour and keeps the asm change minimal. The "keep error
-reporting" alternative appears in a callout in Step 2c.
+`delay_ticks` is a macro (inlined at each call site), so there is no separate
+private helper to keep out of the global namespace.
 
----
+### Design decision: no framing-error status
 
-## Step 2 — Rework `Library/serial.S` to the ABI
-
-Three concrete edits.
-
-### 2a. Make `char_write` take its argument in r24
-
-In the current code:
-
-```asm
-char_write:
-    ; Start bit
-    cbi     IO_PORT, TX
-    ldi     r19,period
-    rcall   timer_delay
-
-    ;  8 data bits and preserve char
-    ldi     r20, 8
-    mov     r18, r17          ; ← reads from r17
-    ...
-```
-
-Change exactly one line:
-
-```diff
--    mov     r18, r17
-+    mov     r18, r24
-```
-
-That's the entire ABI fix for `char_write`. `r24` is call-clobbered, so we're
-free to copy it into `r18` and `ror` through `r18` without preserving the
-original.
-
-Also update the comment at the top of the routine so the convention is
-documented:
-
-```diff
--; write a char in r17 to serial port, r17 is preserved
-+; write a char (passed in r24, per AVR-GCC ABI) to the serial port
-```
-
-### 2b. Make `char_read` return its result in r24
-
-The read loop currently rotates received bits into r17:
-
-```asm
-read_bit:
-    in      r18, IO_PIN
-    clc
-    sbrc    r18, RX
-    sec
-    ror     r17                 ; ← accumulates into r17
-    ...
-```
-
-Change to `r24`:
-
-```diff
--    ror     r17
-+    ror     r24
-```
-
-Update the comment:
-
-```diff
--; char_read - receive one char into r17 (8N1, LSB first)
--;   Returns status in T flag:  T=0 frame OK,  T=1 framing error.
-+; char_read - receive one char into r24 (8N1, LSB first), per AVR-GCC ABI
-```
-
-### 2c. Drop the T-flag status
-
-Delete the stop-bit check block at the end of `char_read`, keeping only the
-`ret`:
-
-```diff
--;   Stop bit check - line must be HIGH (mark); loop fall-through is ~mid stop bit.
--;   Status returned in T flag:  T=0 frame OK,  T=1 framing error.
--    clt                         ; assume frame OK
--    in      r18, IO_PIN
--    sbrs    r18, RX             ; skip 'set' when stop bit is HIGH (valid)
--    set                         ; stop bit LOW -> framing error
-     ret
-```
-
-> **Alternative — keep error reporting:**
-> If you want to preserve the framing-error check, return `uint16_t` instead:
-> place the status (0 or 1) into `r25` before `ret`, and declare the C
-> function as `uint16_t char_read(void)`. The low byte (r24) holds the
-> character; the high byte (r25) is non-zero on framing error.
->
-> ```asm
->     ldi     r25, 0              ; assume frame OK
->     in      r18, IO_PIN
->     sbrs    r18, RX
->     ldi     r25, 1              ; stop bit LOW -> framing error
->     ret
-> ```
+An earlier version of `char_read` returned a framing-error flag in the SREG
+**T** bit. C has no direct access to single SREG bits, so the current
+`char_read` **drops the status** and simply returns the received byte — mirroring
+the behaviour of the old C `soft_char_read`. If you ever need error reporting
+back, the idiomatic approach is to widen the return to `uint16_t` (low byte =
+char, high byte = status) and set `r25` before `ret`.
 
 ---
 
-## Step 3 — Export the symbols with `.global`
+## The C header — `Library/serial_asm.h`
 
-The linker only finds symbols marked `.global`. Add three lines, one above
-each routine's label:
+C code includes this header to declare the assembly routines. It already lives
+in `Library/` and is found via the `-I$(LIBDIR)` include path:
 
-```diff
-+.global init_serial
- init_serial:
-     ...
-
-+.global char_write
- char_write:
-     ...
-
-+.global char_read
- char_read:
-     ...
-```
-
-`timer_delay` stays private — no `.global` for it. The `.global` directives
-are zero-cost (assembler-only) and have no effect on the generated machine
-code.
-
----
-
-## Step 4 — Update the existing asm caller
-
-`asm_examples/serial/main.S` calls these routines directly. The echo loop
-is:
-
-```asm
-main_loop:
-    rcall   char_read
-    brts    main_loop          ; framing error -> discard, wait for next char
-    rcall   char_write
-    rjmp    main_loop
-```
-
-Because the data path is now `char_read` → r24 → `char_write` (both routines
-use r24 the same way), **no `mov` is needed** — the character flows through
-r24 automatically. The only line that must go is the `brts` framing-error
-check, since we dropped the T-flag status:
-
-```diff
- main_loop:
-     rcall   char_read
--    brts    main_loop          ; framing error -> discard, wait for next char
-     rcall   char_write
-     rjmp    main_loop
-```
-
-(If you chose the "keep error reporting" alternative in Step 2c, replace
-this with a test on `r25` instead, e.g. `tst r25` / `brne main_loop`.)
-
-Also tidy the register-usage notes near the top of the file — r17 is no
-longer the char register:
-
-```diff
- ; ---------- Registers and Values ----------------
- ; r16                           ; temp register
--; r17                           ; char register
-+; r24                           ; char register (per AVR-GCC ABI)
- ; r18                           ; temp register
- ; r19                           ; timer delay register
-```
-
----
-
-## Step 5 — Verify the asm example still works
-
-Before touching anything on the C side, prove the asm side still works:
-
-```bash
-cd asm_examples/serial
-make complete
-make flash
-```
-
-Connect a USB-to-serial adapter and run a terminal at 9600-8-N-1 (e.g.
-`screen /dev/ttyUSB0 9600` or `tio -b 9600 /dev/ttyUSB0`). Type characters —
-they should echo back exactly as before. If echo is broken, the ABI changes
-regressed timing or register usage; revisit Steps 2a–2c before moving on.
-
-This is the critical checkpoint. **Do not proceed to the C side until the asm
-example still works end-to-end.**
-
----
-
-## Step 6 — Declare the asm routines for C
-
-Create a small header that C code can `#include`.
-
-**`serial_asm.h`**
 ```c
 // serial_asm.h
 // C declarations for the assembly routines in serial.S
@@ -331,66 +155,44 @@ void char_write(uint8_t c);
 // The result is returned in r24 per the AVR-GCC ABI.
 uint8_t char_read(void);
 
+// Write program memory text to console.
+// The address is passed in r31/r30.
+void flash_write(uint16_t addr);
+
 #ifdef __cplusplus
 }
 #endif
 ```
 
 Notes:
+
 - **No name mangling.** AVR-GCC does not mangle C function names, so the asm
   label `char_write` matches the C declaration `char_write` directly. The
-  `extern "C"` wrapper only matters if you compile the code as C++.
-- **`#pragma once` vs include guards.** Either is fine; `#pragma once` is one
-  line shorter and works in every C/C++ compiler avr-gcc ships with.
-- **`uint8_t` vs `char`.** A signed `char` would also fit, but `uint8_t`
-  makes the byte-orientation explicit and avoids accidental sign extension
-  when bytes are widened to `int` in expressions.
+  `extern "C"` wrapper only matters if you compile as C++.
+- **`uint8_t` vs `char`.** `uint8_t` makes the byte-orientation explicit and
+  avoids accidental sign extension when bytes widen to `int` in expressions.
 
 ---
 
-## Step 7 — Teach the root C `Makefile` about `.S` files
+## How the build links the shared assembly — the `ASM_LIBS` mechanism
 
-The C build currently picks up `*.c` only. Three small edits add `.S`
-support without disturbing existing C behaviour.
+Both root makefiles share one idea: an example's **local Makefile** sets the
+`ASM_LIBS` variable to any shared `.S` files it wants linked in, and the root
+makefile appends those to the object list. The shared `serial.S` is **not
+copied** into the example — it is referenced in place from `Library/`, so there
+is a single shared assembly source used identically by C and asm callers.
 
-### 7a. Add an `ASM_SOURCES` variable in both branches
+### In the root C `Makefile`
 
-Find the `ifeq ($(LIBRARY),no_lib)` block near the top of `Makefile`:
+```makefile
+SOURCES     = $(wildcard *.c)
+ASM_SOURCES = $(wildcard *.S) $(ASM_LIBS)
+CPPFLAGS    = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD) -I. -I$(LIBDIR)
 
-```diff
- ifeq ($(LIBRARY),no_lib)
-     SOURCES=$(wildcard *.c )
-+    ASM_SOURCES=$(wildcard *.S )
-     CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD)
-
- else
-     SOURCES=$(wildcard *.c $(LIBDIR)/*.c)
-+    ASM_SOURCES=$(wildcard *.S $(LIBDIR)/*.S)
-     CPPFLAGS = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD)   -I. \
- 	-I$(LIBDIR)
- endif
+OBJECTS = $(SOURCES:.c=.o) $(ASM_SOURCES:.S=.o)
 ```
 
-The `no_lib` branch picks up only `.S` files in the current example folder
-(consistent with how it picks up `.c` files); the other branch also picks up
-`.S` files from `$(LIBDIR)`.
-
-### 7b. Add the asm objects to `OBJECTS`
-
-A few lines below:
-
-```diff
--OBJECTS=$(SOURCES:.c=.o)
-+OBJECTS=$(SOURCES:.c=.o) $(ASM_SOURCES:.S=.o)
- HEADERS=$(SOURCES:.c=.h)
-```
-
-The link rule (`$(TARGET).elf: $(OBJECTS)`) already links everything in
-`OBJECTS`, so nothing else needs touching there.
-
-### 7c. Add a pattern rule for `.S → .o`
-
-Below the existing `%.o: %.c` rule:
+with the pattern rule that assembles `.S` through the C preprocessor:
 
 ```makefile
 ## Assemble .S files (uppercase S runs the C preprocessor first)
@@ -398,146 +200,197 @@ Below the existing `%.o: %.c` rule:
 	$(CC) $(CPPFLAGS) $(TARGET_ARCH) -g -c -o $@ $<
 ```
 
-Why those flags specifically:
-- **`$(CPPFLAGS)`** — provides `-DF_CPU=...` and (when `LIBRARY != no_lib`)
-  `-I$(LIBDIR)`. The preprocessor needs these because `serial.S` does
-  `#include "registers.S"`, and `registers.S` uses `_SFR_IO_ADDR(...)` which
-  expands to numeric I/O addresses derived from `<avr/io.h>`.
-- **`$(TARGET_ARCH)`** — `-mmcu=attiny13a`. Selects the correct device
-  definitions.
-- **`-g`** — debug info, parallel to what C objects get (the gcc driver
-  passes the right options on to the assembler when the input is `.S`).
-- **No `$(CFLAGS)`** — those flags (`-std=gnu99`, `-Wundef`, `-fpack-struct`,
-  etc.) are C-only and either meaningless or harmful for assembly.
+Why these flags:
 
-> **Indentation note:** the leading whitespace on a make recipe line must be
-> a real tab character, not spaces. If you copy-paste this and the rule
-> silently doesn't fire, that's almost always the cause.
+- **`$(CPPFLAGS)`** — supplies `-DF_CPU=...` and the include paths `-I.` and
+  `-I$(LIBDIR)`. The preprocessor needs them because `serial.S` does
+  `#include "registers.S"`, and `registers.S` uses `_SFR_IO_ADDR(...)` (from
+  `<avr/io.h>`) to turn register names into numeric I/O addresses.
+- **`$(TARGET_ARCH)`** — `-mmcu=$(MCU)`, selecting the correct device
+  definitions.
+- **`-g`** — debug info, parallel to what C objects get.
+- **No `$(CFLAGS)`** — those (`-std=gnu99`, `-Wundef`, `-fpack-struct`, …) are
+  C-only and either meaningless or harmful for assembly.
+
+Because the `.S` is referenced via its `$(DEPTH)Library/...` path, the object is
+built next to it as `Library/serial.o`; the `all_clean` target removes
+`$(LIBDIR)/*.o` so it is not left stale.
+
+### In `Makefile.asm`
+
+The assembly root makefile mirrors the same mechanism:
+
+```makefile
+SOURCES_S = $(wildcard *.S) $(ASM_LIBS)
+OBJECTS   = $(SOURCES_S:.S=.o)
+
+%.o: %.S
+	avr-gcc -mmcu=$(MCU) -DF_CPU=$(F_CPU) -I$(LIBDIR) -g -Wa,--gdwarf-2 -MMD -MP -c -o $@ $<
+
+$(TARGET).elf: $(OBJECTS)
+	avr-gcc -mmcu=$(MCU) -nostartfiles -nostdlib -o $@ $^
+```
+
+So the asm example links `Library/serial.S` as a **separate object** rather than
+`#include`-ing it — exactly the shared-object arrangement the C side uses. The
+`-nostartfiles -nostdlib` link keeps the hand-written vector table and reset
+code authoritative (no C runtime).
+
+> **Indentation note:** the leading whitespace on a make recipe line must be a
+> real tab, not spaces. If a copied rule silently doesn't fire, that is almost
+> always the cause.
 
 ---
 
-## Step 8 — Build a new C example that uses the asm primitives
+## The two examples that use `serial.S`
 
-To avoid disturbing `examples/serial/`, put the new code under
-`examples/serial_asm/`. Following the project's "each C example is
-self-contained" convention, copy the asm file and header into the example
-folder rather than referencing them from `Library/`.
+Each example is just a `main.*` plus a two-or-three-line local Makefile that
+points `ASM_LIBS` at the shared `Library/serial.S`.
 
-### Folder layout
+### C example — `examples/softserial/`
 
-```
-examples/serial_asm/
-├── Makefile          # standard 2-line include
-├── main.c            # application code
-├── serial.S      # copied from Library/ (with Step 2/3 edits)
-└── serial_asm.h  # the header you wrote in Step 6
-```
-
-### Files
-
-**`Makefile`** (the standard 2-liner):
+**`Makefile`**
 ```makefile
 DEPTH = ../../
+ASM_LIBS = $(DEPTH)Library/serial.S
 include $(DEPTH)Makefile
 ```
 
-**`main.c`** — a minimal echo program to start with:
+**`main.c`** (echo, with a PROGMEM prompt written in plain C):
 ```c
+#include <avr/pgmspace.h>
 #include "serial_asm.h"
+
+#define CR 13
+#define LF 10
+
+const char prompt[]  PROGMEM = "13A";
+const char waiting[] PROGMEM = "W:";
+
+// Write a PROGMEM-resident, null-terminated string to the serial port.
+static void pgmtext_write(const char *p)
+{
+    for (uint8_t c; (c = pgm_read_byte(p)); p++)
+        char_write(c);
+}
 
 int main(void)
 {
     init_serial();
+
+    char_write(CR);
+    char_write(LF);
+    pgmtext_write(prompt);
+    char_write(CR);
+    char_write(LF);
+    pgmtext_write(waiting);
+
+    // Echo each received character back over the serial port.
     for (;;) {
-        uint8_t c = char_read();
-        char_write(c);
+        char_write(char_read());
     }
 }
 ```
 
-**`serial.S`** — a copy of `Library/serial.S` with the Step 2/3
-edits applied.
+Note the higher-level helper (`pgmtext_write`) is ordinary C over the two
+primitives. (The assembly `flash_write` does the same job in asm and is also
+available from C if you prefer it.)
 
-**`serial_asm.h`** — the header from Step 6.
+### Assembly example — `asm_examples/softserial/`
 
-### `env.make` requirement
-
-The example needs `LIBRARY = no_lib` (the project-wide default for ATtiny13A
-work) so the build picks up only what's in the example directory. Confirm
-your `env.make` has:
-
+**`Makefile`**
 ```makefile
-LIBRARY = no_lib
+DEPTH = ../../
+ASM_LIBS = $(DEPTH)Library/serial.S
+include $(DEPTH)Makefile.asm
+```
+
+`main.S` provides the interrupt vector table and reset handler, then calls the
+same exported routines. Because both `char_read` and `char_write` use
+`char_reg` (r24), the received byte flows straight from one to the other with
+no `mov`:
+
+```asm
+main_loop:
+    rcall   char_read
+    rcall   char_write
+    rjmp    main_loop
 ```
 
 ---
 
-## Step 9 — Build, flash, verify
+## Build, flash, verify
+
+For either example:
 
 ```bash
-cd examples/serial_asm
+cd examples/softserial        # or asm_examples/softserial
 make complete
 make flash
 ```
 
 Inspect the build output and confirm:
-- A line like `avr-gcc ... -c -o serial.o serial.S` appears (proves
-  the new pattern rule fired).
-- Final flash size is small — a few hundred bytes; the asm primitives are
-  tiny.
 
-Then connect the USB-to-serial adapter and verify in a terminal:
-- `init_serial()` runs cleanly (no garbage on startup).
-- Typed characters echo back exactly.
-- No bit drops at sustained typing speed.
+- A line like `avr-gcc ... -c -o ../../Library/serial.o ../../Library/serial.S`
+  appears (proves `ASM_LIBS` and the `.S` pattern rule fired).
+- Final flash size is small — the asm primitives are tiny.
 
-If reception is unreliable, see Step 10.
+Then connect a USB-to-serial adapter and open a terminal at **9600-8-N-1**
+(e.g. `tio -b 9600 /dev/ttyUSB0` or `screen /dev/ttyUSB0 9600`):
+
+- `init_serial()` runs cleanly (no startup garbage; the C example prints its
+  `13A` / `W:` prompt).
+- Typed characters echo back exactly, with no bit drops at sustained typing
+  speed.
+
+If reception is unreliable, see the timing section below.
 
 ---
 
-## Step 10 — Tuning timing if needed
+## Tuning timing if needed
 
-The `period` and `half_period` constants in `serial.S` are CPU-cycle
-counts for the bit period:
+The bit period is set by two cycle counts at the top of `Library/serial.S`,
+together with an OSCCAL trim value applied in `init_serial`:
 
-```c
-#define period       35      // # of ticks for 1 bit period (9600 baud @ 1.2 MHz)
-#define half_period  18      // # of ticks for 0.5 bit period
+```asm
+#define period       37      ; # of ticks for 1 bit period (9600 baud @ 1.2 MHz)
+#define half_period  20      ; # of ticks for a 0.5 bit period
+#define TRIM         0x60    ; OSCCAL trim value, use examples/osccal to determine
 ```
 
-`period = 35` was tuned for an ATtiny13A at the factory 1.2 MHz RC clock. If
-your clock is detuned (the internal RC oscillator has ±10 % tolerance
-uncalibrated), the effective baud will shift. Two avenues:
+`period = 37` was tuned for an ATtiny13A at the 1.2 MHz internal RC clock. The
+internal oscillator has ±10 % tolerance uncalibrated, so the effective baud
+shifts chip-to-chip. Two avenues:
 
-1. **Calibrate the chip** — set `OSCCAL` at startup to nudge the oscillator
-   toward true 1.2 MHz. The `examples/osccal/` example helps find the right
-   value for your individual chip.
-2. **Re-tune `period`** — measure the bit period on a logic analyser and
-   scale `period` proportionally. Each unit of `period` is 3 CPU cycles
-   (`dec; brne` taken).
+1. **Calibrate the chip** — `init_serial` writes `TRIM` to `OSCCAL` at startup
+   to nudge the oscillator toward true 1.2 MHz. Use `examples/osccal/` to find
+   the right `TRIM` for your individual chip, then update the `TRIM` define.
+2. **Re-tune `period`** — measure the bit period on a logic analyser and scale
+   `period` proportionally. Each unit of `period` is the cost of one
+   `delay_ticks` loop iteration (`dec; brne` taken ≈ 3 CPU cycles).
 
-Do not mix the two — pick one and stick with it for repeatability.
+Pick one avenue and stick with it for repeatability.
 
 ---
 
-## Reference — change summary
+## Reference — where everything lives
 
-| File | Change |
+| File | Role |
 |---|---|
-| `Library/serial.S` | `mov r18, r17` → `mov r18, r24`; `ror r17` → `ror r24`; drop final T-flag block; add `.global init_serial` / `.global char_write` / `.global char_read`; update header comments |
-| `asm_examples/serial/main.S` | Remove `brts main_loop`; update r17 → r24 in the register-usage comment |
-| `Makefile` (root C) | Add `ASM_SOURCES` wildcard in both `LIBRARY` branches; append `$(ASM_SOURCES:.S=.o)` to `OBJECTS`; add `%.o: %.S` pattern rule |
-| `examples/serial_asm/Makefile` | New — standard 2-liner |
-| `examples/serial_asm/main.c` | New — calls `init_serial` / `char_read` / `char_write` |
-| `examples/serial_asm/serial.S` | New — copy of edited `Library/serial.S` |
-| `examples/serial_asm/serial_asm.h` | New — C declarations for the three exported functions |
+| `Library/serial.S` | The ABI-clean primitives: `init_serial`, `char_write`, `char_read`, `flash_write`. Uses logical register names + `delay_ticks` from `registers.S`. |
+| `Library/registers.S` | Logical register aliases (`char_reg`, `temp_r18`, `bit_ctr`, `flash_lo/hi`) and the `delay_ticks` macro. Include-guarded. |
+| `Library/serial_asm.h` | C prototypes for the four exported routines. |
+| `Makefile` (root C) | `ASM_SOURCES = $(wildcard *.S) $(ASM_LIBS)`; `%.o: %.S` pattern rule; links via `OBJECTS`. |
+| `Makefile.asm` (root asm) | Mirror mechanism: `SOURCES_S = $(wildcard *.S) $(ASM_LIBS)`; links the shared object with `-nostartfiles -nostdlib`. |
+| `examples/softserial/` | C example: `main.c` + local Makefile setting `ASM_LIBS`. |
+| `asm_examples/softserial/` | Assembly example: `main.S` (vectors + reset) + local Makefile setting `ASM_LIBS`. |
 
 ---
 
 ## Where to go from here
 
-Once `char_write` and `char_read` work from C, every higher-level helper
-becomes ordinary C code over those two primitives. For example:
+With `char_write` and `char_read` callable from C, every higher-level helper is
+ordinary C over those two primitives — for example:
 
 ```c
 void soft_string_write(const char *s)
@@ -553,7 +406,6 @@ void soft_uint16_write(uint16_t n)
 }
 ```
 
-All the timing-critical work is in the assembly; the C code only sequences bytes through the primitives. Compiler-generated overhead lives in the *gap* between characters (inside the stop bit + idle), not inside a bit period, so it can't break the protocol.
-
-A longer-term cleanup, once this works: have `asm_examples/serial/main.S` *link* `Library/serial.S` as a separate object instead of `#include`-ing it. Then there is one shared library object, used identically by asm and C
-callers. That requires teaching `Makefile.asm` to pick up `$(LIBDIR)/*.S` and add it to the link line — a mirror of Step 7 on the asm side. Worth doing eventually; not required to get the C example working.
+Add such helpers in the example's `main.c` (or a small companion `.c`); the
+timing-critical work stays in `Library/serial.S`, shared unchanged by both the C
+and assembly examples.

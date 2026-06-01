@@ -15,7 +15,7 @@ nano env.make
 # CTRL-s (save) then CTRL-x (exit)
 ```
 
-## env.make
+## Example *env.make*
 
 ```make
 MCU = attiny13a
@@ -24,4 +24,11 @@ F_CPU = 1200000UL
 USB_BAUD = 250000UL
 PROGRAMMER_TYPE = atmelice_isp
 PROGRAMMER_ARGS = -F -V -P usb -b 115200
+
+# MCU = attiny13a
+# SERIAL = /dev/ttyACM0
+# F_CPU = 1200000UL
+# USB_BAUD = 250000UL
+# PROGRAMMER_TYPE = atmelice_isp
+# PROGRAMMER_ARGS = -F -V -P usb -b 115200
 ```

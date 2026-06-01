@@ -24,10 +24,10 @@ done:
 init_sysclock_1k:
 ;   Initialize timer 0 to CTC Mode using OCR0A, with a chip clock of 1.2Mhz
 ;   The values below will result in a 1kHz counter (1000 ticks = 1 second)
-;   TCRR0A 0b01000010 0x42
-;   TCRR0B 0b00000010 0x02
-;   TIMS0K 0b00000100 0x04
-;   OCR0A  0b10010101 0x95
+;   TCRR0A 0b0100 0010 0x42     Toggle OC0A on Compare Match, CTC
+;   TCRR0B 0b0000 0010 0x02     /8 Prescalar
+;   TIMS0K 0b0000 0100 0x04     Output Compare Match A Interrupt Enable
+;   OCR0A  0b1001 0101 0x95     Adjusted for a 1kHz signal
 
 ; clear counter register
     eor     ticks_lo, ticks_lo        ; clear counter low byte

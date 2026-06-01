@@ -766,7 +766,7 @@ avr-gdb
 
 #### bloom and using register commands
 
-*avr-gdb* has a bug when using the *TUI* and terminal color commands, it will be fixed in version 17. Until then, use *td* to *disable the TUI* and *te* to *enable the TUI*. The commands below have had the *TUI* disabled.
+*avr-gdb 16* has a bug when using the *TUI* and terminal color commands. It has been fixed in version 17. If required, use *td* to *disable the TUI* and *te* to *enable the TUI*. While the commands below have had the *TUI* disabled, this is no longer neccesary when using avr-gdb version 17.0+.
 
 #### Example: Setting Pins
 ```bash
@@ -952,7 +952,11 @@ Diagnostics:
   MissingIncludes: None
 ```
 
-### LSP-clangd settings
+### LSP-clangd settings (*both macOS and Linux*)
+
+`Settings -> Package Settings -> LSP -> Servers -> LSP-clangd`
+
+```
 {
     // Whitelist avr-gcc so clangd can query it for system header paths.
     // Without this, the project's .clangd "Compiler: /usr/bin/avr-gcc"
@@ -963,7 +967,7 @@ Diagnostics:
           "--header-insertion=never"
       ]
 }
-
+```
 ### Notes
 
 1. LSP-clangd --query-driver: Sublime's LSP-clangd needs to be allowed to query avr-gcc. In LSP-clangd settings, add to

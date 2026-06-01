@@ -20,6 +20,8 @@
 #define temp_r18    r18
 #define bit_ctr     r20
 #define char_reg    r24
+#define delay_lo    r26
+#define delay_hi    r27
 #define flash_lo    r30
 #define flash_hi    r31
 

@@ -1,545 +1,124 @@
-# Serial Communication Issues with ATtiny13A
-## Introduction
+# Software Serial on the ATtiny13A
 
-Much of this has been deprecated by moving to an assembly language version of *char_read()* and *char_write()*. These new versions are more precise due to their ability to use an assembly instruction (*ror*) which matches the need precisely. The serial programs (both *C* and *assembly*), have been tested extensively using the assembly language versions, and at 9600 baud, appear to be rock-solid.
+## Status
 
-The OSCCAL explanation and program are quite helpful in dialing in the exact RC constant, so continue to use that program. 
-### Explanation
-This page covers the issues creating a soft serial port on an ATtiny13A. There are several issues:
+The software serial port is now implemented in **AVR assembly**
+(`Library/serial.S`), exposed to C through `Library/serial_asm.h`, and runs
+**rock-solid at 9600 baud** (8-N-1) on the 1.2 MHz internal RC oscillator. The
+earlier pure-C approaches on this page (busy-wait `_delay_us`, Timer0 delay
+helpers, dropping to 1200 baud) are **deprecated** — kept below only as
+background on *why* a bit-banged UART is hard on this chip.
 
-1. Lack of precision in internal RC oscillator, Arduino Uno R3 uses a 16Mhz ceramic oscillator (*resonator*)
-2. Reading at the correct time
-3. Use Timer0 instead of software delays for greater accuracy
+Two things made the assembly version reliable:
 
-The solution was to:
-1. Use the `osccal` example, to determine the correct *OSCCAL* value for the RC oscillator
-2. Setup TIMER0 to provide a precise timing delay
-3. Read the bits in the middle of the bit to ensure the greatest accuracy of read.
-3. Set the baud rate to 1200 baud, which is whole divider of the processor clock 1.2MHz. This last step worked quite well and given serial communications won't be high volume, it will be *fast enough*.
+1. **Cycle-exact bit periods.** Each bit is timed by the `delay_ticks` macro in
+   `Library/registers.S` (a counted `dec`/`brne` loop), not by compiler-emitted
+   delay code whose length varies with optimization level.
+2. **The `ror` instruction.** Receiving shifts each sampled bit (carry) straight
+   into the result register with a single `ror` — exactly matching the
+   LSB-first serial format, with no `1<<i` mask computed on a chip that has no
+   barrel shifter.
 
-### What to do
-1. Default for *OSCCAL* is 68, set it in *serial.c:init_soft_serial*
-2. Use the default value of 156 defined in *serial.h:baud_ticks*, this is for 1200 baud
+The `OSCCAL` calibration story below is still relevant: use `examples/osccal/`
+to find your chip's trim value, then set it as `TRIM` in `Library/serial.S`
+(default `0x60`), where `init_serial` applies it.
 
-If the above two steps work for both **TX** and **RX**, great. If not, read below to attempt to solve.
+## The current implementation
 
-## 1. Why Write Works But Read Fails
+| Item | Where |
+|---|---|
+| Assembly primitives | `Library/serial.S` — `init_serial`, `char_write`, `char_read`, `flash_write` |
+| Logical register names + `delay_ticks` macro | `Library/registers.S` |
+| C prototypes | `Library/serial_asm.h` |
+| C example | `examples/softserial/` (`main.c`) |
+| Assembly example | `asm_examples/softserial/` (`main.S`) |
+| Calibration helper | `examples/osccal/` |
 
-The write routine might work perfectly while the read routine fails is actually a **classic symptom** of timing issues in software serial. The key difference is in **timing tolerance**:
+Pins (from `Library/registers.S`): **TX = PB1**, **RX = PB2** (input pull-up),
+LED = PB0. Bit timing constants in `Library/serial.S`:
 
-### Transmit (Write) Operation
-- **You control the timing** - your ATtiny13A generates the signal
-- The receiving device (your PC/terminal) has sophisticated UART hardware with **automatic baud rate detection** and **sampling oversampling** (typically 16x)
-- The receiver can tolerate timing errors up to about ±5% because it resyncs on each start bit
-
-### Receive (Read) Operation  
-- You must **sample at precise moments** within each bit period
-- Your code samples only **once per bit** at a fixed delay
-- **Timing errors accumulate** across all 8 data bits
-- By bit 7 or 8, even a 2-3% timing error can cause you to sample in the wrong bit entirely
-
-## Solution
-
-Since your transmit works, your oscillator is probably close but not precise enough for reliable receive. Try this adjusted read routine with **mid-bit sampling**:
-
-```c
-int8_t soft_char_read()
-{
-    int8_t data = 0;
-
-    // Wait for start bit
-    while (PINB & (1 << SOFT_RX_PIN)) {} ;
-
-    // Wait 1.5 bit periods to sample first data bit in the middle
-    _delay_us(BIT_DURATION + (BIT_DURATION / 2));
-    
-    // Read each bit
-    for (int8_t i = 0; i < 8; i++)
-    {
-        if (PINB & (1 << SOFT_RX_PIN))
-        {
-            data |= (1 << i);
-        }
-        _delay_us(BIT_DURATION);
-    }
-
-    // No need to wait for stop bit
-
-    return data;
-}
+```asm
+#define period       37      ; ticks for 1 bit period (9600 baud @ 1.2 MHz)
+#define half_period  20      ; ticks for a 0.5 bit period
+#define TRIM         0x60    ; OSCCAL trim (use examples/osccal to determine)
 ```
 
-## 2. Calibrate the RC Oscillator
-
-The ATtiny13A uses an internal RC oscillator that has significant tolerance - up to ±10% from the factory. [^5] This inaccuracy directly affects the `_delay_us()` function, which relies on the `F_CPU` definition matching the actual oscillator frequency. [^2] When the oscillator runs faster or slower than expected, your `BIT_DURATION` delays become incorrect, causing the sampling points to drift across the incoming serial data stream.
-
-For reliable software serial communication, the timing accuracy needs to be within about ±5% tolerance. [^6] Your corrupted data suggests your oscillator is running outside this acceptable range.
-
-
-## Solution
-
-To fix this issue, you need to **calibrate the internal oscillator** using the `OSCCAL` register. [^7][^8] The ATtiny13A has separate calibration values for different clock speeds, and proper calibration can improve accuracy to approximately ±2%. [^3]
-
-Here are your options:
-
-1. **Manual OSCCAL Calibration**: Adjust the OSCCAL register value in your code until you receive correct data. Start with small adjustments:
-   ```c
-   OSCCAL += 5;  // Try increasing or decreasing
-   ```
-
-2. **Measure and Calibrate**: Generate a known frequency output on a pin and measure it with an oscilloscope or frequency counter to determine the actual clock speed, then adjust OSCCAL accordingly. [^1]
-
-3. **Fine-tune F_CPU**: If you can't adjust OSCCAL, you might need to redefine `F_CPU` in your makefile to match the actual oscillator frequency rather than the nominal value.
-
-The successful resolution of similar issues confirms that oscillator calibration resolves software UART problems on the ATtiny13A. [^4]
-
-[^1]: [ATtiny Oscillator Calibration : 4 Steps - Instructables](https://www.instructables.com/ATtiny-Oscillator-Calibration/) (22%)     
-[^2]: [<util/delay.h>: Convenience functions for busy-wait delay loops](https://www.nongnu.org/avr-libc/user-manual/group__util__delay.html) (16%)      
-[^3]: [ATtiny13 - using delay() function - 3rd Party Boards - Arduino Forum](https://forum.arduino.cc/t/attiny13-using-delay-function/480592) (15%)     
-[^4]: [Serial Data Attiny13A - Page 2 - Programming - Arduino Forum](https://forum.arduino.cc/t/serial-data-attiny13a/1094674?page=2) (14%)     
-[^5]: [ATtiny13 internal oscillator accurate @9.6MHz but inaccurate @4.8 ...](https://forum.arduino.cc/t/attiny13-internal-oscillator-accurate-9-6mhz-but-inaccurate-4-8mhz/674396) (12%)       
-[^6]: [How to: Display serial output from a ATTiny13... - Arduino Forum](https://forum.arduino.cc/t/how-to-display-serial-output-from-a-attiny13/645602) (11%)      
-[^7]: [ATTiny13a 4.8Mhz serial communication, calibrate... - Arduino Forum](https://forum.arduino.cc/t/attiny13a-4-8mhz-serial-communication-calibrate-osccal/544744) (5%)      
-[^8]: [Serial Data Attiny13A - Programming - Arduino Forum](https://forum.arduino.cc/t/serial-data-attiny13a/1094674) (5%)
-
-### OSCCAL Calibration Routine
+From C, the whole port is four declarations in `serial_asm.h`:
 
 ```c
-#include <avr/io.h>
-#include <util/delay.h>
-
-// Your existing UART definitions
-#define SOFT_TX_PIN PB0
-#define SOFT_RX_PIN PB1
-#define BIT_DURATION 104  // For 9600 baud
-
-// Your existing write function
-void soft_char_write(char data)
-{
-    // Start bit
-    PORTB &= ~(1 << SOFT_TX_PIN);
-    _delay_us(BIT_DURATION);
-
-    // Data bits
-    for (uint8_t i = 0; i < 8; i++)
-    {
-        if (data & (1 << i))
-        {
-            PORTB |= (1 << SOFT_TX_PIN);
-        }
-        else
-        {
-            PORTB &= ~(1 << SOFT_TX_PIN);
-        }
-        _delay_us(BIT_DURATION);
-    }
-
-    // Stop bit
-    PORTB |= (1 << SOFT_TX_PIN);
-    _delay_us(BIT_DURATION);
-}
-
-// Send a string
-void soft_string_write(const char* str)
-{
-    while (*str)
-    {
-        soft_char_write(*str++);
-    }
-}
-
-// Send a hex byte value
-void send_hex_byte(uint8_t value)
-{
-    uint8_t high = (value >> 4) & 0x0F;
-    uint8_t low = value & 0x0F;
-    
-    soft_char_write(high < 10 ? '0' + high : 'A' + high - 10);
-    soft_char_write(low < 10 ? '0' + low : 'A' + low - 10);
-}
-
-int main(void)
-{
-    // Setup TX pin as output, high (idle state)
-    DDRB |= (1 << SOFT_TX_PIN);
-    PORTB |= (1 << SOFT_TX_PIN);
-    
-    // Setup RX pin as input with pull-up
-    DDRB &= ~(1 << SOFT_RX_PIN);
-    PORTB |= (1 << SOFT_RX_PIN);
-    
-    uint8_t osccal_start = OSCCAL;  // Save factory value
-    
-    while (1)
-    {
-        // Test ascending OSCCAL values
-        for (uint8_t i = 0; i < 128; i++)
-        {
-            OSCCAL = osccal_start + i;
-            
-            // Send current OSCCAL value
-            soft_string_write("OSCCAL=");
-            send_hex_byte(OSCCAL);
-            soft_string_write(": ");
-            
-            // Send test pattern
-            soft_string_write("ABC123\r\n");
-            
-            _delay_ms(500);  // Delay between tests
-            
-            // Stop if we reach max value
-            if (OSCCAL == 0xFF) break;
-        }
-        
-        // Test descending OSCCAL values
-        for (uint8_t i = 1; i < 128; i++)
-        {
-            if (osccal_start < i) break;  // Don't go negative
-            
-            OSCCAL = osccal_start - i;
-            
-            // Send current OSCCAL value
-            soft_string_write("OSCCAL=");
-            send_hex_byte(OSCCAL);
-            soft_string_write(": ");
-            
-            // Send test pattern
-            soft_string_write("ABC123\r\n");
-            
-            _delay_ms(500);  // Delay between tests
-        }
-        
-        // Return to factory value and pause
-        OSCCAL = osccal_start;
-        _delay_ms(2000);
-    }
-}
+void    init_serial(void);        // apply TRIM, set pin directions/idle
+void    char_write(uint8_t c);    // transmit one byte, 8-N-1
+uint8_t char_read(void);          // block for one byte, return it
+void    flash_write(uint16_t a);  // print a null-terminated PROGMEM string (Z = a)
 ```
 
-## How to Use
+For how the assembly is made callable from C and how `ASM_LIBS` links the
+shared `serial.S` into either a C or an assembly example, see
+[`docs/asm_from_c.md`](asm_from_c.md).
 
-1. **Compile and upload** this code to your ATtiny13A
-2. **Connect your serial terminal** at 9600 baud
-3. **Watch the output** - you'll see something like:
-   ```
-   OSCCAL=6A: ABC123
-   OSCCAL=6B: ABC123
-   OSCCAL=6C: ABC123
-   ```
-4. **Find the OSCCAL value** where "ABC123" appears correctly without corruption
-5. **Note that value** and use it in your main program by adding:
-   ```c
-   OSCCAL = 0x6C;  // Replace with your optimal value
-   ```
-   at the beginning of your `main()` function
+---
 
-## Tips
+## Background: why a software UART is hard here
 
-- The factory default OSCCAL value is typically around 0x6A-0x6F [^1]
-- The ATtiny13A has separate calibration values for 4.8MHz and 9.6MHz operation [^2][^3]
-- Small adjustments (±5) are usually sufficient [^4][^5]
-- If all values show corruption, your baud rate might be too far off - try adjusting `BIT_DURATION` slightly
+The remaining sections explain the timing problems that drove the move to
+assembly. They are still useful for understanding the design, but the code
+snippets are illustrative C from the exploration phase, not the shipping
+implementation.
 
-Once you find the correct OSCCAL value, your receive routine should work properly since both transmit and receive will use the same calibrated timing.
+There are three core issues:
 
-[^1]: [ATtiny13A Data Sheet](https://www.farnell.com/datasheets/1714641.pdf) (34%)  
-[^2]: [ATTiny13a 4.8Mhz serial communication, calibrate OSCCAL.](https://forum.arduino.cc/t/attiny13a-4-8mhz-serial-communication-calibrate-osccal/544744) (21%)    
-[^3]: [ATtiny13 internal oscillator accurate @9.6MHz but inaccurate @4.8 ...](https://forum.arduino.cc/t/attiny13-internal-oscillator-accurate-9-6mhz-but-inaccurate-4-8mhz/674396) (20%)   
-[^4]: [ATtiny13 - using delay() function - 3rd Party Boards - Arduino Forum](https://forum.arduino.cc/t/attiny13-using-delay-function/480592) (13%)     
-[^5]: [Serial Data Attiny13A - Page 2 - Programming - Arduino Forum](https://forum.arduino.cc/t/serial-data-attiny13a/1094674?page=2) (12%)
+1. The internal RC oscillator is imprecise (±10 % uncalibrated), whereas an
+   Arduino Uno R3 uses a 16 MHz ceramic resonator.
+2. You must sample each received bit at the correct instant.
+3. Bit timing must be exact and uniform across all 8 bits.
 
+### Why write works but read fails
 
-## 3. Mid-bit Sampling
+A working transmit but failing receive is a **classic symptom** of timing
+error, because the two directions have very different tolerances.
 
-The original read routine waits for half a bit period after detecting the start bit, but this isn't quite right. Wait **1.5 bit periods** from the start bit edge to sample in the middle of the first data bit.
+**Transmit:** *You* generate the signal. The receiving PC/USB-UART has hardware
+with oversampling (typically 16×) and resynchronizes on every start bit, so it
+tolerates roughly ±5 % timing error.
 
-## Corrected Read Routine
+**Receive:** You must sample at precise moments within each bit period, only
+once per bit, at a fixed delay. Timing errors **accumulate** across the 8 data
+bits — by bit 7 even a 2–3 % error can land the sample in the wrong bit.
 
-```c
-int8_t soft_char_read()
-{
-    int8_t data = 0;
+The assembly `char_read` addresses this with **mid-bit sampling**: after the
+start-bit falling edge it waits `half_period`, re-confirms the start bit is
+still low (noise reject), then a full `period` — i.e. ~1.5 bit periods total —
+so the first data bit is sampled in its middle. Each subsequent bit is one
+exact `period` later.
 
-    // Wait for start bit (falling edge)
-    while (PINB & (1 << SOFT_RX_PIN)) {} ;
+### Calibrating the RC oscillator (still used)
 
-    // CRITICAL: Wait 1.5 bit periods to reach middle of first data bit
-    // Start bit begins now, we want to sample in middle of bit 0
-    _delay_us(BIT_DURATION + (BIT_DURATION / 2));
-    
-    // Read bit 0
-    if (PINB & (1 << SOFT_RX_PIN))
-    {
-        data |= (1 << 0);
-    }
-    
-    // Read remaining 7 bits
-    for (int8_t i = 1; i < 8; i++)
-    {
-        _delay_us(BIT_DURATION);
-        if (PINB & (1 << SOFT_RX_PIN))
-        {
-            data |= (1 << i);
-        }
-    }
+The internal oscillator's tolerance directly skews any cycle-counted delay, so
+the effective baud rate drifts chip-to-chip. Calibrating `OSCCAL` brings
+accuracy to roughly ±2 %, which is well within the ~±5 % a UART needs.
 
-    // Optional: verify stop bit is present
-    _delay_us(BIT_DURATION);
-    // Could check for stop bit here if needed
+`examples/osccal/` sweeps `OSCCAL` values and emits a test pattern so you can
+find the value at which output is clean for your individual chip. Note that
+value and set it as `TRIM` in `Library/serial.S`; `init_serial` writes it to
+`OSCCAL` at startup:
 
-    return data;
-}
+```asm
+    ldi     temp_r18, TRIM
+    out     RCCAL, temp_r18      ; RCCAL = _SFR_IO_ADDR(OSCCAL)
 ```
 
-## 4. Timer-Based Sampling
+Tips:
+- The factory default `OSCCAL` is typically around `0x6A`–`0x6F`.
+- The ATtiny13A has separate calibration ranges for 4.8 MHz and 9.6 MHz.
+- Small adjustments (±5) are usually enough.
+- If *every* value shows corruption, the baud period itself is off — re-tune
+  `period` (each unit ≈ 3 CPU cycles of the `delay_ticks` loop).
 
-For even better accuracy with your calibrated OSCCAL value of 0x73, you could use Timer0 for precise bit timing:
 
-```c
-void timer0_delay_us(uint16_t us)
-{
-    // Assuming 9.6MHz clock, prescaler /8 = 1.2MHz timer clock
-    // Each timer tick = 0.833us
-    uint16_t ticks = (us * 12) / 10;  // Approximate conversion
-    
-    TCCR0B = (1 << CS01);  // Prescaler /8
-    
-    while (ticks > 0)
-    {
-        TCNT0 = 0;
-        uint8_t wait = (ticks > 255) ? 255 : ticks;
-        while (TCNT0 < wait) {} ;
-        ticks -= wait;
-    }
-    
-    TCCR0B = 0;  // Stop timer
-}
-```
+### References
 
-The key insight is that software UART receive requires **precise alignment** with the incoming data stream. Your transmit works because the receiving hardware is more tolerant and resyncs on each start bit, but your receive must sample at exactly the right moments.
-
-You're absolutely correct! Let me clarify the clock division chain for the ATtiny13A:
-
-## Clock Division Steps
-
-1. **Internal Oscillator**: 9.6 MHz
-2. **System Clock (F_CPU)**: 9.6 MHz ÷ 8 = **1.2 MHz** (due to CKDIV8 fuse)
-3. **Timer0 Clock**: 1.2 MHz ÷ 8 = **150 kHz** (with CS01 prescaler)
-
-## Precision Timer Function (16bits, low speed /8)
-
-```c
-void timer0_delay_us(uint16_t us)
-{
-    // System clock: 1.2MHz (9.6MHz / 8)
-    // Timer clock with prescaler /8: 150kHz
-    // Each timer tick = 6.67us
-    
-    // Calculate ticks needed (us * 10 / 67 approximates us / 6.67)
-    uint16_t ticks = (us * 10) / 67;
-    
-    TCCR0B = (1 << CS01);  // Prescaler /8
-    
-    while (ticks > 0)
-    {
-        TCNT0 = 0;
-        uint8_t wait = (ticks > 255) ? 255 : ticks;
-        while (TCNT0 < wait) {} ;
-        ticks -= wait;
-    }
-    
-    TCCR0B = 0;  // Stop timer
-}
-```
-
-## Alternative: Use Prescaler /1 for Better Resolution
-
-```c
-void timer0_delay_us(uint16_t us)
-{
-    // Timer clock with prescaler /1: 1.2MHz
-    // Each timer tick = 0.833us
-    
-    // Calculate ticks (us * 6 / 5 approximates us / 0.833)
-    uint16_t ticks = (us * 6) / 5;
-    
-    TCCR0B = (1 << CS00);  // Prescaler /1
-    
-    while (ticks > 0)
-    {
-        TCNT0 = 0;
-        uint8_t wait = (ticks > 255) ? 255 : ticks;
-        while (TCNT0 < wait) {} ;
-        ticks -= wait;
-    }
-    
-    TCCR0B = 0;  // Stop timer
-}
-```
-
-This gives you ~125 ticks for 104µs, providing much better timing resolution for your software UART.
-
-Let me break down this timer delay loop that handles delays longer than what an 8-bit timer can count:
-
-## Timer0 16-bit Function explained 
-
-The ATtiny13A's Timer0 is an **8-bit timer**, meaning `TCNT0` can only count from 0 to 255. If you need a delay of, say, 500 ticks, you can't just wait for `TCNT0` to reach 500 - it physically can't count that high.
-
-## Line-by-Line Explanation
-
-```c
-while (ticks > 0)
-```
-This outer loop continues as long as we have ticks remaining to count. It handles the total delay by breaking it into chunks.
-
-```c
-TCNT0 = 0;
-```
-Reset the timer counter to 0 at the start of each iteration. This ensures we're starting fresh for each chunk of counting.
-
-```c
-uint8_t wait = (ticks > 255) ? 255 : ticks;
-```
-This is the **key line**. It determines how many ticks to count in this iteration:
-- If `ticks > 255`: Set `wait = 255` (maximum the 8-bit timer can count)
-- If `ticks ≤ 255`: Set `wait = ticks` (count the remaining ticks)
-
-This ternary operator essentially says: "Count either 255 ticks or whatever's left, whichever is smaller."
-
-```c
-while (TCNT0 < wait) {} ;
-```
-This inner loop **busy-waits** until the timer counter reaches our target value. The timer hardware increments `TCNT0` automatically based on the prescaler setting. We just spin here checking if it's reached our target yet.
-
-```c
-ticks -= wait;
-```
-Subtract the ticks we just counted from our total. If we counted 255 ticks and needed 500 total, we now have 245 ticks left for the next iteration.
-
-## Example Walkthrough
-
-For a 500-tick delay:
-1. **First iteration**: `wait = 255`, count to 255, `ticks = 245` remaining
-2. **Second iteration**: `wait = 245`, count to 245, `ticks = 0` remaining  
-3. **Exit loop** (ticks = 0)
-
-This clever approach lets you create delays of any length (up to 65,535 ticks with `uint16_t`) using only an 8-bit timer register.
-
-## Bit Duration Table for Software UART
-
-| Baud Rate | Bit Period | Bit Duration (µs) | Timer Ticks @ 1.2MHz |
-|-----------|------------|-------------------|---------------------|
-| **1200**  | **1/1200 s**  | **833.33**   | **156 (/8 scalar)**   |
-| 2400      | 1/2400 s   | 416.67           | tbd                  |
-| 4800      | 1/4800 s   | 208.33           | tbd                  |
-| 9600      | 1/9600 s   | 104.17           | 125 (/1 scalar)      |
-| 19200     | 1/19200 s  | 52.08            | tbd                  |
-| 28800     | 1/28800 s  | 34.72            | tbd                  |
-
-## Important Notes
-
-* **1200 baud works reliably, and at 150 bytes/s, fast enough**
-* 9600 baud did not and I wasn't able to find a combination of *OSCCAL* and baud_ticks which delivered ~104.2us reliably
-* Other baud rates haven't been tested, will confirm in table when tested
-
-**For Your Code:**
-Given your OSCCAL calibration to 0x73, you should define `BIT_DURATION` as:
-```c
-#define BIT_DURATION 104  // For 9600 baud
-// or
-#define BIT_DURATION 52   // For 19200 baud
-```
-
-The higher baud rates (57600 and 115200) are generally not recommended for software UART on the ATtiny13A running at 1.2MHz due to insufficient CPU cycles to reliably sample and process bits.
-
-[Most Common Baud Rates](https://lucidar.me/en/serialib/most-used-baud-rates-table/)
-
-## Macro for 8-bit Timer
-
-### Basic Macro Definition
-
-```c
-#define TIMER_DELAY(ticks) do { \
-    TCNT0 = 0; \
-    while (TCNT0 < (ticks)) {} ; \
-} while(0)
-```
-
-## Usage Example
-
-```c
-// In your code, you can now use:
-TIMER_DELAY(baud_ticks);
-// or with a literal value:
-TIMER_DELAY(144);
-// or with any expression:
-TIMER_DELAY(baud_ticks / 2);
-```
-
-## Why This Macro Design?
-
-### The `do-while(0)` Wrapper
-This is a **critical safety pattern** for multi-statement macros in C. It ensures the macro behaves like a single statement in all contexts:
-
-```c
-// Without do-while(0), this would break:
-if (condition)
-    TIMER_DELAY(baud_ticks);  // Works correctly
-else
-    something_else();
-
-// The semicolon after the macro call completes the do-while
-```
-
-### Parentheses Around `ticks`
-The parentheses around `(ticks)` in the comparison protect against operator precedence issues:
-
-```c
-// Safe even with expressions:
-TIMER_DELAY(baud_ticks + 10);  // Evaluates correctly
-```
-
-## Complete Example for Your UART
-
-```c
-#include <avr/io.h>
-#include "ATtiny.h"
-
-#define TIMER_DELAY(ticks) do { \
-    TCNT0 = 0; \
-    while (TCNT0 < (ticks)) {} ; \
-} while(0)
-
-#define BAUD_9600  144   // Your measured value
-#define BAUD_19200 72    // Half the period
-
-int main(void)
-{
-    DDRB |= (_BV(PORTB0));
-    TCCR0B = (1 << CS00);  // Prescaler /1
-    OSCCAL = 0x73;
-
-    for (;;)
-    {
-        SBI(PORTB, PORTB0);
-        TIMER_DELAY(BAUD_9600);
-        
-        CBI(PORTB, PORTB0);
-        TIMER_DELAY(BAUD_9600);
-    }
-}
-```
-
-## Alternative: Function-Like Macro with Type Safety
-
-If you want more control, you can add type checking:
-
-```c
-#define TIMER_DELAY(ticks) do { \
-    uint8_t _ticks = (uint8_t)(ticks); \
-    TCNT0 = 0; \
-    while (TCNT0 < _ticks) {} ; \
-} while(0)
-```
-
-This ensures the value is always treated as an 8-bit value, matching the TCNT0 register size.
+[^1]: [ATtiny Oscillator Calibration — Instructables](https://www.instructables.com/ATtiny-Oscillator-Calibration/)
+[^2]: [`<util/delay.h>` — avr-libc](https://www.nongnu.org/avr-libc/user-manual/group__util__delay.html)
+[^3]: [ATtiny13A Data Sheet](https://www.farnell.com/datasheets/1714641.pdf)
+[^4]: [Serial Data ATtiny13A — Arduino Forum](https://forum.arduino.cc/t/serial-data-attiny13a/1094674)
+[^5]: [ATtiny13 internal oscillator accuracy — Arduino Forum](https://forum.arduino.cc/t/attiny13-internal-oscillator-accurate-9-6mhz-but-inaccurate-4-8mhz/674396)

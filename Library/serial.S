@@ -78,6 +78,15 @@ next_write:
     ret
 ; --------------------------------------------------------------------
 
+; write a word (passed in r25/r24, per AVR-GCC ABI) to the serial port
+.global word_write
+word_write:
+    push    r24
+    mov     r24, r25
+    rcall   char_write
+    pop     r24
+    rcall   char_write
+    ret
 
 ; char_read - receive one char into r24 (8N1, LSB first), per AVR-GCC ABI
 .global char_read

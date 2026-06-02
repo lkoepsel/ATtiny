@@ -15,6 +15,10 @@ void init_serial(void);
 // The character is passed in r24 per the AVR-GCC ABI.
 void char_write(uint8_t c);
 
+// Transmit one word at 9600-8-N-1.
+// The character is passed in r25/r24 per the AVR-GCC ABI.
+void word_write(uint16_t c);
+
 // Block until one byte is received; return it.
 // The result is returned in r24 per the AVR-GCC ABI.
 uint8_t char_read(void);

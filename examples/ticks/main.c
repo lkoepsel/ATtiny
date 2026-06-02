@@ -13,16 +13,18 @@
 // using OCRA0 = 0x9a - _delay_ms(1000) measures 1001 ticks
  
 #include <avr/io.h>
-#include <avr/eeprom.h>
+#include <stdint.h>
+#include "serial_asm.h"
+#include "sysclock_asm.h"
 #include <util/delay.h>
-#include "sysclock.h"
 
 volatile uint16_t delta_ticks = 0;
+void soft_string_write(const char *s);
+void word_write(uint16_t n);
 
 int main (void)
 {
     // init_sysclock_1k is required to initialize the counter for 1Khz ticks
-    uint16_t eeprom_addr = 0;
     init_sysclock_1k ();
 
     for (uint8_t i = 9; i >= 0; i--)
@@ -30,10 +32,19 @@ int main (void)
         uint16_t prior_ticks = ticks();
         _delay_ms(1000);
         delta_ticks = ticks() - prior_ticks;
-
-        eeprom_update_word((uint16_t *)(eeprom_addr), delta_ticks);
-        eeprom_addr += sizeof(eeprom_addr);
+        word_write(delta_ticks);
 
     }
     for (;;) {};
+}
+
+void soft_string_write(const char *s)
+{
+    while (*s) char_write((uint8_t)*s++);
+}
+
+void word_write(uint16_t n)   // raw bytes -> hex on terminal, MSB first
+{
+  char_write(n >> 8);       // high byte
+  char_write(n & 0xFF);     // low byte
 }

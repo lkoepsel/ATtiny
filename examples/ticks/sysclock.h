@@ -7,15 +7,15 @@
 // The three Timer/Counters are used in the following manner:
 // T/C 0 - sys_clock (and only clock)
 
-#ifndef sysclock_h
-#define sysclock_h
+// #ifndef sysclock_h
+// #define sysclock_h
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <avr/sleep.h>
+// #include <avr/io.h>
+// #include <avr/interrupt.h>
+// #include <avr/sleep.h>
 
-uint16_t ticks(void);
+// uint16_t ticks(void);
 
-void init_sysclock_1k (void);
+// void init_sysclock_1k (void);
 
-#endif
+// #endif

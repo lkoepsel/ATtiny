@@ -26,6 +26,8 @@ int main (void)
 {
     // init_sysclock_1k is required to initialize the counter for 1Khz ticks
     init_sysclock_1k ();
+    init_serial();
+    char_write(0x99);
 
     for (uint8_t i = 9; i >= 0; i--)
     {

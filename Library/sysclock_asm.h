@@ -1,5 +1,5 @@
-// serial_asm.h
-// C declarations for the assembly routines in serial.S
+// sysclock_asm.h
+// C declarations for the assembly routines in sysclock.S
 #pragma once
 #include <stdint.h>
 
@@ -7,12 +7,10 @@
 extern "C" {
 #endif
 
-// Initialise TX/RX pin directions and idle state.
-// Must be called before char_write or char_read.
+// Initialize Timer0 CTC for a 1 kHz system tick. Enables global interrupts.
 void init_sysclock_1k(void);
 
-// Transmit one byte at 9600-8-N-1.
-// The character is passed in r24 per the AVR-GCC ABI.
+// Return the current 16-bit tick counter (incremented once per millisecond).
 uint16_t ticks(void);
 
 #ifdef __cplusplus

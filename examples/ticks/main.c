@@ -8,11 +8,10 @@
 //      to setup the counter register pair.
 // Requires init_sysclock()
 // Runs ten times, printing the values to console
-// Typically 1001/1002 for sysclock_1k setup
 
-// while 1200000/8/0x96 = 1000, measurements see the following:
-// using OCRA0 = 0x8f - toggles every 1ms based on scope
-// using OCRA0 = 0x9a - _delay_ms(1000) measures 1001 ticks
+// Given _delay_loop_2(281) => 1ms, measure 100x281 or 28100:
+// using OCRA0 = 0x89 - toggles every 1ms based on scope
+// delta_ticks = 0x67 or 103
  
 #include <avr/io.h>
 #include "serial_asm.h"

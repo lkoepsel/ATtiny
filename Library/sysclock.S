@@ -45,7 +45,7 @@ init_sysclock_1k:
 ;   TCRR0A 0b0100 0010 0x42     Toggle OC0A on Compare Match, CTC
 ;   TCRR0B 0b0000 0010 0x02     /8 Prescalar
 ;   TIMS0K 0b0000 0100 0x04     Output Compare Match A Interrupt Enable
-;   OCR0A  0b1001 0101 0x95     Adjusted for a 1kHz signal
+;   OCR0A  0b1001 0101 0x89     Adjusted for a 1kHz signal (.9934ms)
 
 ; clear counter register
     eor     ticks_lo, ticks_lo        ; clear counter low byte
@@ -63,7 +63,7 @@ init_sysclock_1k:
     ldi     r16, (1<<OCIE0A)      ;
     out     TIMSK,r16          ;
 
-    ; OCR0A: adjust for a 1kHz signal (998.8kHz measured)
+    ; OCR0A: adjust for a 1ms toggle (.992ms positive width, 480kHz measured)
     ldi     r16,0x89       ;
     out     OCRA,r16           ;
     sbi     IO_DDR, LED           ; PB0 as output, for checking SYS_CLOCK

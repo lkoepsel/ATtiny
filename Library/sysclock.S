@@ -64,7 +64,7 @@ init_sysclock_1k:
     out     TIMSK,r16          ;
 
     ; OCR0A: adjust for a 1kHz signal (998.8kHz measured)
-    ldi     r16,0x95       ;
+    ldi     r16,0x89       ;
     out     OCRA,r16           ;
     sbi     IO_DDR, LED           ; PB0 as output, for checking SYS_CLOCK
     sei

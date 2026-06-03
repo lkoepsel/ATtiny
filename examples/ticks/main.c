@@ -32,7 +32,7 @@ int main (void)
     do
     {
         uint16_t prior_ticks = ticks();
-        _delay_loop_2(1200);
+        _delay_loop_2(28100);
         delta_ticks = ticks() - prior_ticks;
         word_write(delta_ticks);
         --i;

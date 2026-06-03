@@ -43,6 +43,17 @@ CPPFLAGS    = -DF_CPU=$(F_CPU) -DUSB_BAUD=$(USB_BAUD) -DSOFT_BAUD=$(SOFT_BAUD) -
 
 OBJECTS=$(SOURCES:.c=.o) $(ASM_SOURCES:.S=.o)
 HEADERS=$(wildcard *.h)
+DEPS=$(ASM_SOURCES:.S=.d)
+
+## Link model — auto-detected, override in a local Makefile if needed.
+## An example with no .c sources is "freestanding": it owns its own vector
+## table and reset code, so it links without the C runtime (matches the old
+## Makefile.asm). Any .c source means a normal runtime-linked build.
+ifeq ($(strip $(SOURCES)),)
+  FREESTANDING ?= 1
+else
+  FREESTANDING ?= 0
+endif
 
 ## Compilation options, type man avr-gcc if you're curious.
 
@@ -58,11 +69,15 @@ CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 CFLAGS += -ffunction-sections -fdata-sections
 # if attempting to use %S format specification (strings in progmem), uncomment next line
 CFLAGS += -Wno-format
+ifeq ($(FREESTANDING),1)
+## Freestanding (assembly) link: no C runtime, no startup files. The example's
+## own main.S provides the vector table and reset handler (was Makefile.asm).
+LDFLAGS = -nostartfiles -nostdlib
+else
 LDFLAGS = -Wl,-Map,$(TARGET).map
-## Uncomment line to remove interrupt vectors for smallest code size
-## LDFLAGS += -nostartfiles
 ## Optional, but often ends up with smaller code
 LDFLAGS += -Wl,--gc-sections
+endif
 # Uncomment line below to add timestamp wrapper to printf() OR
 # Comment line below, if  undefined reference to `__wrap_printf'
 # LDFLAGS += -Wl,--wrap=printf
@@ -77,9 +92,10 @@ TARGET_ARCH = -mmcu=$(MCU)
 %.o: %.c $(HEADERS) Makefile
 	 $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c -o $@ $<;
 
-## Assemble .S files (uppercase S runs the C preprocessor first)
+## Assemble .S files (uppercase S runs the C preprocessor first).
+## -MMD -MP generate per-object header dependencies (was Makefile.asm).
 %.o: %.S Makefile
-	$(CC) $(CPPFLAGS) $(TARGET_ARCH) -g -c -o $@ $<
+	$(CC) $(CPPFLAGS) $(TARGET_ARCH) -g -Wa,--gdwarf-2 -MMD -MP -c -o $@ $<
 
 $(TARGET).elf: $(OBJECTS)
 	$(CC) $(LDFLAGS) $(TARGET_ARCH) $^ $(LDLIBS) -o $@
@@ -92,6 +108,10 @@ $(TARGET).elf: $(OBJECTS)
 
 %.lst: %.elf
 	$(OBJDUMP) -S $< > $@
+
+## Auto-generated header dependencies for .S files (from -MMD -MP). Leading
+## dash stays silent before the .d files exist on a first build.
+-include $(DEPS)
 
 ## These targets don't have files named after them
 .PHONY: all disassemble disasm eeprom size clean clean_all squeaky_clean flash fuses
@@ -139,14 +159,20 @@ disassemble: $(TARGET).lst
 disasm: disassemble
 
 # Optionally show how big the resulting program is
+## Freestanding (hand-assembled) ELFs lack the .note.gnu.avr.deviceinfo
+## section, so objdump -Pmem-usage reports "Device: Unknown"; avr-size -C
+## knows the device itself. Runtime builds keep the richer mem-usage report.
 size:  $(TARGET).elf
-# 	$(AVRSIZE) -G --mcu=$(MCU) $(TARGET).elf
+ifeq ($(FREESTANDING),1)
+	$(AVRSIZE) -C --mcu=$(MCU) $(TARGET).elf
+else
 	$(OBJDUMP) -Pmem-usage $(TARGET).elf
+endif
 clean:
 	rm -f $(TARGET).elf $(TARGET).hex $(TARGET).obj \
 	$(TARGET).o $(TARGET).d $(TARGET).eep $(TARGET).lst \
 	$(TARGET).lss $(TARGET).sym $(TARGET).map $(TARGET)~ \
-	$(TARGET).eeprom *.o cppcheck.txt
+	$(TARGET).eeprom *.o *.d cppcheck.txt $(DEPS)
 
 all_clean:
 	rm -f *.elf *.hex *.obj *.o *.d *.eep *.lst *.lss *.sym *.map *~ *.eeprom core $(LIBDIR)/*.o

@@ -31,7 +31,7 @@ to find your chip's trim value, then set it as `TRIM` in `Library/serial.S`
 | Logical register names + `delay_8` macro | `Library/registers.S` |
 | C prototypes | `Library/serial_asm.h` |
 | C example | `examples/softserial/` (`main.c`) |
-| Assembly example | `asm_examples/softserial/` (`main.S`) |
+| Assembly example | `examples/asm_softserial/` (`main.S`) |
 | Calibration helper | `examples/osccal/` |
 
 Pins (from `Library/registers.S`): **TX = PB1**, **RX = PB2** (input pull-up),

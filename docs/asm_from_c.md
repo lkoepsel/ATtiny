@@ -4,15 +4,15 @@ This guide explains how the hand-written AVR assembly in `Library/serial.S` is
 made callable from C, so that the cycle-deterministic `char_write` and
 `char_read` (plus `init_serial` and `flash_write`) can be used from any C
 program. The same shared `serial.S` is linked by both the C example
-(`examples/softserial/`) and the assembly example (`asm_examples/softserial/`).
+(`examples/softserial/`) and the assembly example (`examples/asm_softserial/`).
 
 By the end you will understand:
 
 - why the bit-banged UART has to be assembly,
 - how `serial.S` satisfies the AVR-GCC calling convention,
 - how `Library/serial_asm.h` declares the routines for C, and
-- how the `ASM_LIBS` mechanism in the root `Makefile` / `Makefile.asm` links
-  one shared assembly object into either kind of example.
+- how the `ASM_LIBS` mechanism in the unified root `Makefile` links one shared
+  assembly object into either kind of example.
 
 ## Why this matters
 
@@ -197,7 +197,7 @@ with the pattern rule that assembles `.S` through the C preprocessor:
 ```makefile
 ## Assemble .S files (uppercase S runs the C preprocessor first)
 %.o: %.S Makefile
-	$(CC) $(CPPFLAGS) $(TARGET_ARCH) -g -c -o $@ $<
+	$(CC) $(CPPFLAGS) $(TARGET_ARCH) -g -Wa,--gdwarf-2 -MMD -MP -c -o $@ $<
 ```
 
 Why these flags:
@@ -216,25 +216,27 @@ Because the `.S` is referenced via its `$(DEPTH)Library/...` path, the object is
 built next to it as `Library/serial.o`; the `all_clean` target removes
 `$(LIBDIR)/*.o` so it is not left stale.
 
-### In `Makefile.asm`
+### The freestanding link for asm-only examples
 
-The assembly root makefile mirrors the same mechanism:
+The same root `Makefile` builds the assembly example. Since `examples/asm_softserial/`
+has no `.c` sources, the Makefile auto-selects the *freestanding* link model:
 
 ```makefile
-SOURCES_S = $(wildcard *.S) $(ASM_LIBS)
-OBJECTS   = $(SOURCES_S:.S=.o)
+ifeq ($(strip $(SOURCES)),)
+  FREESTANDING ?= 1
+else
+  FREESTANDING ?= 0
+endif
 
-%.o: %.S
-	avr-gcc -mmcu=$(MCU) -DF_CPU=$(F_CPU) -I$(LIBDIR) -g -Wa,--gdwarf-2 -MMD -MP -c -o $@ $<
-
-$(TARGET).elf: $(OBJECTS)
-	avr-gcc -mmcu=$(MCU) -nostartfiles -nostdlib -o $@ $^
+ifeq ($(FREESTANDING),1)
+  LDFLAGS = -nostartfiles -nostdlib
+endif
 ```
 
-So the asm example links `Library/serial.S` as a **separate object** rather than
-`#include`-ing it — exactly the shared-object arrangement the C side uses. The
-`-nostartfiles -nostdlib` link keeps the hand-written vector table and reset
-code authoritative (no C runtime).
+So the asm example links `Library/serial.S` as a **separate object** (via the same
+`ASM_LIBS` / `%.o: %.S` mechanism) rather than `#include`-ing it — exactly the
+shared-object arrangement the C side uses. The `-nostartfiles -nostdlib` link keeps
+the hand-written vector table and reset code authoritative (no C runtime).
 
 > **Indentation note:** the leading whitespace on a make recipe line must be a
 > real tab, not spaces. If a copied rule silently doesn't fire, that is almost
@@ -296,13 +298,13 @@ Note the higher-level helper (`pgmtext_write`) is ordinary C over the two
 primitives. (The assembly `flash_write` does the same job in asm and is also
 available from C if you prefer it.)
 
-### Assembly example — `asm_examples/softserial/`
+### Assembly example — `examples/asm_softserial/`
 
 **`Makefile`**
 ```makefile
 DEPTH = ../../
 ASM_LIBS = $(DEPTH)Library/serial.S
-include $(DEPTH)Makefile.asm
+include $(DEPTH)Makefile
 ```
 
 `main.S` provides the interrupt vector table and reset handler, then calls the
@@ -324,7 +326,7 @@ main_loop:
 For either example:
 
 ```bash
-cd examples/softserial        # or asm_examples/softserial
+cd examples/softserial        # or examples/asm_softserial
 make complete
 make flash
 ```
@@ -380,10 +382,9 @@ Pick one avenue and stick with it for repeatability.
 | `Library/serial.S` | The ABI-clean primitives: `init_serial`, `char_write`, `char_read`, `flash_write`. Uses logical register names + `delay_8` from `registers.S`. |
 | `Library/registers.S` | Logical register aliases (`char_reg`, `temp_r18`, `bit_ctr`, `flash_lo/hi`) and the `delay_8` macro. Include-guarded. |
 | `Library/serial_asm.h` | C prototypes for the four exported routines. |
-| `Makefile` (root C) | `ASM_SOURCES = $(wildcard *.S) $(ASM_LIBS)`; `%.o: %.S` pattern rule; links via `OBJECTS`. |
-| `Makefile.asm` (root asm) | Mirror mechanism: `SOURCES_S = $(wildcard *.S) $(ASM_LIBS)`; links the shared object with `-nostartfiles -nostdlib`. |
+| `Makefile` (unified root) | `ASM_SOURCES = $(wildcard *.S) $(ASM_LIBS)`; `%.o: %.S` pattern rule; auto-detects the link model — runtime link when `.c` sources exist, freestanding (`-nostartfiles -nostdlib`) when only `.S`. |
 | `examples/softserial/` | C example: `main.c` + local Makefile setting `ASM_LIBS`. |
-| `asm_examples/softserial/` | Assembly example: `main.S` (vectors + reset) + local Makefile setting `ASM_LIBS`. |
+| `examples/asm_softserial/` | Assembly example: `main.S` (vectors + reset) + local Makefile setting `ASM_LIBS`. |
 
 ---
 

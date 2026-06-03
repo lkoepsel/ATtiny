@@ -8,7 +8,7 @@ This repository provides example programs in  [*C* (ANSI C99) AVR-LibC](https://
 
 As there is not a boot loader for the *ATtiny13A* due to memory constraints, you will need to use an *ATMEL-ICE* or *Microchip SNAP* to load programs. The *env.make* allows for this, with entries for both.
 
-There are two examples folders, one for [C](./examples) and one for [assembly](./asm_examples). The standard *make* commands will work such as `make flash`, `make size` etc. will work on both types of files.
+All example programs live in a single [examples](./examples) folder. C and mixed-C/assembly examples use `main.c`; pure-assembly examples are named with an `asm_` prefix (e.g. `asm_blink`) and use `main.S`. The same root `Makefile` builds every kind — it auto-detects whether to link freestanding (assembly) or with the C runtime — so the standard *make* commands such as `make flash`, `make size`, etc. work on all of them. See [docs/assembly_examples.md](./docs/assembly_examples.md) for the assembly examples index.
 
  I strongly recommend using [Bloom](https://bloom.oscillate.io/) and *avr-gdb*. Bloom provides the ability to load code as well as display the microcontroller's registers and memory. More details specific to the *ATTiny13A*, **bloom**, and *gdb* at the [bottom of this page](#using-bloom-and-avr-gdb). The debugger, [gdb](https://www.sourceware.org/gdb/) is a simple yet extremely powerful debugging tool. I find it easier to use than most IDE's such as Visual Studio, MPLAB IDE etc. More guidance at [Developing in C for the ATmega328: Setup Bloom and gdb for Hardware Debug](https://wellys.com/posts/avr_c_gdb_bloomsetup/). 
 

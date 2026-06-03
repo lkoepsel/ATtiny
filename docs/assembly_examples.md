@@ -1,10 +1,11 @@
 # AVR Assembly Examples
 
-Hand-written AVR assembly for the **ATtiny13A**. Each example is a self-contained folder
-with a `main.S` source and a 2-line `Makefile`.
+Hand-written AVR assembly for the **ATtiny13A**. These live alongside the C examples under
+`examples/`, each in a self-contained folder named with an `asm_` prefix (e.g.
+`examples/asm_blink/`) holding a `main.S` source and a 2-line `Makefile`.
 
 For framework-wide setup (toolchain install, `env.make`, programmer wiring) see the repo-root
-`CLAUDE.md` and `docs/`. For a line-by-line toolchain walkthrough see `docs/assembly.md`.
+`CLAUDE.md` and `docs/`. For sharing assembly routines with C, see `docs/asm_from_c.md`.
 
 ## How assembly is built
 
@@ -19,15 +20,16 @@ Every `main.S` begins with:
 ```
 
 `registers.S` and `serial.S` are shared from `Library/` and located via the `-I` flag in
-`Makefile.asm`, so an example only needs its own `main.S` and `Makefile`.
+the root `Makefile`, so an example only needs its own `main.S` and `Makefile`.
 
 One rule when reading or writing these files: the `in`, `out`, `sbi`, and `cbi` instructions
 need their register operand wrapped in `_SFR_IO_ADDR()`, because `avr/io.h` defines register
 names as data-space addresses. `registers.S` already does this for its logical names — so
 prefer `sbi IO_DDR, LED` over `sbi DDRB, PB0`.
 
-Build chain (`Makefile.asm`): `avr-gcc` assembles `main.S` → `main.o`, links with
-`-nostartfiles -nostdlib` → `main.elf`, then `avr-objcopy` produces `main.hex`.
+Build chain: the root `Makefile` sees an example with no `.c` sources and builds it
+freestanding — `avr-gcc` assembles `main.S` → `main.o`, links with `-nostartfiles
+-nostdlib` → `main.elf`, then `avr-objcopy` produces `main.hex`.
 
 ## Common targets
 
@@ -45,12 +47,12 @@ make help      # full target list
 
 ## Creating a new program
 
-Start from `skeleton/` — a minimal program with the interrupt vector table and reset handler
-already in place:
+Start from `asm_skeleton/` — a minimal program with the interrupt vector table and reset
+handler already in place:
 
 ```bash
-cp -r asm_examples/skeleton asm_examples/myprogram
-cd asm_examples/myprogram
+cp -r examples/asm_skeleton examples/asm_myprogram
+cd examples/asm_myprogram
 ```
 
 Then:
@@ -64,20 +66,23 @@ The `Makefile` is the standard 2-liner and needs no editing:
 
 ```makefile
 DEPTH = ../../
-include $(DEPTH)Makefile.asm
+include $(DEPTH)Makefile
 ```
 
 ## Examples
 
+All under `examples/`:
+
 | Folder | What it does |
 |---|---|
-| `skeleton` | Minimal template — vector table, reset handler (stack-pointer init, zero register, cleared status), empty `main_loop`. Copy this to start a new program. |
-| `blink` | Blinks an LED on PB0 at 500 Hz using a software (cycle-counted) busy-wait delay. See `blink/blink.md` for a line-by-line analysis. |
-| `blink_nodelay` | Blinks the LED with a **non-blocking** Timer0 poll instead of a busy-wait — Timer0 prescaler 1024, ~100 ms signal. |
-| `blink_word` | Blinks the LED at 500 Hz using a 16-bit (word) counter; trimmed to minimal flash size by omitting unused interrupt vectors. See `blink_word/blink_word.md`. |
-| `blink_pwm` | Drives the LED with a hardware **PWM** signal from Timer0 (~4.51 kHz, no prescaler). |
-| `serial` | Software-UART demo; pulls in the shared `serial.S` routines from `Library/`. |
-| `sysclock` | Non-blocking **1 kHz system clock** via a Timer0 CTC interrupt; uses serial to report timing. See `sysclock/sysclock.md`. |
+| `asm_skeleton` | Minimal template — vector table, reset handler (stack-pointer init, zero register, cleared status), empty `main_loop`. Copy this to start a new program. |
+| `asm_blink` | Blinks an LED on PB0 at 500 Hz using a software (cycle-counted) busy-wait delay. See `asm_blink/blink.md` for a line-by-line analysis. |
+| `asm_blink_nodelay` | Blinks the LED with a **non-blocking** Timer0 poll instead of a busy-wait — Timer0 prescaler 1024, ~100 ms signal. |
+| `asm_blink_word` | Blinks the LED at 500 Hz using a 16-bit (word) counter; trimmed to minimal flash size by omitting unused interrupt vectors. See `asm_blink_word/blink_word.md`. |
+| `asm_blink_pwm` | Drives the LED with a hardware **PWM** signal from Timer0 (~4.51 kHz, no prescaler). |
+| `asm_softserial` | Software-UART demo; pulls in the shared `serial.S` routines from `Library/`. |
+| `asm_sysclock` | Non-blocking **1 kHz system clock** via a Timer0 CTC interrupt; uses serial to report timing. See `asm_sysclock/sysclock.md`. |
+| `asm_debug` | Assembly example wired for Bloom + avr-gdb debugWire debugging. |
 
 Per-example `.md` files (`blink.md`, `blink_word.md`, `sysclock.md`) contain deeper
 walkthroughs where present.

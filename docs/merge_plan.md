@@ -1,10 +1,18 @@
 # Plan: Merge C and Assembly into a Single Code Base
 
-Status: **decided** — ready to execute. Decisions locked (2026-06-03):
+Status: **Phases 1–5 complete** on branch `merge-c-asm` (2026-06-03) — pending
+final hardware sign-off and merge to `main`. Decisions locked:
 
-- **Link model:** auto-detect from presence of `.c` sources (override via `FREESTANDING`).
-- **Naming:** prefix assembly examples with `asm_`.
-- **`Makefile.asm`:** delete outright once verified.
+- **Link model:** auto-detect from presence of `.c` sources (override via `FREESTANDING`). ✓
+- **Naming:** prefix assembly examples with `asm_`. ✓
+- **`Makefile.asm`:** deleted. ✓
+
+What landed: unified root `Makefile` (auto-detect link model + `build_all`
+target); all eight `asm_examples/*` moved to `examples/asm_*` with history
+preserved; `Makefile.asm` deleted; `CLAUDE.md`, `README.md`,
+`docs/asm_from_c.md`, `docs/softserial.md`, `docs/sysclock_regpair.md`, and the
+moved `docs/assembly_examples.md` updated. All 33 examples build via
+`make build_all`.
 
 ## 1. Goal
 

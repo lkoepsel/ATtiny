@@ -1,7 +1,7 @@
-❯ One question i had regarding the ABI changes is that I want to use a register pair in @asm_examples/sysclock/main.S which will remain constant
+❯ One question i had regarding the ABI changes is that I want to use a register pair in @examples/asm_sysclock/main.S which will remain constant
   and be somewhat safe to use anywhere. What would be the best way to handle this, given the constraints of the C ABI, conventions and so on. I
   had beeen using r25:r24 and clearly this won't work.
-  ⎿  Read asm_examples/sysclock/main.S (152 lines)
+  ⎿  Read examples/asm_sysclock/main.S (152 lines)
 
 ⏺ Good question — and r25:r24 is the worst possible choice under the ABI: it's both the first-argument register and the byte-return register.
   Every C call writes to it. So your global counter would be trashed by rcall char_write(byte) (which loads the byte into r24) and again on every

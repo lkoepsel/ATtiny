@@ -65,7 +65,7 @@ main_setup:
     rcall   init_serial
 
     ; delay to allow for trim value to settle (stabilize)
-    delay_ticks 0x80            
+    delay_8 0x80            
 
     ; prompt to show terminal is live
     ldi     r30, lo8(prompt)

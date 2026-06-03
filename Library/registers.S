@@ -26,10 +26,18 @@
 #define flash_lo    r30
 #define flash_hi    r31
 
-.macro  delay_ticks  ticks
+.macro  delay_8  ticks
     ldi     r19, \ticks
 9:  dec     r19
     brne    9b
+.endm
+
+.macro  delay_16  ticks
+  ldi     r18, lo8(\ticks)
+  ldi     r19, hi8(\ticks)
+9:  subi    r18, 1
+  sbci    r19, 0
+  brne    9b
 .endm
 
 #endif  /* REGISTERS_S */

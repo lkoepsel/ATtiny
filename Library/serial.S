@@ -51,7 +51,7 @@ char_write:
 
     ; Start bit
     cbi     IO_PORT, TX
-    delay_ticks period
+    delay_8 period
 
     ;  8 data bits and preserve char
     ldi     bit_ctr, 8
@@ -67,14 +67,14 @@ write_one:
     sbi     IO_PORT, TX
 
 next_write:
-    delay_ticks period
+    delay_8 period
 
     dec     bit_ctr
     brne    write_bit
 
     ;  Stop bit
     sbi     IO_PORT, TX
-    delay_ticks period
+    delay_8 period
     ret
 ; --------------------------------------------------------------------
 
@@ -99,14 +99,14 @@ wait_start:
     rjmp    wait_start
 
 ;   Wait a .5 bit period so bit0 is sampled mid-bit
-    delay_ticks half_period
+    delay_8 half_period
 
     in      bit_ctr, IO_PIN
     sbrc    bit_ctr, RX    ; confirm start bit remains low
     rjmp    wait_start
 
 ;   Wait a 1 bit period for a total of 1.5 bit periods
-    delay_ticks period
+    delay_8 period
 
 ;   Read 8 data bits, LSB first, into r24
     ldi     bit_ctr, 8              ; bit counter
@@ -118,7 +118,7 @@ read_bit:
     sec                         ; RX HIGH -> bit is 1
     ror     char_reg                 ; shift carry into MSB (LSB-first)
 
-    delay_ticks period
+    delay_8 period
 
     dec     bit_ctr
     brne    read_bit

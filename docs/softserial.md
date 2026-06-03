@@ -11,7 +11,7 @@ background on *why* a bit-banged UART is hard on this chip.
 
 Two things made the assembly version reliable:
 
-1. **Cycle-exact bit periods.** Each bit is timed by the `delay_ticks` macro in
+1. **Cycle-exact bit periods.** Each bit is timed by the `delay_8` macro in
    `Library/registers.S` (a counted `dec`/`brne` loop), not by compiler-emitted
    delay code whose length varies with optimization level.
 2. **The `ror` instruction.** Receiving shifts each sampled bit (carry) straight
@@ -28,7 +28,7 @@ to find your chip's trim value, then set it as `TRIM` in `Library/serial.S`
 | Item | Where |
 |---|---|
 | Assembly primitives | `Library/serial.S` — `init_serial`, `char_write`, `char_read`, `flash_write` |
-| Logical register names + `delay_ticks` macro | `Library/registers.S` |
+| Logical register names + `delay_8` macro | `Library/registers.S` |
 | C prototypes | `Library/serial_asm.h` |
 | C example | `examples/softserial/` (`main.c`) |
 | Assembly example | `asm_examples/softserial/` (`main.S`) |
@@ -112,7 +112,7 @@ Tips:
 - The ATtiny13A has separate calibration ranges for 4.8 MHz and 9.6 MHz.
 - Small adjustments (±5) are usually enough.
 - If *every* value shows corruption, the baud period itself is off — re-tune
-  `period` (each unit ≈ 3 CPU cycles of the `delay_ticks` loop).
+  `period` (each unit ≈ 3 CPU cycles of the `delay_8` loop).
 
 
 ### References

@@ -24,7 +24,7 @@ without a barrel shifter, optimization-level-dependent overhead) — so the bit
 period drifts and reception breaks.
 
 `Library/serial.S` runs a constant, hand-counted number of cycles per bit (via
-the `delay_ticks` macro). Exposing it to C gives the timing accuracy of
+the `delay_8` macro). Exposing it to C gives the timing accuracy of
 hand-tuned assembly with the convenience of writing the application logic
 (string formatting, line buffering, integer-to-ASCII conversion) in plain C.
 All the timing-critical work stays in assembly; the C code only sequences bytes
@@ -91,14 +91,14 @@ rather than raw `rNN` numbers. The relevant aliases are:
 `registers.S` also defines the cycle-counting delay used for each bit period:
 
 ```asm
-.macro  delay_ticks  ticks
+.macro  delay_8  ticks
     ldi     r19, \ticks
 9:  dec     r19
     brne    9b
 .endm
 ```
 
-Every register the routines touch — `r18`, `r19` (inside `delay_ticks`),
+Every register the routines touch — `r18`, `r19` (inside `delay_8`),
 `r20`, `r24`, and `r30`/`r31` — is **call-clobbered**, so the routines need no
 `push`/`pop` of call-saved registers, and `r1` is never disturbed. That is what
 makes them ABI-clean and directly callable from C.
@@ -114,7 +114,7 @@ Each is marked `.global` so the linker can find it from a C object file:
 | `char_read` | `uint8_t char_read(void)` | Blocks for one byte, returns it in `char_reg` (r24). |
 | `flash_write` | `void flash_write(uint16_t addr)` | Z-pointer (`r31:r30`) addresses a null-terminated PROGMEM string; each byte is sent via `char_write`. |
 
-`delay_ticks` is a macro (inlined at each call site), so there is no separate
+`delay_8` is a macro (inlined at each call site), so there is no separate
 private helper to keep out of the global namespace.
 
 ### Design decision: no framing-error status
@@ -367,7 +367,7 @@ shifts chip-to-chip. Two avenues:
    the right `TRIM` for your individual chip, then update the `TRIM` define.
 2. **Re-tune `period`** — measure the bit period on a logic analyser and scale
    `period` proportionally. Each unit of `period` is the cost of one
-   `delay_ticks` loop iteration (`dec; brne` taken ≈ 3 CPU cycles).
+   `delay_8` loop iteration (`dec; brne` taken ≈ 3 CPU cycles).
 
 Pick one avenue and stick with it for repeatability.
 
@@ -377,8 +377,8 @@ Pick one avenue and stick with it for repeatability.
 
 | File | Role |
 |---|---|
-| `Library/serial.S` | The ABI-clean primitives: `init_serial`, `char_write`, `char_read`, `flash_write`. Uses logical register names + `delay_ticks` from `registers.S`. |
-| `Library/registers.S` | Logical register aliases (`char_reg`, `temp_r18`, `bit_ctr`, `flash_lo/hi`) and the `delay_ticks` macro. Include-guarded. |
+| `Library/serial.S` | The ABI-clean primitives: `init_serial`, `char_write`, `char_read`, `flash_write`. Uses logical register names + `delay_8` from `registers.S`. |
+| `Library/registers.S` | Logical register aliases (`char_reg`, `temp_r18`, `bit_ctr`, `flash_lo/hi`) and the `delay_8` macro. Include-guarded. |
 | `Library/serial_asm.h` | C prototypes for the four exported routines. |
 | `Makefile` (root C) | `ASM_SOURCES = $(wildcard *.S) $(ASM_LIBS)`; `%.o: %.S` pattern rule; links via `OBJECTS`. |
 | `Makefile.asm` (root asm) | Mirror mechanism: `SOURCES_S = $(wildcard *.S) $(ASM_LIBS)`; links the shared object with `-nostartfiles -nostdlib`. |

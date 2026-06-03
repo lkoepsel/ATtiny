@@ -114,7 +114,7 @@ $(TARGET).elf: $(OBJECTS)
 -include $(DEPS)
 
 ## These targets don't have files named after them
-.PHONY: all disassemble disasm eeprom size clean clean_all squeaky_clean flash fuses
+.PHONY: all disassemble disasm eeprom size clean clean_all build_all squeaky_clean flash fuses
 
 
 complete: all_clean compile size
@@ -144,6 +144,7 @@ help:
 	@echo "make flash - show program size and flash to board (Arduino upload)"
 	@echo "make clean - delete all non-source files in folder"
 	@echo "make clean_all - run clean in every examples/ folder"
+	@echo "make build_all - build every examples/ folder and report failures"
 	@echo "make complete - delete all .o files in folder & Library then compile, for complete rebuild/upload"
 	@echo "make verbose - make flash with more programming information for debugging upload"
 	@echo "make env - print active env.make variables"
@@ -186,6 +187,20 @@ clean_all:
 			echo "skipping $$d (no makefile)"; \
 		fi; \
 	done
+
+## Build (clean + compile) every example under examples/ and report failures.
+## Catches breakage across the whole tree — C, C+asm, and freestanding asm.
+build_all:
+	@fail=""; \
+	for d in $(DEPTH)examples/*/; do \
+		[ -f "$$d"Makefile ] || { echo "skip : $$d (no makefile)"; continue; }; \
+		if $(MAKE) --no-print-directory -C "$$d" complete >/dev/null 2>&1; then \
+			echo "ok   : $$d"; \
+		else \
+			echo "FAIL : $$d"; fail="$$fail $$d"; \
+		fi; \
+	done; \
+	if [ -n "$$fail" ]; then echo "FAILED:$$fail"; exit 1; else echo "all examples built"; fi
 
 ##########------------------------------------------------------##########
 ##########              Programmer-specific details             ##########

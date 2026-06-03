@@ -2,7 +2,10 @@
 // Sets up a system tick of 1 millisec (1kHz)
 // To test, uses the system delay (blocking, doesn't use clock)
 // to determine delta between a delay
-// There can be a lag of 1-2 milliseconds at times
+// _delay_loop_2 - 16-bit blocking delay
+//      The loop executes four CPU cycles per iteration
+//      not including the overhead the compiler requires
+//      to setup the counter register pair.
 // Requires init_sysclock()
 // Runs ten times, printing the values to console
 // Typically 1001/1002 for sysclock_1k setup
@@ -15,7 +18,7 @@
 #include "serial_asm.h"
 #include "sysclock_asm.h"
 #include <stdint.h>
-#include <util/delay.h>
+#include <util/delay_basic.h>
 
 uint16_t delta_ticks = 0;
 
@@ -29,7 +32,7 @@ int main (void)
     do
     {
         uint16_t prior_ticks = ticks();
-        _delay_ms(1000);
+        _delay_loop_2(1200);
         delta_ticks = ticks() - prior_ticks;
         word_write(delta_ticks);
         --i;

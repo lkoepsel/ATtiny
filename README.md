@@ -592,16 +592,22 @@ bloom snap_13a
 2. In second window (remain in this window):
 ```
 cd ATtiny/examples/blink
+make complete
 avr-gdb main.elf
 ```
 
 ### Typical gdb commands
 
-* Once gdb has started, hit enter to get the command window
-* `ll` to load main.elf and list contents
+Assuming you have setup ~/.gdbinit from above, once gdb has started, there will be two windows:
+1. Top window is your main.c or main.S listing
+2. Bottom window is the command window with the (gdb) prompt
+
+At this point, the program has been loaded into the *ATtiny13A* and it is ready to run:
+
 * `c` to run
 * *Ctrl-c* to stop
 * `mon reset` to reset PC to *0x0000*
+* or shortcut `mrc` to reset PC and run
 * `br lineno` to set a *breakpoint* on a line number
 * `display variablename` to see a variable valuable every *breakpoint*
 * `set variablename=n` to change a value of the *variablename*
@@ -610,6 +616,10 @@ avr-gdb main.elf
 * `mon lr` to list ALL registers
 * `mon rr portb` to show contents of *PORTB*, *DDRB* and *PINB*
 * `mon wr portb portb 07` to set lowest 3 bits to 1
+
+* Edit your program and save it
+* `cll` to compile, link and load the program
+
 
 #### bloom and using register commands
 
@@ -661,12 +671,10 @@ Register written
 ## avr-gdb commands
 
 ### Basic Control Commands
-- ```run``` or ```r``` - Start program execution from the beginning
 - ```continue``` or ```c``` - Continue execution after a breakpoint
 - ```step``` or ```s``` - Execute one line of code, stepping into functions
 - ```next``` or ```n``` - Execute one line of code, stepping over functions
 - ```finish``` - Run until current function returns
-- ```kill``` - Terminate the running program
 
 ### Breakpoint Commands
 - ```break main``` or ```b main``` - Set breakpoint at function main

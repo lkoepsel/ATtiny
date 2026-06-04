@@ -34,11 +34,11 @@ main_loop:
     rjmp    main_loop
 
 ; ~1ms delay at 1.2MHz
-; cycles = 2 × ((3×189 + 3) + 4) ~= 1ms (1.004ms measured)
+; cycles = 80 × ((3×250 + 3) + 4) ~= 1ms (1.004ms measured)
 delay_1ms:
-    ldi     r17, 1
+    ldi     r17, 80
 outer:
-    ldi     r16, 189
+    ldi     r16, 250
 inner:
     dec     r16
     brne    inner

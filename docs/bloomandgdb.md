@@ -47,11 +47,11 @@ RESET/BROWN --| 5  ●     ●  6 |--- GND/BLACK
 
 ## Software Setup
 1. Bloom is only available for Linux, so you need to have a development computer which runs Linux. This doesn't need to be a show-stopper. An inexpensive Raspberry Pi can be used as a headless development box, while the programming and Internet support exist on a more full function computer. In addition to Bloom, you will want to have a modern *gcc* environment, all of the details to do this are [here](./RPi_build.md).
-1. I use *VS Code* to *SSH* into the Raspberry Pi and develop my code. I use *Warp*, a terminal program to run Bloom and gdb. I've found VS Code's terminal interface to be insufficient.
+1. I will use *VS Code* to *SSH* into the Raspberry Pi and develop my code. I use *ghostty*, a terminal program to run Bloom and gdb. I've found VS Code's terminal interface to be insufficient.
 
 ## Setup files
 
-### bloom.yaml 
+### bloom.yaml (ATtiny/bloom.yaml)
 
 ```yaml
 environments:
@@ -89,22 +89,31 @@ environments:
       port: 1442
 ```
 
-### .gdbinit
+### .gdbinit (~/.gdbinit)
 
 ```
+set confirm off
+set pagination off
 set history save on
 set history size 10000
 set history filename ~/.gdb_history
 
 file main.elf
 target remote :1442
+load
 set listsize 0
 set tui compact-source on
 tui focus cmd
 
-define ll
+define cll
+make
 load
-l main
+l
+end
+
+define mrc
+mon reset
+continue
 end
 
 define td

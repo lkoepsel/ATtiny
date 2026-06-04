@@ -6,11 +6,11 @@ Notes as to developing C and assembly code for the Microchip ATtiny13A.
 ## Introduction
 This repository provides example programs in  [*C* (ANSI C99) AVR-LibC](https://github.com/avrdudes/avr-libc) and [*AVR assembly language*](https://ww1.microchip.com/downloads/en/DeviceDoc/AVR-Instruction-Set-Manual-DS40002198A.pdf) which support programming the ATtiny13A. In order to use this framework, you need to install the *GNU avr* tool chain appropriate for your computer (*Linux*, *macOS*, or *Windows*). 
 
-As there is not a boot loader for the *ATtiny13A* due to memory constraints, you will need to use an *ATMEL-ICE* or *Microchip SNAP* to load programs. The *env.make* allows for this, with entries for both.
+All example programs live in the [examples](./examples) folder. A subfolder will either contain a *C language*, *assembly language* or *mixed-C/assembly* example. A *C language* or  *mixed-C/assembly* will use `main.c`as the principal program.  *Assembly language* examples are named with an `asm_` prefix (e.g. `asm_blink`) and use `main.S` as their principal program. The same root `Makefile` will build all three kinds, as it auto-detects whether to link freestanding (*assembly*) or with the *C runtime*. The standard *make* commands such as `make flash`, `make size`, etc. work on all examples. See [docs/assembly_examples.md](./docs/assembly_examples.md) for the assembly examples index.
 
-All example programs live in a single [examples](./examples) folder. C and mixed-C/assembly examples use `main.c`; pure-assembly examples are named with an `asm_` prefix (e.g. `asm_blink`) and use `main.S`. The same root `Makefile` builds every kind — it auto-detects whether to link freestanding (assembly) or with the C runtime — so the standard *make* commands such as `make flash`, `make size`, etc. work on all of them. See [docs/assembly_examples.md](./docs/assembly_examples.md) for the assembly examples index.
+As there is not a boot loader for the *ATtiny13A* due to memory constraints, you will need to use a hardware programmer such as the [*ATMEL-ICE*](https://www.microchip.com/en-us/development-tool/atatmel-ice) or [*Microchip SNAP*](https://www.microchip.com/en-us/development-tool/pg164100) to load programs. The *env.make* allows for this, with entries for both. I recommend the *SNAP* due to price ($11).
 
- I strongly recommend using [Bloom](https://bloom.oscillate.io/) and *avr-gdb*. Bloom provides the ability to load code as well as display the microcontroller's registers and memory. More details specific to the *ATTiny13A*, **bloom**, and *gdb* at the [bottom of this page](#using-bloom-and-avr-gdb). The debugger, [gdb](https://www.sourceware.org/gdb/) is a simple yet extremely powerful debugging tool. I find it easier to use than most IDE's such as Visual Studio, MPLAB IDE etc. More guidance at [Developing in C for the ATmega328: Setup Bloom and gdb for Hardware Debug](https://wellys.com/posts/avr_c_gdb_bloomsetup/). 
+For the best programming and debugging experience **and if your are using a Linux system**, I strongly recommend using [Bloom](https://bloom.oscillate.io/) and *avr-gdb*. Bloom provides the ability to load code as well as display the microcontroller's registers and memory. More details specific to the *ATTiny13A*, **bloom**, and *gdb* at the [bottom of this page](#using-bloom-and-avr-gdb). The debugger, [gdb](https://www.sourceware.org/gdb/) is a simple yet extremely powerful debugging tool. I find it easier to use than most IDE's such as Visual Studio, MPLAB IDE etc. More guidance at [Developing in C for the ATmega328: Setup Bloom and gdb for Hardware Debug](https://wellys.com/posts/avr_c_gdb_bloomsetup/). 
 
 ## Local Documentation (in the repo folder [documentation](./documentation))
 
@@ -48,8 +48,8 @@ All example programs live in a single [examples](./examples) folder. C and mixed
 * [GDB Online Manual](https://sourceware.org/gdb/current/onlinedocs/gdb.html/index.html#Top) 
 * [Bloom Documentation](https://bloom.oscillate.io/docs/getting-started)
 * [Bloom Target Information](https://bloom.oscillate.io/docs/target/attiny13a)
-* [Arduino Sensors](https://arduinomodules.info)
-* [Arduino Compatible MicroCore for ATtiny](https://github.com/MCUdude/MicroCore/)
+* [Arduino Sensors](https://arduinomodules.info) inexpensive modules to interface to the *ATtiny13A*
+* [Arduino Compatible MicroCore for ATtiny](https://github.com/MCUdude/MicroCore/) *not used in this project, however, it might be of interest*
 
 ## docs
 
@@ -71,7 +71,7 @@ If you want to use a Raspberry Pi (3/4/5) as a C development platform, this page
 Given the ATtiny13A requires a hardware interface to load software, I recommend using *bloom* as the interface to avr-gdb. This provides loading and debugging capability, which is required to be successful. 
 
 ## Steps to Use
-1. Install the AVR toolchain which consists of *avr-gcc*, *avr-gdb*, and *avrdude* as well as *make* and *git*. The **best** method is to use a [Raspberry Pi as your development platform.](./docs/RPi_build.md). If you wish to use *Windows* or *macOS*, some instruction is provided [here](https://www.wellys.com/posts/avr_c_setup/).
+1. Install the AVR toolchain which consists of *avr-gcc*, *avr-gdb*, and *avrdude* as well as *make* and *git*. A **great** method is to use a [Raspberry Pi as your development platform.](./docs/RPi_build.md). If you wish to use *Windows* or *macOS*, some instruction is provided [here](https://www.wellys.com/posts/avr_c_setup/).
 2. Clone this repository.
 3. Open the *ATtiny* folder and add an *env.make* file (*see below*) based on your programming board and system.
 4. Navigate to *examples/blink* in your CLI and run:
@@ -410,159 +410,6 @@ F_CPU = 9600000UL  # 9.6MHz instead of 1200000UL
 
 The confusion often arises because Atmel/Microchip ships the chips with **CLKDIV8 enabled by default** for compatibility and lower power consumption, even though the oscillator itself runs at 9.6MHz.
 
-## Multiplex ATtiny13A pin
-### Context Provided
-I wish to multiplex an AVR ATtiny13A pin. Provide a circuit example where the microcontroller has a pin being used as both input and output. For example, I want to measure temperature with a thermistor then light an LED based on the thermistor value, with both the thermistor and led will be on the same pin.  Explain via a circuit analysis, that the thermistor won’t be affected when the LED is lit and the LED won’t light when the thermistor is being measured via the ADC of the ATtiny13A pin.
-
-### Claude 4 Response
-To multiplex a pin on the ATtiny13A for both input (thermistor measurement) and output (LED control), you can use a clever circuit design that ensures the thermistor and LED do not interfere with each other. Below is an example circuit and explanation of how it works.
-
----
-
-### **Circuit Design**
-1. **Components**:
-   - **Thermistor**: Connected in a voltage divider configuration with a resistor.
-   - **LED**: Connected in series with a current-limiting resistor.
-   - **ATtiny13A Pin**: Configured as an ADC input for the thermistor and as an output to drive the LED.
-
-The 74HC4053 is a triple 2:1 analog multiplexer/demultiplexer. It has three independent switches, each with two inputs and one output. The user only needs one of these switches for their application.
-
-## **What the 74HC4053 Is:**
-It contains **three independent 2-to-1 switches** (like three SPDT switches). One switch is required for this application.
-
-## **Simplified Connection for the Circuit:**
-
-```
-                    74HC4053
-                 +------------+
-Thermistor-R1 ---|Y0       COM|--- To ADC Pin
-                 |            |
-LED-R2 ----------|Y1        S |--- To GPIO (Select)
-                 |            |
-GND -------------|INH      VCC|--- 5V
-                 |            |
-GND -------------|VEE      GND|--- GND
-                 +------------+
-```
-
-## **How It Works:**
-
-**Pin Functions:**
-- **Y0, Y1**: The two inputs being switched
-- **COM**: Common output (connects to either Y0 or Y1)
-- **S**: Select pin (LOW = Y0, HIGH = Y1)
-- **INH**: Inhibit (tie to GND to enable the switch)
-- **VEE**: Negative supply (tie to GND for single supply)
-
-**Operation:**
-- When **S = LOW**: COM connects to Y0 (thermistor circuit)
-- When **S = HIGH**: COM connects to Y1 (LED circuit)
-
-## **Your Complete Circuit:**
-```
-    5V                          5V
-     |                           |
-Thermistor                      VCC
-     |                           |
-     +----------Y0          74HC4053
-     |           |               |
-   [10k]        COM-----ADC Pin  |
-     |           |               |
-    GND         Y1               |
-                 |               |
-                LED              |
-                 |               |
-              [330Ω]             |
-                 |               |
-                GND              |
-                                 |
-    GPIO Pin----S                |
-                                 |
-    GND--------INH, VEE, GND-----+
-```
-
-
-## **CD74HCT4053B Complete Pinout**
-
-* [TI CD74HCT4053B Datasheet](https://www.ti.com/lit/ds/symlink/cd74hct4053.pdf?ts=1749252478329&ref_url=https%253A%252F%252Fwww.ti.com%252Fproduct%252FCD74HCT4053)
-* [TI CD74HCT4053](https://www.ti.com/product/CD74HCT4053)
-```
-                  CD74HCT4053B (16-pin PDIP)
-                    +--------U--------+
-       LED ---------|1  B1      VCC 16|------- 5V
-                    |                 |
-   Thermistor/10k --|2  B0       A1 15|------- NC
-                    |                 |
-              NC ---|3  C1       A0 14|------- NC
-                    |                 |
-              NC ---|4  C0    COM A 13|------- NC
-                    |                 |
-              NC ---|5  COM C COM B 12|------- ADC Pin
-                    |                 |
-             GND ---|6  INH      SA 11|------- NC
-                    |                 |
-             GND ---|7  VEE      SB 10|------- GPIO (Select)
-                    |                 |
-             GND ---|8  GND      SC  9|------- NC
-                    +-----------------+
-```
-
-## **Pin Connections Summary:**
-
-| Pin | Name | Connection |
-|-----|------|------------|
-| 1   | B1   | **LED anode** |
-| 2   | B0   | **Thermistor/10k junction** |
-| 3   | C1   | NC |
-| 4   | C0   | NC |
-| 5   | COM C| NC |
-| 6   | INH  | **GND** (enables all switches) |
-| 7   | VEE  | **GND** (for single supply) |
-| 8   | GND  | **GND** |
-| 9   | SC   | NC |
-| 10  | SB   | **GPIO Select Pin** |
-| 11  | SA   | NC |
-| 12  | COM B| **ADC Pin** |
-| 13  | COM A| NC |
-| 14  | A0   | NC |
-| 15  | A1   | NC |
-| 16  | VCC  | **5V** |
-
-**Control Logic:**
-- When **SB = LOW**: COM B connects to B0 (thermistor)
-- When **SB = HIGH**: COM B connects to B1 (LED)
-
-**Notes:**
-- Using only the B channel (pins 1, 2, 10, 12)
-- Channels A and C are unused
-- INH must be LOW to enable operation
-
-
-**Software Control:**
-```c
-// Read temperature
-digitalWrite(SELECT_PIN, LOW);  // Connect thermistor
-int temp = analogRead(ADC_PIN);
-
-// Control LED
-digitalWrite(SELECT_PIN, HIGH); // Connect LED
-pinMode(ADC_PIN, OUTPUT);
-digitalWrite(ADC_PIN, HIGH);    // LED on
-```
-
-**Key Benefits:**
-- **Complete isolation** between circuits
-- **No voltage limitations**
-- **No power waste**
-- **Bidirectional** - can pass analog or digital signals
-
-## Additional Elements 
-
-* [CR2025 Vs CR2032 Batteries – Are They Interchangeable? | Battery Tools](https://batterytools.net/what-is-the-difference-between-2032-and-2025-batteries/)
-* [Lithium Ion Polymer Battery with Short Cable - 3.7V 420mAh : ID 4236 : Adafruit Industries, Unique & fun DIY electronics and kits](https://www.adafruit.com/product/4236)
-* [Overview | Sipping Power With NeoPixels | Adafruit Learning System](https://learn.adafruit.com/sipping-power-with-neopixels)
-* [NeoPixel RGBW Mini Button PCB - Pack of 10 : ID 4776 : Adafruit Industries, Unique & fun DIY electronics and kits](https://www.adafruit.com/product/4776)
-* [Using the RESET pin on Startup](https://sites.google.com/site/wayneholder/using-the-avr-reset-pin-as-an-input)
 ## Helpful Files
 
 ### tasks.json for VS Code
@@ -734,7 +581,7 @@ environments:
 ### Steps
 
 1. Copy *.gdbinit* in your home folder
-2. Copy *bloom.yaml* file in your home folder
+2. Copy *bloom.yaml* file in your project folder root
 3. Open two windows in your **CLI**
 1. In first window:
 ```bash
@@ -745,7 +592,7 @@ bloom snap_13a
 2. In second window (remain in this window):
 ```
 cd ATtiny/examples/blink
-avr-gdb
+avr-gdb main.elf
 ```
 
 ### Typical gdb commands
@@ -1010,3 +857,158 @@ Diagnostics:
   UnusedIncludes: None
   MissingIncludes: None
 ```
+
+## Multiplex ATtiny13A pin (Claude Recommendation)
+### Context Provided
+I wish to multiplex an AVR ATtiny13A pin. Provide a circuit example where the microcontroller has a pin being used as both input and output. For example, I want to measure temperature with a thermistor then light an LED based on the thermistor value, with both the thermistor and led will be on the same pin.  Explain via a circuit analysis, that the thermistor won’t be affected when the LED is lit and the LED won’t light when the thermistor is being measured via the ADC of the ATtiny13A pin.
+
+### Claude 4 Response
+To multiplex a pin on the ATtiny13A for both input (thermistor measurement) and output (LED control), you can use a clever circuit design that ensures the thermistor and LED do not interfere with each other. Below is an example circuit and explanation of how it works.
+
+---
+
+### **Circuit Design**
+1. **Components**:
+   - **Thermistor**: Connected in a voltage divider configuration with a resistor.
+   - **LED**: Connected in series with a current-limiting resistor.
+   - **ATtiny13A Pin**: Configured as an ADC input for the thermistor and as an output to drive the LED.
+
+The 74HC4053 is a triple 2:1 analog multiplexer/demultiplexer. It has three independent switches, each with two inputs and one output. The user only needs one of these switches for their application.
+
+## **What the 74HC4053 Is:**
+It contains **three independent 2-to-1 switches** (like three SPDT switches). One switch is required for this application.
+
+## **Simplified Connection for the Circuit:**
+
+```
+                    74HC4053
+                 +------------+
+Thermistor-R1 ---|Y0       COM|--- To ADC Pin
+                 |            |
+LED-R2 ----------|Y1        S |--- To GPIO (Select)
+                 |            |
+GND -------------|INH      VCC|--- 5V
+                 |            |
+GND -------------|VEE      GND|--- GND
+                 +------------+
+```
+
+## **How It Works:**
+
+**Pin Functions:**
+- **Y0, Y1**: The two inputs being switched
+- **COM**: Common output (connects to either Y0 or Y1)
+- **S**: Select pin (LOW = Y0, HIGH = Y1)
+- **INH**: Inhibit (tie to GND to enable the switch)
+- **VEE**: Negative supply (tie to GND for single supply)
+
+**Operation:**
+- When **S = LOW**: COM connects to Y0 (thermistor circuit)
+- When **S = HIGH**: COM connects to Y1 (LED circuit)
+
+## **Your Complete Circuit:**
+```
+    5V                          5V
+     |                           |
+Thermistor                      VCC
+     |                           |
+     +----------Y0          74HC4053
+     |           |               |
+   [10k]        COM-----ADC Pin  |
+     |           |               |
+    GND         Y1               |
+                 |               |
+                LED              |
+                 |               |
+              [330Ω]             |
+                 |               |
+                GND              |
+                                 |
+    GPIO Pin----S                |
+                                 |
+    GND--------INH, VEE, GND-----+
+```
+
+
+## **CD74HCT4053B Complete Pinout**
+
+* [TI CD74HCT4053B Datasheet](https://www.ti.com/lit/ds/symlink/cd74hct4053.pdf?ts=1749252478329&ref_url=https%253A%252F%252Fwww.ti.com%252Fproduct%252FCD74HCT4053)
+* [TI CD74HCT4053](https://www.ti.com/product/CD74HCT4053)
+```
+                  CD74HCT4053B (16-pin PDIP)
+                    +--------U--------+
+       LED ---------|1  B1      VCC 16|------- 5V
+                    |                 |
+   Thermistor/10k --|2  B0       A1 15|------- NC
+                    |                 |
+              NC ---|3  C1       A0 14|------- NC
+                    |                 |
+              NC ---|4  C0    COM A 13|------- NC
+                    |                 |
+              NC ---|5  COM C COM B 12|------- ADC Pin
+                    |                 |
+             GND ---|6  INH      SA 11|------- NC
+                    |                 |
+             GND ---|7  VEE      SB 10|------- GPIO (Select)
+                    |                 |
+             GND ---|8  GND      SC  9|------- NC
+                    +-----------------+
+```
+
+## **Pin Connections Summary:**
+
+| Pin | Name | Connection |
+|-----|------|------------|
+| 1   | B1   | **LED anode** |
+| 2   | B0   | **Thermistor/10k junction** |
+| 3   | C1   | NC |
+| 4   | C0   | NC |
+| 5   | COM C| NC |
+| 6   | INH  | **GND** (enables all switches) |
+| 7   | VEE  | **GND** (for single supply) |
+| 8   | GND  | **GND** |
+| 9   | SC   | NC |
+| 10  | SB   | **GPIO Select Pin** |
+| 11  | SA   | NC |
+| 12  | COM B| **ADC Pin** |
+| 13  | COM A| NC |
+| 14  | A0   | NC |
+| 15  | A1   | NC |
+| 16  | VCC  | **5V** |
+
+**Control Logic:**
+- When **SB = LOW**: COM B connects to B0 (thermistor)
+- When **SB = HIGH**: COM B connects to B1 (LED)
+
+**Notes:**
+- Using only the B channel (pins 1, 2, 10, 12)
+- Channels A and C are unused
+- INH must be LOW to enable operation
+
+
+**Software Control:**
+```c
+// Read temperature
+digitalWrite(SELECT_PIN, LOW);  // Connect thermistor
+int temp = analogRead(ADC_PIN);
+
+// Control LED
+digitalWrite(SELECT_PIN, HIGH); // Connect LED
+pinMode(ADC_PIN, OUTPUT);
+digitalWrite(ADC_PIN, HIGH);    // LED on
+```
+
+**Key Benefits:**
+- **Complete isolation** between circuits
+- **No voltage limitations**
+- **No power waste**
+- **Bidirectional** - can pass analog or digital signals
+
+## Additional Elements 
+
+* [CR2025 Vs CR2032 Batteries – Are They Interchangeable? | Battery Tools](https://batterytools.net/what-is-the-difference-between-2032-and-2025-batteries/)
+* [Lithium Ion Polymer Battery with Short Cable - 3.7V 420mAh : ID 4236 : Adafruit Industries, Unique & fun DIY electronics and kits](https://www.adafruit.com/product/4236)
+* [Overview | Sipping Power With NeoPixels | Adafruit Learning System](https://learn.adafruit.com/sipping-power-with-neopixels)
+* [NeoPixel RGBW Mini Button PCB - Pack of 10 : ID 4776 : Adafruit Industries, Unique & fun DIY electronics and kits](https://www.adafruit.com/product/4776)
+* [Using the RESET pin on Startup](https://sites.google.com/site/wayneholder/using-the-avr-reset-pin-as-an-input)
+

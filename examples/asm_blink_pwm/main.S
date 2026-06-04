@@ -35,12 +35,12 @@
 
 main_setup:                  ; also serves as main_setup
     ldi     r16, lo8(RAMEND)    ; init stack
-    out     STACK_LOW, r16            ; ATtiny13A has no SPH
+    out     STACK_LOW, r16      ; ATtiny13A has no SPH
     eor     r1, r1
-    out     STATUS, r1            ; clear status register
-    sbi     IO_DDR, LED           ; LED as output
+    out     STATUS, r1          ; clear status register
+    sbi     IO_DDR, LED         ; LED as output
 
-    ; TCCRA: Fast PWM, use DC_FACTOR to adjust
+    ; TCCRA: Fast PWM, use OCRA to adjust width (duty cycle)
     ldi     r18,(1<<COM0A1) | (1<<WGM01) | (1<<WGM00)
     out     TCCRA,R18
 

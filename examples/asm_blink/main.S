@@ -1,5 +1,5 @@
 ; =============================================================
-; main  –  Blink LED on PB0 at 500Hz (1ms on, 1ms off)
+; main  –  Blink LED on PB0 at ~10Hz (50ms on, 50ms off)
 ; Target : ATtiny13A at 1.2MHz (factory default clock)
 ; Circuit: LED + 220Ω resistor from PB0 (pin 5) to GND
 ; =============================================================
@@ -33,8 +33,9 @@ main_loop:
     rcall   delay_1ms
     rjmp    main_loop
 
-; ~1ms delay at 1.2MHz
-; cycles = 80 × ((3×250 + 3) + 4) ~= 1ms (1.004ms measured)
+; ~50ms width at 1.2MHz
+; cycles = (80 × ((3×250 + 3)) + 4 ~= 50.183ms calculated (52.2ms measured)
+; inner loop ~= 627us calculated, 662 us measured
 delay_1ms:
     ldi     r17, 80
 outer:

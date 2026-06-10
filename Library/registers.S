@@ -2,8 +2,8 @@
 #ifndef REGISTERS_S
 #define REGISTERS_S
 #define LED         PB0                     ; LED
-#define TX          PB1                     ; transmit pin, output
-#define RX          PB2                     ; receive pin, input pullup
+#define TX          PB3                     ; transmit pin, output
+#define RX          PB4                     ; receive pin, input pullup
 #define DEBUG       PB4                     ; receive pin, input pullup
 #define IO_PORT    _SFR_IO_ADDR(PORTB)
 #define IO_DDR      _SFR_IO_ADDR(DDRB)

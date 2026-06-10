@@ -2,6 +2,7 @@
 // Change serial pins and timing in Library/registers.S and Library/serial.S
 
 #include <avr/pgmspace.h>
+#include <avr/io.h>
 #include "serial_asm.h"
 
 #define CR 13
@@ -19,9 +20,10 @@ static void pgmtext_write(const char *p)
 
 int main(void)
 {
-    init_serial();
     /* set pin to output*/
     DDRB |= (_BV(PORTB2) | _BV(PORTB1) | _BV(PORTB0));
+
+    init_serial();
 
     char_write(CR);
     char_write(LF);
@@ -33,9 +35,12 @@ int main(void)
     // Echo each received character back over the serial port.
     for (;;) {
         uint8_t bits = char_read();
+        char_write(bits);
+
+        bits -= 0x30;
         if (bits <= 7)
         {
-            PORTB = bits;
+            PORTB = (PORTB & ~0x07) | (bits & 0x07);
         }
         else
         {

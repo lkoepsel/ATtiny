@@ -27,13 +27,10 @@
 .section .text
 
 ; ---------- Registers and Values ----------------
-; r5:r4                         ; index and saved index
+; r4                            ; saved index
 ; r7:r6                         ; temp registers for lpm command
-; r15                           ; temp register, saved in ISR
 ; r16                           ; temp register
 ; r19:r18                       ; ticks register
-; char_reg                      ; char register (serial)
-; delay_hi/lo                   ; delay word
 ; ---------- Reserved registers ----------
 ; r2        ISR_temp - ISR scratch (STATUS save) — do NOT use elsewhere
 ; r9:r8     ticks_hi/lo - global 16-bit ISR ticks counter — do NOT use elsewhere
@@ -45,8 +42,8 @@
 reset_handler:
 
         ; ATtiny13A has only SPL (no SPH) — RAMEND = 0x9F fits in 8 bits
-        ldi     r16, lo8(RAMEND)
-        out     STACK_LOW, r16
+        ldi     temp_16, lo8(RAMEND)
+        out     STACK_LOW, temp_16
 
         ; r1 = 0 by convention (zero register); clear status flags
         eor     r1, r1
@@ -57,20 +54,20 @@ reset_handler:
 ; --------------------------------------------------------------------
 
 main:
-        ldi     r16, 0xFF
-        out     _SFR_IO_ADDR(DDRB), r16   ; PORTB all outputs
+        ldi     temp_16, 0xFF
+        out     _SFR_IO_ADDR(DDRB), temp_16   ; PORTB all outputs
 
 reload:
-        ; ---- Choose an index (0..5) and dispatch ----
-        ldi     r16, 5                    ; initial index into the table
-
+        ; ---- Choose an index (0..7) and dispatch ----
+        ldi     temp_16, 0x0C                    ; initial index into the table
 dispatch:
+        mov     r4, temp_16                      ; save it for next iteration
         ; Z = jump_table + (index * 1 word)
         ldi     ZL, lo8(jump_table)
         ldi     ZH, hi8(jump_table)
         ; add index*2 BYTES to the byte pointer used by LPM...
-        lsl     r16                       ; index * 2 (each entry is 1 word = 2 bytes)
-        add     ZL, r16
+        lsl     temp_16                       ; index * 2 (each entry is 1 word = 2 bytes)
+        add     ZL, temp_16
         adc     ZH, r1                    ; r1 assumed 0; clr it if unsure
 
         ; Load the task's WORD address stored in the table
@@ -81,45 +78,58 @@ dispatch:
         ; Z now holds the word-address of the target task
         icall                             ; push PC, jump to (Z)
 
-        dec     r16
-        breq    reload
+        mov     temp_16, r4
+        dec     temp_16
+        brmi    reload
         rjmp    dispatch
 
 
 ; ---- The tasks ----
 task0:
-        ldi     r16, 0x00
-        out     _SFR_IO_ADDR(PORTB), r16
+        ldi     temp_16, 0x00
+        out     _SFR_IO_ADDR(PORTB), temp_16
         delay_16 0x1000
         ret
 
 task1:
-        ldi     r16, 0x01
-        out     _SFR_IO_ADDR(PORTB), r16
-        delay_16 0x1000
+        ldi     temp_16, 0x01
+        out     _SFR_IO_ADDR(PORTB), temp_16
+        delay_16 0x800
         ret
 
 task2:
-        ldi     r16, 0x02
-        out     _SFR_IO_ADDR(PORTB), r16
-        delay_16 0x1000
+        ldi     temp_16, 0x02
+        out     _SFR_IO_ADDR(PORTB), temp_16
+        delay_16 0x600
         ret
 
 task3:
-        ldi     r16, 0x03
-        out     _SFR_IO_ADDR(PORTB), r16
-        delay_16 0x1000
+        ldi     temp_16, 0x03
+        out     _SFR_IO_ADDR(PORTB), temp_16
+        delay_16 0x800
         ret
 
 task4:
-        ldi     r16, 0x04
-        out     _SFR_IO_ADDR(PORTB), r16
-        delay_16 0x1000
+        ldi     temp_16, 0x04
+        out     _SFR_IO_ADDR(PORTB), temp_16
+        delay_16 0x400
         ret
 
 task5:
-        ldi     r16, 0x05
-        out     _SFR_IO_ADDR(PORTB), r16
+        ldi     temp_16, 0x05
+        out     _SFR_IO_ADDR(PORTB), temp_16
+        delay_16 0x200
+        ret
+
+task6:
+        ldi     temp_16, 0x06
+        out     _SFR_IO_ADDR(PORTB), temp_16
+        delay_16 0x500
+        ret
+
+task7:
+        ldi     temp_16, 0x07
+        out     _SFR_IO_ADDR(PORTB), temp_16
         delay_16 0x1000
         ret
 
@@ -127,11 +137,18 @@ task5:
         .balign 2
 jump_table:
         .word   pm(task0)
+        .word   pm(task5)
         .word   pm(task1)
+        .word   pm(task3)
+        .word   pm(task7)
+        .word   pm(task4)
+        .word   pm(task0)
+        .word   pm(task6)
         .word   pm(task2)
+        .word   pm(task1)
         .word   pm(task3)
         .word   pm(task4)
-        .word   pm(task5)
+        .word   pm(task6)
 
 ; ====================================================================
 ;  DATA SECTION  (initialized variables in SRAM)

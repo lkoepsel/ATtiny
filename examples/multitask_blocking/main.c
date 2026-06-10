@@ -6,7 +6,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-#define NTASKS 3
+#define NTASKS 8
 
 void zero (void) {
     /* toggle led on and off */
@@ -32,7 +32,47 @@ void two (void) {
     return;
 } 
 
-void (*tasklist[NTASKS])() = {zero, one, two};
+void three (void) {
+    /* toggle led on and off */
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB2));
+    _delay_ms(500);
+    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB2));
+    return;
+} 
+
+void four (void) {
+    /* toggle led on and off */
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB0));
+    _delay_ms(200);
+    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB0));
+    return;
+} 
+
+void five (void) {
+    /* toggle led on and off */
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB1));
+    _delay_ms(100);
+    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB1));
+    return;
+} 
+
+void six (void) {
+    /* toggle led on and off */
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB2));
+    _delay_ms(500);
+    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB2));
+    return;
+} 
+
+void seven (void) {
+    /* toggle led on and off */
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB2));
+    _delay_ms(500);
+    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB2));
+    return;
+} 
+
+void (*tasklist[NTASKS])() = {zero, one, two, three, four, five, six, seven};
 
 int main(void)
 {

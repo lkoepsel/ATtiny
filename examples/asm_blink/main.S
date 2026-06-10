@@ -22,8 +22,8 @@
 .section .text
 
 reset_handler:                  ; also serves as main_setup
-    ldi     r16, lo8(RAMEND)    ; init stack
-    out     STACK_LOW, r16      ; ATtiny13A has no SPH
+    ldi     temp_16, lo8(RAMEND)    ; init stack
+    out     STACK_LOW, temp_16      ; ATtiny13A has no SPH
     eor     r1, r1
     out     STATUS, r1          ; clear status register
     sbi     IO_DDR, LED         ; PB0 as output
@@ -37,13 +37,13 @@ main_loop:
 ; cycles = (80 × ((3×250 + 3)) + 4 ~= 50.183ms calculated (52.2ms measured)
 ; inner loop ~= 627us calculated, 662 us measured
 delay_1ms:
-    ldi     r17, 80
+    ldi     temp_17, 80
 outer:
-    ldi     r16, 250
+    ldi     temp_16, 250
 inner:
-    dec     r16
+    dec     temp_16
     brne    inner
-    dec     r17
+    dec     temp_17
     brne    outer
     ret
 

@@ -15,9 +15,16 @@
 #define TCCRB       _SFR_IO_ADDR(TCCR0B)
 #define TIMSK       _SFR_IO_ADDR(TIMSK0)
 #define RCCAL       _SFR_IO_ADDR(OSCCAL)
+
+; ---------- Reserved registers ----------
+; r2        ISR_temp - ISR scratch (STATUS save) — do NOT use elsewhere
+; r9:r8     ticks_hi/lo - global 16-bit ISR ticks counter — do NOT use elsewhere
+; r24       char register and C register for passing values
 #define ISR_temp    r2
 #define ticks_lo    r8
 #define ticks_hi    r9
+#define temp_16    r16
+#define temp_17    r17
 #define temp_r18    r18
 #define bit_ctr     r20
 #define char_reg    r24

@@ -1,4 +1,4 @@
-// soft serial - software-defined serial port using assembly primitives
+// bitWrite - use serial port to control value on pins PB0-PB2
 // Change serial pins and timing in Library/registers.S and Library/serial.S
 
 #include <avr/pgmspace.h>

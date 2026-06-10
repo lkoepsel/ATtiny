@@ -35,6 +35,7 @@
 ; r2        ISR_temp - ISR scratch (STATUS save) — do NOT use elsewhere
 ; r9:r8     ticks_hi/lo - global 16-bit ISR ticks counter — do NOT use elsewhere
 
+#define  saved_index    r4
 
 ; ---- Vector table ----
         .section .text
@@ -58,33 +59,32 @@ main:
         out     _SFR_IO_ADDR(DDRB), temp_16   ; PORTB all outputs
 
 reload:
-        ; ---- Choose an index (0..7) and dispatch ----
-        ldi     temp_16, 0x0C                    ; initial index into the table
+        ; ---- Start at the last table entry and dispatch down to 0 ----
+        ldi     temp_16, NUM_TASKS              ; index of last entry (count auto-computed)
+        mov     saved_index, temp_16            ; r4 = saved index, survives icall
 dispatch:
-        mov     r4, temp_16                      ; save it for next iteration
         ; Z = jump_table + (index * 1 word)
+        mov     temp_16, saved_index            ; working copy of the index
+        lsl     temp_16                         ; index * 2 (each entry is 1 word = 2 bytes)
         ldi     ZL, lo8(jump_table)
         ldi     ZH, hi8(jump_table)
-        ; add index*2 BYTES to the byte pointer used by LPM...
-        lsl     temp_16                       ; index * 2 (each entry is 1 word = 2 bytes)
         add     ZL, temp_16
-        adc     ZH, r1                    ; r1 assumed 0; clr it if unsure
+        adc     ZH, r1                          ; r1 assumed 0; clr it if unsure
 
-        ; Load the task's WORD address stored in the table
+        ; Load the task's WORD address stored in the table. LPM cannot target
+        ; r30/r31 (Z) directly, so read into r7:r6 then movw into Z in one op.
         lpm     r6, Z+
         lpm     r7, Z
-        mov     ZL, r6                   ; low byte
-        mov     ZH, r7                    ; high byte
+        movw    ZL, r6                   ; ZL<-r6 (low), ZH<-r7 (high)
         ; Z now holds the word-address of the target task
         icall                             ; push PC, jump to (Z)
 
-        mov     temp_16, r4
-        dec     temp_16
-        brmi    reload
+        dec     saved_index
+        breq    reload
         rjmp    dispatch
 
 
-; ---- The tasks ----
+; ---- Tasks ----
 task0:
         ldi     temp_16, 0x00
         out     _SFR_IO_ADDR(PORTB), temp_16
@@ -134,6 +134,10 @@ task7:
         ret
 
 ; ---- The table: each entry is the WORD address of a task ----
+; Entry count, computed by the assembler from the table span.
+; Each entry is a .word (2 bytes), so divide the byte length by 2.
+        .equ    NUM_TASKS, (jump_table_end - jump_table) / 2
+
         .balign 2
 jump_table:
         .word   pm(task0)
@@ -149,6 +153,7 @@ jump_table:
         .word   pm(task3)
         .word   pm(task4)
         .word   pm(task6)
+jump_table_end:
 
 ; ====================================================================
 ;  DATA SECTION  (initialized variables in SRAM)

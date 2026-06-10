@@ -10,22 +10,25 @@
 
 void zero (void) {
     /* toggle led on and off */
-    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (PINB0));
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB0));
     _delay_ms(2000);
+    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB0));
     return;
 } 
 
 void one (void) {
     /* toggle led on and off */
-    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (PINB1));
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB1));
     _delay_ms(1000);
+    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB1));
     return;
 } 
 
 void two (void) {
     /* toggle led on and off */
-    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PINB)), "I" (PINB2));
+    asm ("sbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB2));
     _delay_ms(500);
+    asm ("cbi %0, %1 \n" : : "I" (_SFR_IO_ADDR(PORTB)), "I" (PINB2));
     return;
 } 
 

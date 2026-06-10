@@ -1,5 +1,4 @@
 // soft serial - software-defined serial port using assembly primitives
-// Slow serial port, use for non-intensive serial interaction
 // Change serial pins and timing in Library/registers.S and Library/serial.S
 
 #include <avr/pgmspace.h>
@@ -8,8 +7,8 @@
 #define CR 13
 #define LF 10
 
-const char prompt[]  PROGMEM = "13A";
-const char waiting[] PROGMEM = "W:";
+const char prompt[]  PROGMEM = "A";
+const char waiting[] PROGMEM = "?";
 
 // Write a PROGMEM-resident, null-terminated string to the serial port.
 static void pgmtext_write(const char *p)

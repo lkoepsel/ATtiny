@@ -50,11 +50,6 @@ reset_handler:
         eor     r1, r1
         out     STATUS, r1
 
-; --------------------------------------------------------------------
-; main – 
-; --------------------------------------------------------------------
-
-main:
         ldi     temp_16, 0xFF
         out     _SFR_IO_ADDR(DDRB), temp_16   ; PORTB all outputs
 
@@ -69,14 +64,14 @@ dispatch:
         ldi     ZL, lo8(jump_table)
         ldi     ZH, hi8(jump_table)
         add     ZL, temp_16
-        adc     ZH, r1                          ; r1 assumed 0; clr it if unsure
+        adc     ZH, r1                          ; r1 assumed 0
 
         ; Load the task's WORD address stored in the table. LPM cannot target
         ; r30/r31 (Z) directly, so read into r7:r6 then movw into Z in one op.
         lpm     r6, Z+
         lpm     r7, Z
         movw    ZL, r6                   ; ZL<-r6 (low), ZH<-r7 (high)
-        ; Z now holds the word-address of the target task
+        ; Z holds the word-address of the target task
         icall                             ; push PC, jump to (Z)
 
         dec     saved_index

@@ -50,8 +50,8 @@ reset_handler:
         eor     r1, r1
         out     STATUS, r1
 
-        ldi     temp_16, 0xFF
-        out     _SFR_IO_ADDR(DDRB), temp_16   ; PORTB all outputs
+        ldi     temp_16, 0x07
+        out     IO_DDR, temp_16   ; PB0-2 outputs
 
 reload:
         ; ---- Start at the last table entry and dispatch down to 0 ----
@@ -82,50 +82,50 @@ dispatch:
 ; ---- Tasks ----
 task0:
         ldi     temp_16, 0x00
-        out     _SFR_IO_ADDR(PORTB), temp_16
-        delay_16 0x1000
+        out     IO_PORT, temp_16
+        ; delay_16 0x1000
         ret
 
 task1:
         ldi     temp_16, 0x01
-        out     _SFR_IO_ADDR(PORTB), temp_16
-        delay_16 0x800
+        out     IO_PORT, temp_16
+        ; delay_16 0x800
         ret
 
 task2:
         ldi     temp_16, 0x02
-        out     _SFR_IO_ADDR(PORTB), temp_16
-        delay_16 0x600
+        out     IO_PORT, temp_16
+        ; delay_16 0x600
         ret
 
 task3:
         ldi     temp_16, 0x03
-        out     _SFR_IO_ADDR(PORTB), temp_16
-        delay_16 0x800
+        out     IO_PORT, temp_16
+        ; delay_16 0x800
         ret
 
 task4:
         ldi     temp_16, 0x04
-        out     _SFR_IO_ADDR(PORTB), temp_16
-        delay_16 0x400
+        out     IO_PORT, temp_16
+        ; delay_16 0x400
         ret
 
 task5:
         ldi     temp_16, 0x05
-        out     _SFR_IO_ADDR(PORTB), temp_16
-        delay_16 0x200
+        out     IO_PORT, temp_16
+        ; delay_16 0x200
         ret
 
 task6:
         ldi     temp_16, 0x06
-        out     _SFR_IO_ADDR(PORTB), temp_16
-        delay_16 0x500
+        out     IO_PORT, temp_16
+        ; delay_16 0x500
         ret
 
 task7:
         ldi     temp_16, 0x07
-        out     _SFR_IO_ADDR(PORTB), temp_16
-        delay_16 0x1000
+        out     IO_PORT, temp_16
+        ; delay_16 0x1000
         ret
 
 ; ---- The table: each entry is the WORD address of a task ----

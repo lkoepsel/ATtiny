@@ -55,7 +55,7 @@ reset_handler:
 
 reload:
         ; ---- Start at the last table entry and dispatch down to 0 ----
-        ldi     temp_16, NUM_TASKS              ; index of last entry (count auto-computed)
+        ldi     temp_16, NUM_TASKS - 1          ; index of last entry (count auto-computed)
         mov     saved_index, temp_16            ; r4 = saved index, survives icall
 dispatch:
         ; Z = jump_table + (index * 1 word)
@@ -75,7 +75,7 @@ dispatch:
         icall                             ; push PC, jump to (Z)
 
         dec     saved_index
-        breq    reload
+        brmi    reload
         rjmp    dispatch
 
 
@@ -136,18 +136,13 @@ task7:
         .balign 2
 jump_table:
         .word   pm(task0)
-        .word   pm(task5)
         .word   pm(task1)
-        .word   pm(task3)
-        .word   pm(task7)
-        .word   pm(task4)
-        .word   pm(task0)
-        .word   pm(task6)
         .word   pm(task2)
-        .word   pm(task1)
         .word   pm(task3)
         .word   pm(task4)
+        .word   pm(task5)
         .word   pm(task6)
+        .word   pm(task7)
 jump_table_end:
 
 ; ====================================================================

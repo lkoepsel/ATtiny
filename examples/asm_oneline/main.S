@@ -136,13 +136,18 @@ task7:
         .balign 2
 jump_table:
         .word   pm(task0)
+        .word   pm(task5)
         .word   pm(task1)
+        .word   pm(task3)
+        .word   pm(task7)
+        .word   pm(task4)
+        .word   pm(task0)
+        .word   pm(task6)
         .word   pm(task2)
+        .word   pm(task1)
         .word   pm(task3)
         .word   pm(task4)
-        .word   pm(task5)
         .word   pm(task6)
-        .word   pm(task7)
 jump_table_end:
 
 ; ====================================================================

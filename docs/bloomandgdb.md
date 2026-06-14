@@ -152,6 +152,7 @@ wire, and that has practical consequences you hit regularly:
    time, so the programmer needs the complete ISP connection
    (MOSI/MISO/SCK/RESET/VCC/GND), not just the RESET wire.
 
-5. **Breakpoint budget.** `hardware_breakpoints: true` gives the ATtiny13A's one
-   HW breakpoint; anything beyond becomes software breakpoints that rewrite flash
-   (wear + slower).
+5. **Breakpoint budget.** Despite `hardware_breakpoints: true`, Bloom reports
+   **0 available hardware breakpoints** on the SNAP + ATtiny13A (verified
+   2026-06-14), so *every* breakpoint is a software breakpoint that rewrites
+   flash (wear + slower). Keep breakpoint counts low.

@@ -44,9 +44,10 @@ and the **debugWire gotchas** section below.
 
 Modest, real **ergonomic** value (stay in the editor, visual breakpoints) but
 **not a capability gain**. The ATtiny13A's resources cap the payoff: 64 bytes
-RAM, debugWire offers roughly one hardware breakpoint, and software breakpoints
-rewrite flash (wear + slow). Worth setting up only if driving avr-gdb from the
-terminal is your actual pain point.
+RAM, and on the **SNAP + ATtiny13A** Bloom reports **0 hardware breakpoints**
+(verified 2026-06-14 — see below), so *every* breakpoint is a software
+breakpoint that rewrites flash (wear + slow). Worth setting up only if driving
+avr-gdb from the terminal is your actual pain point.
 
 ## Config sketch
 
@@ -156,6 +157,14 @@ privilege-escalation CVEs).
    connects to Bloom via `target remote :1442`.
 4. The MCU is halted on connect — set breakpoints, then continue/step.
 
+> **`~/.gdbinit` conflict (verified).** This repo's terminal-workflow
+> `~/.gdbinit` (see `bloomandgdb.md`) auto-runs `target remote`, `load`, and
+> `tui enable`. A non-interactive driver like Native Debug inherits it and dies
+> on `Cannot enable the TUI when output is not a terminal`, dropping the
+> connection. Two fixes: (a) run gdb under `tools/node-confined`, whose sandbox
+> hides `$HOME` so `.gdbinit` never loads; or (b) for an unsandboxed run, launch
+> gdb with `-nx` (e.g. via a `gdbpath` wrapper) or guard the TUI lines.
+
 ## debugWire gotchas
 
 The practical debugWire pitfalls (chip stuck in debugWire after an unclean exit,
@@ -176,15 +185,36 @@ documented once in [`bloomandgdb.md`](bloomandgdb.md#debugwire-gotchas).
    example before debugging so the ELF matches the flashed image.
 4. ✅ **GDB adapter route** — resolved: install **Native Debug** (`code-debug`),
    which supplies `"type": "gdb"` (no custom stdio-adapter registration needed).
+5. ✅ **Hardware chain** — `bloom snap_13a` connected the SNAP, activated the
+   ATtiny13A (signature `0x1E9007`), and opened the GDB server on `127.0.0.1:1442`.
+   `avr-gdb` attached over RSP and halted at the reset vector, and Bloom shut down
+   cleanly (DWEN cleared, ISP restored). The whole chain below Node — SNAP →
+   debugWire → ATtiny13A → Bloom → avr-gdb — is proven; Node + Native Debug just
+   replaces the manual avr-gdb invocation.
+   - ⚠️ **0 hardware breakpoints** reported (see *Is it worth it?*).
+   - ⚠️ **`~/.gdbinit` conflict** surfaced (see the note under *Workflow*).
 
 ## Still to confirm
 
+- **Node.js not yet installed** — install per *Node.js: install minimally &
+  sandbox*. A **reboot is pending first** (see *Next steps*).
 - **Native Debug not yet installed** — Package Control currently lists only
   `AVR, Git, LSP, LSP-clangd, Package Control`. Install the `Debugger` package
   and then the Native Debug adapter (see *One-time setup*).
-- **End-to-end test** — with hardware connected and `bloom snap_13a` running,
-  confirm Native Debug connects via `target remote :1442`, halts, and that
-  breakpoints/stepping work. The `target`/`remote`/`gdbpath` fields are from
-  Native Debug's documented schema but haven't been exercised here yet.
-- **Node.js for Native Debug** — the adapter requires Node on `PATH`; verify or
-  set its path in the Debugger settings.
+- **End-to-end test through Sublime** — once Node + Native Debug are in, confirm
+  Native Debug connects via `target remote :1442`, halts, and that
+  breakpoints/stepping work from the editor. The `target`/`remote`/`gdbpath`
+  fields are from Native Debug's documented schema, not yet exercised through it.
+
+## Next steps
+
+1. **Reboot the machine** (pending) — required before the Node install.
+2. **Install Node minimally**: `sudo pacman -S nodejs` (not `npm`). See *Node.js:
+   install minimally & sandbox*.
+3. **Verify the runtime**: `node --version`, and that `tools/node-confined` runs
+   Node under bubblewrap.
+4. **Install the Sublime side**: `Debugger` package → `Debugger: Install Adapters`
+   → Native Debug; point its Node-path setting at `tools/node-confined`.
+5. **End-to-end test**: `cd examples/asm_blink && make`, start `bloom snap_13a`,
+   open `ATtiny.sublime-project`, run the debug config, confirm halt + a
+   breakpoint. Watch for the `~/.gdbinit` conflict if running gdb unsandboxed.

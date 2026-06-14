@@ -124,3 +124,34 @@ define te
 tui enable
 end
 ```
+
+## debugWire gotchas
+
+Bloom manages the DWEN fuse (`manage_dwen_fuse_bit: true`), but debugWire
+repurposes the **RESET pin** (PB5 on the ATtiny13A) as its single signaling
+wire, and that has practical consequences you hit regularly:
+
+1. **Chip stuck in debugWire → ISP/`make flash` fails.** While DWEN is set,
+   RESET is the debugWire line, so ISP can't drive it. Bloom clears DWEN on a
+   *clean* exit; a Bloom crash, a hard-killed gdb session, or pulled power
+   mid-session leaves the chip in debugWire mode and `avrdude`/`make flash`
+   errors out.
+   **Recovery:** start another Bloom debugWire session against the chip and exit
+   it cleanly — that clears DWEN and restores ISP.
+
+2. **SNAP does not power the target.** The Microchip SNAP only senses target
+   voltage (VTG); it supplies none. Power the ATtiny13A from its own supply
+   before connecting, or debugWire won't come up. (The ATMEL-ICE can power the
+   target, but SNAP cannot.)
+
+3. **RESET-pin hardware.** A pull-up (~10k) on RESET is fine, but **no
+   decoupling capacitor on RESET** — a cap swallows the debugWire edges and the
+   connection won't establish. PB5 is also unavailable as a GPIO while debugging.
+
+4. **Full ISP wiring still required.** Bloom uses ISP to *set* DWEN the first
+   time, so the programmer needs the complete ISP connection
+   (MOSI/MISO/SCK/RESET/VCC/GND), not just the RESET wire.
+
+5. **Breakpoint budget.** `hardware_breakpoints: true` gives the ATtiny13A's one
+   HW breakpoint; anything beyond becomes software breakpoints that rewrite flash
+   (wear + slower).

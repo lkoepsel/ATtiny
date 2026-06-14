@@ -1,0 +1,16 @@
+{
+  "folders": [{ "path": "." }],
+  "debugger_configurations": [
+    {
+      "name": "ATtiny13A — Bloom + avr-gdb (Native Debug)",
+      "type": "gdb",
+      "request": "attach",
+      "executable": "${project_path}/examples/asm_blink/main.elf",
+      "target": ":1442",
+      "remote": true,
+      "cwd": "${project_path}",
+      "gdbpath": "avr-gdb",
+      "valuesFormatting": "prettyPrinters"
+    }
+  ]
+}

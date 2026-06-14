@@ -16,7 +16,7 @@ For the best programming and debugging experience **and if your are using a Linu
 
 ### AVR and ATtiny13A Details
 * [ATTiny13A Datasheet](./documentation/ATtiny13A-Data-Sheet-DS40002307A.pdf)
-* [AVR Instruction Set](./documentation/Atmel-0856-avr-instruction-set-manual.pdf)
+* [AVR Instruction Set](./documentation/AVR-Instruction-Set-Manual.pdf)
 * [AVR C Library User Manual](./documentation/avr-libc-user-manual-2.2.0.pdf)
 
 ### Compilers, Debuggers
@@ -37,7 +37,7 @@ For the best programming and debugging experience **and if your are using a Linu
 
 ### Application Notes
 * [Getting Started Writing C for AVR](./documentation/AVR1000b-Getting-Started-Writing-C-Code-for-AVR-DS90003262B.pdf)
-* [AVR Efficient C Coding](./documentation/Atmel-AVR035-Efficient%20C%20Coding%20for%20AVR.pdf)
+* [AVR Efficient C Coding](./documentation/Atmel-AVR035-Efficient-C-Coding.pdf)
 * [AVR Accessing the EEPROM](./AVR100_doc0932.pdf)
 
 ## Online Documentation

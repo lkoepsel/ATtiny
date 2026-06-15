@@ -1,10 +1,9 @@
 ; Register and other definitions required for assembly files
 #ifndef REGISTERS_S
 #define REGISTERS_S
+
 #define LED         PB0                     ; LED
-#define TX          PB3                     ; transmit pin, output
-#define RX          PB4                     ; receive pin, input pullup
-#define DEBUG       PB4                     ; receive pin, input pullup
+#define DEBUG       PB4                     ; debug pin, input pullup
 #define IO_PORT    _SFR_IO_ADDR(PORTB)
 #define IO_DDR      _SFR_IO_ADDR(DDRB)
 #define IO_PIN     _SFR_IO_ADDR(PINB)
@@ -46,5 +45,15 @@
   sbci    r19, 0
   brne    9b
 .endm
+
+; ---------- Serial Communications ----------
+; 1. Define the TX/RX pins
+; 2. Leave period/half-period alone, unless changing baud rate
+; 3. If communications are flaky, use examples/osccal to determine TRIM
+#define TX          PB3   ; transmit pin, output
+#define RX          PB4   ; receive pin, input pullup
+#define period       37   ; # of ticks for 1 bit period (9600 baud @ 1.2MHz)
+#define half_period  20   ; # of ticks for  a .5 bit period
+#define TRIM         0x60 ; OSCCAL trim value, use examples/osccal to determine
 
 #endif  /* REGISTERS_S */

@@ -50,10 +50,12 @@
 ; 1. Define the TX/RX pins
 ; 2. Leave period/half-period alone, unless changing baud rate
 ; 3. If communications are flaky, use examples/osccal to determine TRIM
+; 4. Default: 9600 baud, 8 data bits, 1 stop bit and 0 parity bits
 #define TX          PB3   ; transmit pin, output
 #define RX          PB4   ; receive pin, input pullup
 #define period       37   ; # of ticks for 1 bit period (9600 baud @ 1.2MHz)
 #define half_period  20   ; # of ticks for  a .5 bit period
 #define TRIM         0x60 ; OSCCAL trim value, use examples/osccal to determine
+#define no_bits     8     ; no of bits, typically 8
 
 #endif  /* REGISTERS_S */

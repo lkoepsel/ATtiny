@@ -54,7 +54,7 @@ char_write:
     delay_8 period
 
     ;  8 data bits and preserve char
-    ldi     bit_ctr, 8
+    ldi     bit_ctr, no_bits
     mov     temp_r18, char_reg
 
 write_bit:
@@ -109,7 +109,7 @@ wait_start:
     delay_8 period
 
 ;   Read 8 data bits, LSB first, into r24
-    ldi     bit_ctr, 8              ; bit counter
+    ldi     bit_ctr, no_bits              ; bit counter
 
 read_bit:
     in      temp_r18, IO_PIN           ; scratch read - do not clobber r24

@@ -46,53 +46,111 @@ disassembly — well suited to the `asm_*` assembly examples.
   open the UI in a browser **on the Mac** at `http://<pi-ip>:5000`.
 - **Standalone:** everything on the Linux box, browser local (`127.0.0.1:5000`).
 
-### Implementation plan
+### The shared `.gdbinit`
 
-Run these **on the Linux/Pi box** (where Bloom lives) unless noted.
+gdbgui auto-loads gdb's init files, so the project's existing `.gdbinit` does the
+connect-and-flash work — no separate script is needed. The only requirement is
+that its **TUI commands are guarded**, because the terminal TUI is incompatible
+with the GDB/MI interpreter gdbgui uses (and with DAP). Guarding lets the *same*
+file work in a plain terminal session *and* under gdbgui.
+
+Place this `.gdbinit` in the example directory (paths are relative, so gdb must
+be started from that directory):
+
+```gdb
+set confirm off
+set pagination off
+set history save on
+set history size 10000
+set history filename ~/.gdb_history
+
+file main.elf
+target remote :1442
+load
+set listsize 0
+
+# TUI is terminal-only; skip it silently under gdbgui/DAP (MI interpreter).
+python
+import gdb
+try:
+    gdb.execute("set tui compact-source on")
+    gdb.execute("tui focus cmd")
+except gdb.error:
+    pass
+end
+
+define cll
+make
+load
+l
+end
+
+define mrc
+mon reset
+continue
+end
+
+define td
+tui disable
+end
+
+define te
+tui enable
+end
+```
+
+In a terminal, this enables the TUI as before; under gdbgui the `gdb.error` is
+caught and the rest runs normally. Adjust `:1442` if `bloom.yaml` uses a
+different GDB server port.
+
+### First-time setup (on the Linux/Pi box, where Bloom lives)
 
 1. **Install gdbgui** (isolated, so it doesn't disturb system Python):
    ```bash
    pipx install gdbgui        # or: python3 -m pip install --user gdbgui
    gdbgui --version           # confirm it runs
    ```
+2. **Add the `.gdbinit` above** to the example directory you'll debug
+   (e.g. `examples/asm_blink/.gdbinit`).
+3. **Confirm fuses are set for debugWire** (`atmelice_dw`) per `bloomandgdb.md`.
 
-2. **Build the target with debug symbols.** The repo default is already
-   `-Og -ggdb3` (see CLAUDE.md). In the example directory:
+### Each debug session
+
+Run from the example directory (so `.gdbinit`'s relative paths resolve):
+
+1. **Build with debug symbols** — repo default is `-Og -ggdb3` (see CLAUDE.md):
    ```bash
-   make complete              # produces main.elf with DWARF; or `make flash`
+   cd examples/asm_blink
+   make complete            # produces main.elf with DWARF
    ```
-   gdbgui needs `main.elf` for source/symbol info; Bloom has already programmed
-   flash, so no `load` is required at debug time.
-
-3. **Create a one-line gdb connect script** so the session auto-attaches to
-   Bloom. In the example directory, add `bloom.gdbinit`:
-   ```
-   target remote localhost:1442
-   ```
-   (Use the host/port from `bloom.yaml`; `1442` is Bloom's default.)
-
-4. **Start Bloom** in the project (debugWire); it opens its GDB server and halts
-   the core on connect. Leave it running.
-
-5. **Launch gdbgui** pointing at avr-gdb, the connect script, and the ELF:
-   - Remote view (expose on the LAN):
+2. **Start Bloom** in the project (debugWire). It opens the GDB server and halts
+   the core on connect. Leave it running in its own terminal.
+3. **Launch gdbgui** from the example directory. `.gdbinit` does `file` +
+   `target remote` + `load`, so don't pass the ELF on the command line:
+   - **Remote view** (browse from the Mac — expose on the LAN):
      ```bash
-     gdbgui --host 0.0.0.0 --port 5000 \
-            --gdb-cmd "avr-gdb -x bloom.gdbinit examples/asm_blink/main.elf"
+     gdbgui --host 0.0.0.0 --port 5000 --gdb-cmd avr-gdb
      ```
-   - Standalone (local only — omit `--host`):
+   - **Standalone** (browse locally on the Linux box):
      ```bash
-     gdbgui --gdb-cmd "avr-gdb -x bloom.gdbinit examples/asm_blink/main.elf"
+     gdbgui --gdb-cmd avr-gdb
      ```
-
-6. **Open the UI.** On the Pi: get its address with `hostname -I`. On the Mac:
-   browse to `http://<pi-ip>:5000`. Set breakpoints in the gutter, then
-   `continue`/step; inspect registers, memory, and disassembly in the panes.
+   If gdb's local-init auto-load is disabled in your setup, point at it
+   explicitly instead: `--gdb-cmd "avr-gdb -x .gdbinit"`.
+4. **Open the UI.**
+   - Remote: on the Pi run `hostname -I` for its address; on the Mac browse to
+     `http://<pi-ip>:5000`.
+   - Standalone: browse to `http://127.0.0.1:5000` (gdbgui usually opens it for
+     you).
+5. **Debug.** gdbgui has already attached and flashed via `.gdbinit`, with the
+   core halted. Set breakpoints in the gutter, then `continue`/step; inspect
+   registers, memory, and disassembly in the panes. Your defines still work from
+   gdbgui's console — `mrc` (reset + continue) and `cll` (rebuild + reload).
 
 ### Verify / confirm on first run
 
 - `avr-gdb` MI works with gdbgui (any modern avr-gdb — no version gate).
-- Bloom's GDB port matches `bloom.gdbinit` (check `bloom.yaml`).
+- The port in `.gdbinit` (`:1442`) matches `bloom.yaml`.
 - The core halts on attach (expected with debugWire) so you attach already
   stopped.
 
@@ -104,8 +162,8 @@ Use only on a trusted network. gdbgui supports basic auth (`--auth-file`, or
 
 ### Optional: a `make gdbgui` convenience target
 
-A per-example target could wrap step 5 (start gdbgui with the right ELF and
-`bloom.gdbinit`). Worth adding only once the manual flow is proven.
+A per-example target could wrap the session launch (start gdbgui from the example
+directory with `avr-gdb`). Worth adding only once the manual flow is proven.
 
 ---
 

@@ -11,26 +11,25 @@ neither replaces Bloom, which remains the Linux-only debugWire ↔ GDB server.
                             Linux only)
 ```
 
-Fuses must already be set for debugWire (`PROGRAMMER_TYPE = atmelice_dw`, see
-`bloomandgdb.md`). Resource ceiling is unchanged by any GUI: 64 bytes RAM,
-debugWire offers ≈1 hardware breakpoint, software breakpoints rewrite flash.
+Bloom manages the debugWire DWEN fuse automatically (`manage_dwen_fuse_bit:
+true`) — there's no avrdude `PROGRAMMER_TYPE` to set for debugging; the debug
+tool (SNAP) is configured in `bloom.yaml` (see `bloomandgdb.md`). Resource
+ceiling is unchanged by any GUI: 64 bytes RAM,
+debugWire offers 0 hardware breakpoints, software breakpoints rewrite flash.
 
 ## Which one?
 
-| | **gdbgui** (Option A) | **Sublime + DAP** (Option B) |
+| | **gdbgui** (Option A) | **Sublime + DAP** (Not an Option) |
 |---|---|---|
 | Frontend | Browser | Sublime Text 4 editor |
 | Drives gdb via | GDB/MI | DAP (`avr-gdb --interpreter=dap`) |
 | Min avr-gdb version | any modern (MI) | **≥ 14** |
 | View on Mac, run on Pi | **Native** — web server on the LAN | Awkward (editor wants local access) |
-| Setup friction | Low (`pip install gdbgui`) | Higher (custom adapter registration unconfirmed) |
+| Setup friction | Low (`pip install gdbgui`) | Higher (custom adapter registration not found) |
 | Registers / memory / disasm | Built-in panes | Depends on adapter UI |
 | In-editor | No | Yes |
 
-For the Mac-edits / Pi-debugs split here, **Option A (gdbgui) is the one to try
-first**: lower friction, no GDB-version gate, and the browser model is a natural
-fit for debugging on the Pi while sitting at the Mac. It also runs standalone on
-the Linux box.
+For the Mac-edits / Pi-debugs split here, **Option A (gdbgui) is the only one to try**: lower friction, no GDB-version gate, and the browser model is a natural fit for debugging on the Pi while sitting at the Mac. It also runs standalone on the Linux box.
 
 ---
 
@@ -54,8 +53,13 @@ that its **TUI commands are guarded**, because the terminal TUI is incompatible
 with the GDB/MI interpreter gdbgui uses (and with DAP). Guarding lets the *same*
 file work in a plain terminal session *and* under gdbgui.
 
-Place this `.gdbinit` in the example directory (paths are relative, so gdb must
-be started from that directory):
+Keep this at `~/.gdbinit` — gdb (and the gdb that gdbgui launches) auto-loads the
+home init unconditionally. Its relative paths (`file main.elf`, `load`, and the
+`make`/`load` in `cll`) resolve against gdb's **working directory**, not the
+init file's location, so the only requirement is to **start gdb/gdbgui from the
+example directory** (`cd examples/asm_blink` first). A per-directory `./.gdbinit`
+would also work but needs `set auto-load local-gdbinit on` plus a safe-path
+entry — more friction, so the home init is preferred.
 
 ```gdb
 set confirm off
@@ -110,9 +114,9 @@ different GDB server port.
    pipx install gdbgui        # or: python3 -m pip install --user gdbgui
    gdbgui --version           # confirm it runs
    ```
-2. **Add the `.gdbinit` above** to the example directory you'll debug
-   (e.g. `examples/asm_blink/.gdbinit`).
-3. **Confirm fuses are set for debugWire** (`atmelice_dw`) per `bloomandgdb.md`.
+2. **Ensure the `.gdbinit` above is at `~/.gdbinit`** (the existing home init).
+3. **Confirm the SNAP debug tool is set in `bloom.yaml`**; Bloom enables the
+   DWEN (debugWire) fuse on connect — see `bloomandgdb.md`.
 
 ### Each debug session
 
@@ -167,53 +171,10 @@ directory with `avr-gdb`). Worth adding only once the manual flow is proven.
 
 ---
 
-## Option B — Sublime Text 4 via DAP (experimental)
+## Explored and rejected: Sublime Text 4 via DAP
 
-An in-editor frontend using the Debug Adapter Protocol, so breakpoints, stepping,
-and variable/watch panes appear inside Sublime. Uses GDB's **native DAP**
-(requires avr-gdb ≥ 14).
-
-```
-Sublime Text 4 + Debugger pkg → avr-gdb --interpreter=dap → target remote → Bloom → ATtiny13A
-```
-
-### Config sketch
-
-Sublime's Debugger package (daveleroy `sublime_debugger`) reads VS Code-style
-configs from a `.sublime-project`:
-
-```json
-{
-  "folders": [{ "path": "." }],
-  "debugger_configurations": [
-    {
-      "name": "ATtiny13A — Bloom + avr-gdb (DAP)",
-      "type": "gdb",
-      "request": "attach",
-      "program": "${project_path}/examples/asm_blink/main.elf",
-      "target": "localhost:1442"
-    }
-  ]
-}
-```
-
-- `attach` + `target` is correct for a remote GDB server; GDB's DAP passes
-  `target` straight to `target remote`. The MCU halts on connect, so you attach
-  already stopped.
-- The adapter behind `"type": "gdb"` must launch `avr-gdb --interpreter=dap`.
-- GDB DAP params — **attach:** `program` plus one of `target`/`pid`/`coreFile`;
-  **launch:** `program`, `args`, `cwd`, `env`, `stopOnEntry`,
-  `stopAtBeginningOfMainSubprogram`.
-
-### Open items to confirm on the Linux box
-
-1. **avr-gdb ≥ 14** (native DAP). Check `avr-gdb --version`.
-2. **Custom adapter registration** — the one genuinely uncertain piece. The
-   Debugger package documents only its pre-packaged adapters, not GDB; confirm
-   how it registers a custom stdio adapter running `avr-gdb --interpreter=dap`
-   and match its name to `"type"` above.
-3. **`bloom.yaml`** GDB host/port; **`program`** path to the real `main.elf`.
-
-Note the cross-machine friction: with the editor on the Mac and Bloom on the Pi,
-DAP is less convenient than gdbgui's web view — a reason Option A is preferred
-here.
+An in-editor DAP frontend (daveleroy `sublime_debugger` driving `avr-gdb
+--interpreter=dap`) was investigated but **not adopted**: it requires avr-gdb ≥ 14
+*and* a custom stdio adapter for GDB that the Debugger package doesn't provide,
+and the editor-on-Mac / Bloom-on-Pi split makes it less convenient than gdbgui's
+web view.

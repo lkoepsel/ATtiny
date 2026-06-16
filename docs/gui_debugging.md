@@ -1,7 +1,7 @@
 # Debugging the ATtiny13A — terminal TUI + Bloom Insight
 
-The debug stack is unchanged from [`bloomandgdb.md`](bloomandgdb.md): Bloom is the
-Linux-only debugWire ↔ GDB server, driven by avr-gdb.
+The debug stack is unchanged from [`bloomandgdb.md`](bloomandgdb.md): *Bloom* is the
+Linux-only *debugWire* ↔ *GDB* server, driven by *avr-gdb*.
 
 ```
   avr-gdb  ──►  Bloom  ──►  ATMEL-ICE / SNAP  ──►  ATtiny13A
@@ -53,17 +53,10 @@ target remote :1442
 load
 tbreak main
 
-# Terminal TUI: source-over-command split, brought up automatically. Guarded so
-# a non-interactive (batch / MI) gdb run doesn't error on the tui commands.
-python
-import gdb
-try:
-    gdb.execute("set tui compact-source on")
-    gdb.execute("tui enable")
-    gdb.execute("tui focus cmd")
-except gdb.error:
-    pass
-end
+# Terminal TUI: source-over-command split, brought up automatically.
+set tui compact-source on
+tui enable
+tui focus cmd
 
 # Rebuild + reload, then redraw the TUI source window.
 define cll
@@ -72,7 +65,7 @@ load
 refresh
 end
 
-# Reset the core and run.
+# Reset to 00 and run.
 define mrc
 mon reset
 continue
@@ -95,10 +88,6 @@ halted at your code. Assembly (`asm_*`) examples have no `main` symbol — swap 
 for a temporary breakpoint on the reset handler or a known label, e.g.
 `tbreak *0` (the reset vector) or `tbreak reset`. Use `tbreak` (temporary), not a
 plain `break`, so it doesn't immediately re-trip at the current PC after `load`.
-
-The python block is **guarded** (`try/except gdb.error`) so the same file is safe
-in a non-interactive run (e.g. a `gdb --batch` invocation from a script), where
-the `tui` commands would otherwise error.
 
 ### TUI quick reference
 

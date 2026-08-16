@@ -114,10 +114,12 @@ cd ATtiny/examples/blink_asm && bloom snap_13a
 ```
 ```sh
 # terminal 2 -- the debugger (no banner, auto-connects, clean dashboard)
+cd ATtiny/examples/blink_asm
 make complete
-cd ATtiny/examples/blink_asm && avr-gdb
-(gdb) si           # step one instruction; all panes repaint automatically
-(gdb) c            # run;  Ctrl-C to halt (or set a breakpoint)
+avr-gdb
+(gdb) c           # to begin execution
+(gdb)             # once running;  Ctrl-C to halt (or to set a breakpoint etc)
+(gdb) q           # q to quit avr-gdb
 ```
 
 - `connect` — re-run the attach/flash/redisplay by hand if needed.
@@ -126,6 +128,16 @@ cd ATtiny/examples/blink_asm && avr-gdb
 - `mon reset` — reset the core to the vector.
 - `dashboard -layout source assembly avrregs` — change which panes show.
 - `dashboard avrregs` — toggle a pane.
+
+## If errors
+
+Like all programs, one can introduce formatting or logical bugs in the configuration file, avr_dashboard.py. The .gdbinit program might cover up the bugs with a new screen, making it difficult to ascertain and solve the problem. When this happens:
+
+```bash
+avr-gdb > test.txt
+```
+
+This will write the contents of the first two screens to the file *test.txt*, and examing this file can help you find the error. To reclaim the terminal, `Ctrl-C` to stop avr-grb and `q` to quit.
 
 ## Adapting to another program
 

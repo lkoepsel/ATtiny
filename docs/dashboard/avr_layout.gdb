@@ -26,7 +26,7 @@ gdb.execute('dashboard -layout ' + ' '.join(_layout))
 end
 
 # Shorter source panel (default is 10 lines). Tweak to taste.
-dashboard source -style height 24
+dashboard source -style height 10
 
 # Hide the Assembly "function+offset" column (the '?' you saw when labels had
 # no function symbol). Centering still works -- it uses the function boundaries

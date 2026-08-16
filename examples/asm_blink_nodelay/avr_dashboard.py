@@ -29,6 +29,14 @@ AVR_PERIPHERALS = [
     ("PORTB.PORTB",    0x0038, 1),   # Data Register, Port B
 ]
 
+# SRAM regions to hexdump: (start_addr, length [, "label"]). Addresses are
+# datasheet DATA-space; AVR64DD32 SRAM is 0x6000-0x7FFF (RAMEND 0x7FFF). The
+# AvrSram module (avr_modules.py) shows addr + 16 hex bytes + ASCII per row and
+# is auto-added to the layout when this list is non-empty. Dump the start of
+# SRAM here; point at a .data/.bss label's address instead once you add one.
+# Use `avr-nm -n main.elf | grep NAME` to determine address locations
+# Or `avr-nm -n main.elf ` to view all SRAM at the end
+AVR_SRAM = [(0x0060, 0x40, "SRAM") ]
 
 AVR_BITFIELDS = {                  # per-bit decode for 1-byte regs
    "TC0.TCCR0A": [(7, "COM0A1"), (6, "COM0A0"), (5, "COM0B1"), (4, "COM0B0"), (1, "WGM01"), (0, "WGM00")],
@@ -41,12 +49,3 @@ AVR_BITFIELDS = {                  # per-bit decode for 1-byte regs
     "PORTB.PORTB": [(5, "PORTB5"), (4, "PORTB4"), (3, "PORTB3"),
                      (2, "PORTB2"), (1, "PORTB1"), (0, "PORTB0")],
 }
-
-# SRAM regions to hexdump: (start_addr, length [, "label"]). Addresses are
-# datasheet DATA-space; AVR64DD32 SRAM is 0x6000-0x7FFF (RAMEND 0x7FFF). The
-# AvrSram module (avr_modules.py) shows addr + 16 hex bytes + ASCII per row and
-# is auto-added to the layout when this list is non-empty. Dump the start of
-# SRAM here; point at a .data/.bss label's address instead once you add one.
-# Use `avr-nm -n main.elf | grep NAME` to determine address locations
-# Or `avr-nm -n main.elf ` to view all SRAM at the end
-AVR_SRAM = [(0x0060, 0x40, "SRAM") ]

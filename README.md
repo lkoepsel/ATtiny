@@ -70,6 +70,8 @@ If you want to use a Raspberry Pi (3/4/5) as a C development platform, this page
 #### [bloom and gdb.md](./docs/bloomandgdb.md)
 Given the ATtiny13A requires a hardware interface to load software, I recommend using *bloom* as the interface to avr-gdb. This provides loading and debugging capability, which is required to be successful. 
 
+In order to use it most effectively follow these [instructions](./docs/gdb_dashboard) to setup gdb_dashboard. This creates a custom window with the specific registers and I/O used by the program. The .gdbinit file shown on [bloom and gdb.md](./docs/bloomandgdb.md) will need to be replaced per the instructions provided.
+
 ## Steps to Use
 1. Install the AVR toolchain which consists of *avr-gcc*, *avr-gdb*, and *avrdude* as well as *make* and *git*. A **great** method is to use a [Raspberry Pi as your development platform.](./docs/RPi_build.md). If you wish to use *Windows* or *macOS*, some instruction is provided [here](https://www.wellys.com/posts/avr_c_setup/).
 2. Clone this repository.

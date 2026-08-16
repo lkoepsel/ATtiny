@@ -44,7 +44,7 @@ Auto-connect is **global, not per-directory**: `avr_autostart.py` checks for a `
 
 1. **Install gdb-dashboard** as `~/.gdbinit`:
    ```sh
-   wget -P ~ https://git.io/.gdbinit      # or copy from the gdb-dashboard repo
+   wget -P ~ https://github.com/cyrus-and/gdb-dashboard/raw/master/.gdbinit
    ```
    (Requires a `gdb`/`avr-gdb` built with Python support — the standard
    toolchain has it.)
@@ -66,18 +66,42 @@ modules, everything else as GDB scripts.
 
 ```yaml
 environments:
-  default:
-    shutdown_post_debug_session: false
+  atmel_ice_13a:
+    shutdown_post_debug_session: true
+
     tool:
-      name: "curiosity_nano"
+      name: "atmel_ice"
+
     target:
-      name: "avr64dd32"
-      physical_interface: "updi"
+      name: "attiny13a"
+      physical_interface: "debug_wire"
       hardware_breakpoints: true
+      manage_dwen_fuse_bit: true
+
     server:
       name: "avr_gdb_rsp"
       ip_address: "127.0.0.1"
       port: 1442
+
+  snap_13a:
+    shutdown_post_debug_session: true
+
+    tool:
+      name: "snap"
+
+    target:
+      name: "attiny13a"
+      physical_interface: "debug_wire"
+      hardware_breakpoints: true
+      manage_dwen_fuse_bit: true
+
+    server:
+      name: "avr_gdb_rsp"
+      ip_address: "127.0.0.1"
+      port: 1442
+
+    insight:
+      activate_on_startup: false
 ```
 
 ## Use
@@ -86,11 +110,12 @@ Two terminals (or `bloom &`):
 
 ```sh
 # terminal 1 -- the GDB server
-cd AVR64DD_examples/asm_blink && bloom
+cd ATtiny/examples/blink_asm && bloom snap_13a
 ```
 ```sh
 # terminal 2 -- the debugger (no banner, auto-connects, clean dashboard)
-cd AVR64DD_examples/asm_blink && avr-gdb
+make complete
+cd ATtiny/examples/blink_asm && avr-gdb
 (gdb) si           # step one instruction; all panes repaint automatically
 (gdb) c            # run;  Ctrl-C to halt (or set a breakpoint)
 ```

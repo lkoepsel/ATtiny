@@ -69,7 +69,6 @@ AVR_SOURCE_HEIGHT = 10
 # ----------------------------------------------------------------------------
 import os
 
-
 def _load_example_overrides():
     path = os.path.join(os.getcwd(), 'avr_dashboard.py')
     if not os.path.exists(path):

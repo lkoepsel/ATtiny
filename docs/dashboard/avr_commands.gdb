@@ -7,6 +7,7 @@
 # cll -- rebuild, reload onto the target, and list source.
 define cll
 make
+file main.elf
 load
 l
 end

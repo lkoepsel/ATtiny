@@ -12,6 +12,10 @@ AVR_REG_PAIRS = [("r26", "r27", "X"),("r28", "r29", "Y"),("r30", "r31", "Z")]
 # How many working registers to pack per row.
 REGS_PER_ROW = 8
 
+# Source panel height (lines shown by `dashboard source`). Overrides the
+# avr_modules.py default (10). 0 = use the whole terminal height.
+AVR_SOURCE_HEIGHT = 10
+
 # TC0 single-mode registers (addresses from avr/io.h / the ATtiny13A datasheet).
 #   name           addr     width
 AVR_PERIPHERALS = [
@@ -31,15 +35,13 @@ AVR_PERIPHERALS = [
 
 
 AVR_BITFIELDS = {                  # per-bit decode for 1-byte regs
+    # --- Timer 0 ---
    "TC0.TCCR0A": [(7, "COM0A1"), (6, "COM0A0"), (5, "COM0B1"), (4, "COM0B0"), (1, "WGM01"), (0, "WGM00")],
    "TC0.TCCR0B": [(7, "FOC0A"), (6, "FOC0B"), (3, "WGM02"), (2, "CS02"), (1, "CS01"), (0, "CS00")],
     # --- PORTB ---
-    "PORTB.PINB":  [(5, "PINB5"), (4, "PINB4"), (3, "PINB3"),
-                     (2, "PINB2"), (1, "PINB1"), (0, "PINB0")],
-    "PORTB.DDRB":  [(5, "DDB5"), (4, "DDB4"), (3, "DDB3"),
-                     (2, "DDB2"), (1, "DDB1"), (0, "DDB0")],
-    "PORTB.PORTB": [(5, "PORTB5"), (4, "PORTB4"), (3, "PORTB3"),
-                     (2, "PORTB2"), (1, "PORTB1"), (0, "PORTB0")],
+    "PORTB.PINB":  [(5, "PINB5"), (4, "PINB4"), (3, "PINB3"), (2, "PINB2"), (1, "PINB1"), (0, "PINB0")],
+    "PORTB.DDRB":  [(5, "DDB5"), (4, "DDB4"), (3, "DDB3"), (2, "DDB2"), (1, "DDB1"), (0, "DDB0")],
+    "PORTB.PORTB": [(5, "PORTB5"), (4, "PORTB4"), (3, "PORTB3"), (2, "PORTB2"), (1, "PORTB1"), (0, "PORTB0")],
 }
 
 # SRAM regions to hexdump: (start_addr, length [, "label"]). Addresses are

@@ -225,10 +225,27 @@ class AvrPeripheral(Dashboard.Module):
 
             line = '{:<{nw}} @0x{:04X} = {}'.format(name, addr, valstr, nw=namew)
 
+            # New code for bitfields, instead of CAP/lowercase, bright green/gray
+
+            # original code
+            # bits = AVR_BITFIELDS.get(name)
+            # if v is not None and width == 1 and bits:
+            #     decoded = ' '.join(fn if (v & (1 << bp)) else fn.lower()
+            #                        for bp, fn in bits)
+            #     line += '  [ {} ]'.format(decoded)
+            # out.append(line)
+
+            # new code
             bits = AVR_BITFIELDS.get(name)
             if v is not None and width == 1 and bits:
-                decoded = ' '.join(fn if (v & (1 << bp)) else fn.lower()
-                                   for bp, fn in bits)
+                SET = '\033[1;32m'    # bold green
+                CLR = '\033[2;37m'    # dim gray
+                RST = '\033[0m'
+                decoded = ' '.join(
+                    '{}{}{}'.format(SET, fn.upper(), RST) if (v & (1 << bp))
+                    else '{}{}{}'.format(CLR, fn.lower(), RST)
+                    for bp, fn in bits
+                )
                 line += '  [ {} ]'.format(decoded)
             out.append(line)
         return out

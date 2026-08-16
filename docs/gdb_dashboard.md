@@ -124,8 +124,8 @@ avr-gdb
 
 - `connect` — re-run the attach/flash/redisplay by hand if needed.
 - `cll` — rebuild (`make`), reload onto the target, and list source.
-- `mrc` — reset to the vector and run (`mon reset` + `continue`).
-- `mon reset` — reset the core to the vector.
+- `mrc` — reset to the 0000 vector and run (`mon reset` + `continue`).
+- `mon reset` — reset the core to the 0000 vector.
 - `dashboard -layout source assembly avrregs` — change which panes show.
 - `dashboard avrregs` — toggle a pane.
 
@@ -138,6 +138,9 @@ avr-gdb > test.txt
 ```
 
 This will write the contents of the first two screens to the file *test.txt*, and examing this file can help you find the error. To reclaim the terminal, `Ctrl-C` to stop avr-grb and `q` to quit.
+
+Another solution, in program is to enter `dashboard -output ./dashboard.log` at a gdb prompt. This will log all of the content to a file for review. This won't work on problems which occur at the initial start.
+
 
 ## Adapting to another program
 

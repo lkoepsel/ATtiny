@@ -21,13 +21,16 @@
 
 .section .text
 
+.type   reset_handler, @function
 reset_handler:                  ; also serves as main_setup
     ldi     temp_16, lo8(RAMEND)    ; init stack
     out     STACK_LOW, temp_16      ; ATtiny13A has no SPH
     eor     r1, r1
     out     STATUS, r1          ; clear status register
     sbi     IO_DDR, LED         ; PB0 as output
+.size   reset_handler, .-reset_handler
 
+.type   main_loop, @function
 main_loop:
     sbi     IO_PIN, LED         ; toggle LED — writing 1 to PIN flips PORT output
     rcall   delay_1ms
@@ -46,6 +49,7 @@ inner:
     dec     temp_17
     brne    outer
     ret
+.size   main_loop, .-main_loop
 
 .section .data
 .section .bss

@@ -28,27 +28,27 @@
 .section .text
 
 ; ---------- Registers ----------------
-; R18                           ; Multi purpose register
+; R16                           ; Multi purpose register
 
 .equ    COUNT_A, 0x70           ; measured 100.4ms
 
 main_setup:                  ; also serves as main_setup
-    ldi     r16, lo8(RAMEND)    ; init stack
-    out     STACK_LOW, r16            ; ATtiny13A has no SPH
+    ldi     temp_16, lo8(RAMEND)    ; init stack
+    out     STACK_LOW, temp_16            ; ATtiny13A has no SPH
     eor     r1, r1
     out     STATUS, r1            ; clear status register
     sbi     IO_DDR, LED           ; LED as output
 
     ; OCRA: Use COUNT_A for Compare Match
-    ldi     r18,COUNT_A         ; Match at COUNT_A
+    ldi     temp_16,COUNT_A         ; Match at COUNT_A
     out     OCRA,R18           ;
 
     ; TCCRA: Toggle LED at Compare Match to OCRA (CTC mode)
-    ldi     r18,(1<<COM0A0) |(1<<WGM01)
+    ldi     temp_16,(1<<COM0A0) |(1<<WGM01)
     out     TCCRA,R18
 
     ; TCCRB: 1/1024 prescaler
-    ldi     r18,(1<<CS02)|(1<<CS00) ; prescaler 1024
+    ldi     temp_16,(1<<CS02)|(1<<CS00) ; prescaler 1024
     out     TCCRB,R18          ; to control port B
 
 main_loop:

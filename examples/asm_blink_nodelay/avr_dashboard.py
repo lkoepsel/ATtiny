@@ -14,7 +14,7 @@ REGS_PER_ROW = 8
 
 # Source panel height (lines shown by `dashboard source`). Overrides the
 # avr_modules.py default (10). 0 = use the whole terminal height.
-AVR_SOURCE_HEIGHT = 10
+AVR_SOURCE_HEIGHT = 12
 
 # TC0 single-mode registers (addresses from avr/io.h / the ATtiny13A datasheet).
 #   name           addr     width
@@ -32,7 +32,6 @@ AVR_PERIPHERALS = [
     ("PORTB.DDRB",     0x0037, 1),   # Data Direction Register, Port B
     ("PORTB.PORTB",    0x0038, 1),   # Data Register, Port B
 ]
-
 
 AVR_BITFIELDS = {                  # per-bit decode for 1-byte regs
     # --- Timer 0 ---

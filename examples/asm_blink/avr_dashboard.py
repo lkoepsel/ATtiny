@@ -12,6 +12,25 @@ AVR_REG_PAIRS = [("r26", "r27", "X"),("r28", "r29", "Y"),("r30", "r31", "Z")]
 # How many working registers to pack per row.
 REGS_PER_ROW = 8
 
+# Source panel height (lines shown by `dashboard source`). Overrides the
+# avr_modules.py default (10). 0 = use the whole terminal height.
+AVR_SOURCE_HEIGHT = 20
+
+#   name           addr     width
+AVR_PERIPHERALS = [
+    # --- PORTB ---------------------------------------------------------
+    ("PORTB.PINB",     0x0036, 1),   # Input Pins, Port B
+    ("PORTB.DDRB",     0x0037, 1),   # Data Direction Register, Port B
+    ("PORTB.PORTB",    0x0038, 1),   # Data Register, Port B
+]
+
+AVR_BITFIELDS = {                  # per-bit decode for 1-byte regs
+    # --- PORTB ---
+    "PORTB.PINB":  [(5, "PINB5"), (4, "PINB4"), (3, "PINB3"), (2, "PINB2"), (1, "PINB1"), (0, "PINB0")],
+    "PORTB.DDRB":  [(5, "DDB5"), (4, "DDB4"), (3, "DDB3"), (2, "DDB2"), (1, "DDB1"), (0, "DDB0")],
+    "PORTB.PORTB": [(5, "PORTB5"), (4, "PORTB4"), (3, "PORTB3"), (2, "PORTB2"), (1, "PORTB1"), (0, "PORTB0")],
+}
+
 # SRAM regions to hexdump: (start_addr, length [, "label"]). Addresses are
 # datasheet DATA-space; AVR64DD32 SRAM is 0x6000-0x7FFF (RAMEND 0x7FFF). The
 # AvrSram module (avr_modules.py) shows addr + 16 hex bytes + ASCII per row and

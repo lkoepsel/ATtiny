@@ -1,0 +1,160 @@
+# Headless Debugging with gdb-dashboard (AVR64DD32 + Bloom)
+
+[Bloom Insight](https://bloom.oscillate.io/) is excellent, however, it isn't as customizable as I wish nor does it work in a headless environment. On the other hand, [**gdb-dashboard**](https://github.com/cyrus-and/gdb-dashboard) is a pure-terminal front-end for `avr-gdb`: source, disassembly, and a curated register view, entirely over the terminal/SSH.
+
+Here is how to use the  dashboard configuration when debuigging the ATtiny13A. When you launch `avr-gdb` in an example directory, there will be a clean three-pane view halted at the reset vector:
+
+```
+── Source ──────────────────────────────────────────
+   (main.S, current line highlighted)
+── Assembly ────────────────────────────────────────
+   (disassembly centered on PC, AVR byte addresses)
+── AVR Registers ───────────────────────────────────
+r18=0x15  r19=0xFA  r20=0x3B
+SREG = 0x00  [ i t h s v n z c ]      (UPPER=set, lower=clear)
+SP   = 0x7FFF
+PC   = 0x0014
+```
+
+## What's special about the AVR setup
+
+- **Specific desired registers, not all 32.** A small custom module (`AvrRegs`) shows only the registers a given program uses, plus a **decoded SREG** (`I T H S V N Z C`, uppercase = set), the **SP**, and the **PC as a byte address** (matching the disassembly — the AVR hardware PC is a *word* address, so they would otherwise disagree by 2×). `SP` and `PC` show in **every** example's dashboard. You may specify the working-register set by placing an `avr_dashboard.py` in the program's `main.S` folder (see below).
+- **Peripheral pane (per example).** A second module (`AvrPeripheral`) shows selected memory-mapped peripheral registers — the headless equivalent of Insight's peripheral view. An example lists them in its `avr_dashboard.py` (`AVR_PERIPHERALS`); the pane is added to the layout **only** when an example
+defines them. One byte registers can be bit-decoded via `AVR_BITFIELDS`.
+- **SRAM pane (per example).** A third module (`AvrSram`) hexdumps all of SRAM — address, 16 hex bytes, and printable ASCII per row — the headless equivalent of Insight's memory view. An example lists the regions in its `avr_dashboard.py` (`AVR_SRAM`); the pane is added to the layout **only** when an example defines them. On the ATtiny, SRAM is **0x0060–0x009F** (`RAMEND` 0x009F).
+- **SREG name** gdb's register is `SREG` (uppercase, case-sensitive); `sreg`/`$sreg` silently fail. The module reads `SREG`.
+- **Assembly centering needs function symbols.** gdb-dashboard centers the disassembly on the PC by disassembling the *current function* — which only works if the address is covered by an `STT_FUNC` symbol. Plain asm labels are not functions, so the example sources mark their entry points with `.type <label>, @function` / `.size <label>, .-<label>` (see `AVR64DD_examples/asm_blink/main.S`). This also removes the `?` that gdb-dashboard prints for the unknown-function column.
+- **Register read/write while halted.** Bloom's `mon rr <peripheral>` / `mon wr <peripheral> <reg> <val>` work at the gdb prompt; their output appears in the dashboard's *Output/messages* area.
+
+## Files (`docs/dashboard/`)
+
+| File | Install to | Purpose |
+|---|---|---|
+| `avr_modules.py`   | `~/.gdbinit.d/` | the `AvrRegs` (curated regs + SREG + PC), `AvrPeripheral`, and `AvrSram` modules |
+| `avr_layout.gdb`   | `~/.gdbinit.d/` | layout `source assembly avrregs` (+ `avrperipheral`/`avrsram` when defined); shorter source; hide the `?` column |
+| `avr_connect.gdb`  | `~/.gdbinit.d/` | the `connect` command (attach + `break *0` + `load`, then a clean redisplay) |
+| `avr_commands.gdb` | `~/.gdbinit.d/` | convenience commands: `cll` (rebuild + reload + list), `mrc` (reset + run) |
+| `avr_autostart.py` | `~/.gdbinit.d/` | auto-runs `connect` on startup **if** the cwd has a `main.elf` |
+| `avr_settings.gdb` | `~/.gdbinit.d/` | `set confirm off`, `set listsize 0`, global `~/.gdb_history` |
+| `gdbearlyinit`     | `~/.gdbearlyinit` | `set startup-quietly on` — suppresses the gdb version banner |
+
+Auto-connect is **global, not per-directory**: `avr_autostart.py` checks for a `main.elf` in the directory you launched gdb from and, if present, runs `connect`. Launch `avr-gdb` in any example directory and it attaches + flashes; plain `gdb` anywhere else is untouched. No per-example `.gdbinit` files.
+
+## Install
+
+1. **Install gdb-dashboard** as `~/.gdbinit`:
+   ```sh
+   wget -P ~ https://git.io/.gdbinit      # or copy from the gdb-dashboard repo
+   ```
+   (Requires a `gdb`/`avr-gdb` built with Python support — the standard
+   toolchain has it.)
+2. **Copy the AVR files:**
+   ```sh
+   mkdir -p ~/.gdbinit.d
+   cp docs/dashboard/avr_modules.py   ~/.gdbinit.d/
+   cp docs/dashboard/avr_layout.gdb   ~/.gdbinit.d/
+   cp docs/dashboard/avr_connect.gdb  ~/.gdbinit.d/
+   cp docs/dashboard/avr_commands.gdb ~/.gdbinit.d/
+   cp docs/dashboard/avr_autostart.py ~/.gdbinit.d/
+   cp docs/dashboard/avr_settings.gdb ~/.gdbinit.d/
+   cp docs/dashboard/gdbearlyinit     ~/.gdbearlyinit
+   ```
+
+`~/.gdbinit.d/` is auto-sourced by gdb-dashboard: `.py` files load as Python
+modules, everything else as GDB scripts.
+3. Create a *bloom.yaml* file specifically for the *AVR64DD32 Curiosity Nano*:
+
+```yaml
+environments:
+  default:
+    shutdown_post_debug_session: false
+    tool:
+      name: "curiosity_nano"
+    target:
+      name: "avr64dd32"
+      physical_interface: "updi"
+      hardware_breakpoints: true
+    server:
+      name: "avr_gdb_rsp"
+      ip_address: "127.0.0.1"
+      port: 1442
+```
+
+## Use
+
+Two terminals (or `bloom &`):
+
+```sh
+# terminal 1 -- the GDB server
+cd AVR64DD_examples/asm_blink && bloom
+```
+```sh
+# terminal 2 -- the debugger (no banner, auto-connects, clean dashboard)
+cd AVR64DD_examples/asm_blink && avr-gdb
+(gdb) si           # step one instruction; all panes repaint automatically
+(gdb) c            # run;  Ctrl-C to halt (or set a breakpoint)
+```
+
+- `connect` — re-run the attach/flash/redisplay by hand if needed.
+- `cll` — rebuild (`make`), reload onto the target, and list source.
+- `mrc` — reset to the vector and run (`mon reset` + `continue`).
+- `mon reset` — reset the core to the vector.
+- `dashboard -layout source assembly avrregs` — change which panes show.
+- `dashboard avrregs` — toggle a pane.
+
+## Adapting to another program
+
+1. Copy **`avr_dashboard.py`** next to the program's `main.S` choosing the
+   registers to show — it's read automatically when you launch `avr-gdb` in that
+   directory, and is tracked in the repo per example. For example
+   (`AVR64DD_examples/asm_blink/avr_dashboard.py`):
+   ```python
+   AVR_REG_SET   = ["r18", "r19", "r20"]   # in display order
+   AVR_REG_PAIRS = []                       # e.g. [("r30", "r31", "Z")] for Z
+   REGS_PER_ROW  = 4
+   ```
+   With no `avr_dashboard.py`, the defaults in `~/.gdbinit.d/avr_modules.py` apply.
+
+   To also show **peripheral registers**, add `AVR_PERIPHERALS` (and optionally
+   `AVR_BITFIELDS`) — the peripheral pane then appears automatically. For
+   example (`AVR64DD_examples/asm_blink_pwm/avr_dashboard.py`, TCA0 PWM):
+   ```python
+   #                name           addr     width
+   AVR_PERIPHERALS = [
+       ("TCA0.CTRLA",  0x0A00,  1),
+       ("TCA0.CTRLB",  0x0A01,  1),
+       ("TCA0.CNT",    0x0A20,  2),   # live counter
+       ("TCA0.PER",    0x0A26,  2),   # period -> frequency
+       ("TCA0.CMP2",   0x0A2C,  2),   # compare -> duty on WO2
+   ]
+   AVR_BITFIELDS = {                  # per-bit decode for 1-byte regs
+       "TCA0.CTRLA": [(0, "ENABLE")],
+       "TCA0.CTRLB": [(6, "CMP2EN"), (5, "CMP1EN"), (4, "CMP0EN")],
+   }
+   ```
+   Addresses come from `/usr/avr/include/avr/ioavr64dd32.h` (the `_SFR_MEM*`
+   macros) or the datasheet register map — verify them per peripheral.
+
+   To also show **SRAM**, add `AVR_SRAM` — a list of `(start_addr, length [,
+   "label"])` regions, in datasheet data-space addresses (AVR64DD32 SRAM is
+   `0x6000`–`0x7FFF`). The SRAM hexdump pane then appears automatically:
+   ```python
+   #            start    length  label
+   AVR_SRAM = [
+       (0x6000, 32, "vars"),     # .data/.bss live at the start of SRAM
+       (0x7FE0, 32, "stack"),    # top of SRAM, near RAMEND (0x7FFF)
+   ]
+   ```
+   To find a variable's address, build then
+   `avr-objdump -t main.elf | grep <label>`. SRAM symbols show with the linker's
+   data-space VMA (e.g. `00806000`); subtract `0x800000` to get the datasheet
+   address used here (`0x6000`). The module re-adds that offset when reading.
+2. In the program's `main.S`, give each routine `.type ...,@function` and
+   `.size ...` so the Assembly pane centers and shows names.
+
+Nothing else: auto-connect is global, so `avr-gdb` in any directory that has a
+`main.elf` attaches automatically.
+
+> **Note:** gdb-dashboard and gdb's built-in **TUI** are mutually exclusive —
+> enabling TUI (`tui enable` / `layout`) fights the dashboard for the screen and
+> requires manual `refresh`. Stay in the dashboard for headless use.

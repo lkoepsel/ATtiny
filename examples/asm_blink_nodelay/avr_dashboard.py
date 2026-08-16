@@ -23,11 +23,23 @@ AVR_PERIPHERALS = [
     ("TC0.OCR0A",  0x0056, 1),   # Output Compare Register A
     ("TC0.TIFR0",  0x0058, 1),   # Interrupt Flag Register
     ("TC0.TIMSK0", 0x0059, 1),   # Interrupt Mask Register
+    # --- PORTB ---------------------------------------------------------
+    ("PORTB.PINB",     0x0036, 1),   # Input Pins, Port B
+    ("PORTB.DDRB",     0x0037, 1),   # Data Direction Register, Port B
+    ("PORTB.PORTB",    0x0038, 1),   # Data Register, Port B
 ]
+
 
 AVR_BITFIELDS = {                  # per-bit decode for 1-byte regs
    "TC0.TCCR0A": [(7, "COM0A1"), (6, "COM0A0"), (5, "COM0B1"), (4, "COM0B0"), (1, "WGM01"), (0, "WGM00")],
    "TC0.TCCR0B": [(7, "FOC0A"), (6, "FOC0B"), (3, "WGM02"), (2, "CS02"), (1, "CS01"), (0, "CS00")],
+    # --- PORTB ---
+    "PORTB.PINB":  [(5, "PINB5"), (4, "PINB4"), (3, "PINB3"),
+                     (2, "PINB2"), (1, "PINB1"), (0, "PINB0")],
+    "PORTB.DDRB":  [(5, "DDB5"), (4, "DDB4"), (3, "DDB3"),
+                     (2, "DDB2"), (1, "DDB1"), (0, "DDB0")],
+    "PORTB.PORTB": [(5, "PORTB5"), (4, "PORTB4"), (3, "PORTB3"),
+                     (2, "PORTB2"), (1, "PORTB1"), (0, "PORTB0")],
 }
 
 # SRAM regions to hexdump: (start_addr, length [, "label"]). Addresses are

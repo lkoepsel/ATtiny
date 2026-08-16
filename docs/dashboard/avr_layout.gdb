@@ -23,10 +23,13 @@ if AVR_PERIPHERALS:
 if AVR_SRAM:
     _layout.append('avrsram')
 gdb.execute('dashboard -layout ' + ' '.join(_layout))
-end
 
-# Shorter source panel (default is 10 lines). Tweak to taste.
-dashboard source -style height 24
+# Source panel height, set per example via AVR_SOURCE_HEIGHT in that
+# directory's avr_dashboard.py (falls back to the avr_modules.py default of
+# 10 if the example doesn't define one). 0 means "use the whole terminal
+# height" -- see gdb-dashboard's Source.attributes().
+gdb.execute('dashboard source -style height {}'.format(AVR_SOURCE_HEIGHT))
+end
 
 # Hide the Assembly "function+offset" column (the '?' you saw when labels had
 # no function symbol). Centering still works -- it uses the function boundaries

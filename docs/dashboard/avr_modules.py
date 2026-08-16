@@ -51,6 +51,13 @@ AVR_BITFIELDS = {}
 # avr_dashboard.py fills this in, e.g.  [(0x6000, 32, "vars")].
 AVR_SRAM = []
 
+# Number of lines in the `source` module's window (dashboard source -style
+# height). Matches the gdb-dashboard Source module's own default of 10; an
+# example's avr_dashboard.py can override this (e.g. a smaller value once
+# AvrPeripheral/AvrSram start eating into vertical space). 0 means "use the
+# whole terminal height" (see gdb-dashboard's Source.attributes()).
+AVR_SOURCE_HEIGHT = 10
+
 
 # ----------------------------------------------------------------------------
 #  Per-example override: if the launch directory contains an `avr_dashboard.py`,
@@ -75,13 +82,14 @@ def _load_example_overrides():
         gdb.write('[avr_dashboard.py] {}\n'.format(e))
         return
     global AVR_REG_SET, AVR_REG_PAIRS, REGS_PER_ROW
-    global AVR_PERIPHERALS, AVR_BITFIELDS, AVR_SRAM
+    global AVR_PERIPHERALS, AVR_BITFIELDS, AVR_SRAM, AVR_SOURCE_HEIGHT
     AVR_REG_SET = ns.get('AVR_REG_SET', AVR_REG_SET)
     AVR_REG_PAIRS = ns.get('AVR_REG_PAIRS', AVR_REG_PAIRS)
     REGS_PER_ROW = ns.get('REGS_PER_ROW', REGS_PER_ROW)
     AVR_PERIPHERALS = ns.get('AVR_PERIPHERALS', AVR_PERIPHERALS)
     AVR_BITFIELDS = ns.get('AVR_BITFIELDS', AVR_BITFIELDS)
     AVR_SRAM = ns.get('AVR_SRAM', AVR_SRAM)
+    AVR_SOURCE_HEIGHT = ns.get('AVR_SOURCE_HEIGHT', AVR_SOURCE_HEIGHT)
 
 
 _load_example_overrides()

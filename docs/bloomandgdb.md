@@ -47,6 +47,14 @@ RESET/BROWN --| 5  ●     ●  6 |--- GND/BLACK
 
 ## Software Setup
 1. Bloom is only available for Linux, so you need to have a development computer which runs Linux. This doesn't need to be a show-stopper. An inexpensive Raspberry Pi can be used as a headless development box, while the programming and Internet support exist on a more full function computer. In addition to Bloom, you will want to have a modern *gcc* environment, all of the details to do this are [here](./RPi_build.md).
+
+```bash
+cd
+wget https://github.com/bloombloombloom/Bloom/releases/download/v2.0.0/Bloom-headless-2.0.0-Linux-aarch64.deb
+sudo apt install ./Bloom-headless-2.0.0-Linux-aarch64.deb
+rm Bloom-headless-2.0.0-Linux-aarch64.deb
+```
+
 1. I will use *VS Code* to *SSH* into the Raspberry Pi and develop my code. I use *ghostty*, a terminal program to run Bloom and gdb. I've found VS Code's terminal interface to be insufficient.
 
 ## Setup files
@@ -55,14 +63,14 @@ RESET/BROWN --| 5  ●     ●  6 |--- GND/BLACK
 
 ```yaml
 environments:
-  default:
+  atmel_ice_13a:
     shutdown_post_debug_session: true
 
     tool:
-      name: "xplained_mini"
- 
+      name: "atmel_ice"
+
     target:
-      name: "atmega328pb"
+      name: "attiny13a"
       physical_interface: "debug_wire"
       hardware_breakpoints: true
       manage_dwen_fuse_bit: true
@@ -72,21 +80,25 @@ environments:
       ip_address: "127.0.0.1"
       port: 1442
 
-  attiny13a:
+  snap_13a:
     shutdown_post_debug_session: true
 
     tool:
-      name: "atmel_ice"
- 
+      name: "snap"
+
     target:
       name: "attiny13a"
       physical_interface: "debug_wire"
+      hardware_breakpoints: true
       manage_dwen_fuse_bit: true
 
     server:
       name: "avr_gdb_rsp"
       ip_address: "127.0.0.1"
       port: 1442
+
+    insight:
+      activate_on_startup: false
 ```
 
 ### .gdbinit (~/.gdbinit)

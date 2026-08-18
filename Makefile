@@ -165,7 +165,7 @@ disasm: disassemble
 ## knows the device itself. Runtime builds keep the richer mem-usage report.
 size:  $(TARGET).elf
 ifeq ($(FREESTANDING),1)
-	$(AVRSIZE) -C --mcu=$(MCU) $(TARGET).elf
+	$(AVRSIZE) --format=avr --mcu=$(MCU) $(TARGET).elf
 else
 	$(OBJDUMP) -Pmem-usage $(TARGET).elf
 endif

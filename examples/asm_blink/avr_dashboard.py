@@ -14,7 +14,7 @@ REGS_PER_ROW = 8
 
 # Source panel height (lines shown by `dashboard source`). Overrides the
 # avr_modules.py default (10). 0 = use the whole terminal height.
-AVR_SOURCE_HEIGHT = 20
+AVR_SOURCE_HEIGHT = 28
 
 #   name           addr     width
 AVR_PERIPHERALS = [
@@ -31,11 +31,3 @@ AVR_BITFIELDS = {                  # per-bit decode for 1-byte regs
     "PORTB.PORTB": [(5, "PORTB5"), (4, "PORTB4"), (3, "PORTB3"), (2, "PORTB2"), (1, "PORTB1"), (0, "PORTB0")],
 }
 
-# SRAM regions to hexdump: (start_addr, length [, "label"]). Addresses are
-# datasheet DATA-space; AVR64DD32 SRAM is 0x6000-0x7FFF (RAMEND 0x7FFF). The
-# AvrSram module (avr_modules.py) shows addr + 16 hex bytes + ASCII per row and
-# is auto-added to the layout when this list is non-empty. Dump the start of
-# SRAM here; point at a .data/.bss label's address instead once you add one.
-# Use `avr-nm -n main.elf | grep NAME` to determine address locations
-# Or `avr-nm -n main.elf ` to view all SRAM at the end
-AVR_SRAM = [(0x0060, 0x40, "SRAM") ]

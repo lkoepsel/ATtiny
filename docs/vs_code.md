@@ -1,8 +1,8 @@
 # VS Code Configuration Files
 
-**As of Aug 18, 2026 for Raspberry Pi Trixie.**
+As of Aug 18, 2026 for Raspberry Pi Trixie.
 
-Perform these steps in VS Code:
+**Perform these steps in VS Code while connected remotely to the Raspberry Pi:**
 
 ## C/C++ Configuration Installation
 **If you are on Windows, use Ctrl, instead of CMD.**
@@ -11,9 +11,7 @@ Perform these steps in VS Code:
 2. Copy the content below then in *VS Code CMD-a* to select all of the existing *c_cpp_properties.json* file
 3. *CMD-v* to paste and *CMD-s* to save. 
 
-The location of libraries will be different based on how gcc was installed. If you compiled gcc yourself (Option 3 on wellys.com), then use the first json file. If you used the default installation from Bookworm, use the second JSON file. VS Code will advise if it isn't able to find the library files.
-## User built C (gcc 15.1)
-### c_cpp_properties.json
+## c_cpp_properties.json
 ```json
 {
     "configurations": [
@@ -25,7 +23,7 @@ The location of libraries will be different based on how gcc was installed. If y
                 "/usr/lib/avr/include",
                 "${workspaceFolder}/**"
             ],
-            "defines": ["__AVR_ATmega328P__"],
+            "defines": ["__AVR_ATtiny13a__"],
             "compilerPath": "/usr/bin/avr-gcc", 
             "compilerArgs": [ ],
             "cStandard": "c99",
@@ -37,22 +35,13 @@ The location of libraries will be different based on how gcc was installed. If y
 }
 ```
 
-## extensions.josn
+## extensions.json
 
 ```json
 {
     "recommendations": [
-    "ms-vscode-remote.remote-containers",
-    "ms-vscode-remote.remote-ssh",
-    "ms-vscode-remote.remote-ssh-edit",
-    "ms-vscode.cpptools",
-    "ms-vscode.cpptools-themes",
-    "ms-vscode.remote-explorer"
-  ],
-  "unwantedRecommendations": [
-    "qili.vscode-lc3",
-    "yzane.markdown-pdf",
-    "marp-team.marp-vscode"
+    "rockcat.avr-support",
+    "ms-vscode.cpptools"
   ]
 }
 ```
@@ -121,13 +110,6 @@ The location of libraries will be different based on how gcc was installed. If y
       "Xplained"
     ],
   "extensions.ignoreRecommendations": true,
-  // to disable specific extensions:
-  "extensions.disabled": [
-    "qili.vscode-lc3",
-    "yzane.markdown-pdf",
-    "marp-team.marp-vscode",
-    "paulober.pico-w-go"
-  ],
     "remote.defaultExtensionsIfInstalledLocally": []
 }
 ```

@@ -88,28 +88,41 @@ cnh
 
 From this you can see the serial port name */dev/ttyACM0* along with the possible configuration profiles.
 
-## Status
+## Using softserial
 
-The software serial port is now implemented in **AVR assembly**
-(`Library/serial.S`), exposed to C through `Library/serial_asm.h`, and runs
-**rock-solid at 9600 baud** (8-N-1) on the 1.2 MHz internal RC oscillator. The
-earlier pure-C approaches on this page (busy-wait `_delay_us`, Timer0 delay
-helpers, dropping to 1200 baud) are **deprecated** — kept below only as
-background on *why* a bit-banged UART is hard on this chip.
+1. `tio -l` to ensure you see both the serial port to the ATtiny13A and the serial port for *bloom* (typically */dev/ttyUSB0* and */dev/ttyACM0*, respectively)
+2. On softserial/make.S, run `make complete` -> `avr-gdb` -> `c` to begin execution
+3. In another terminal window, `tio cna`, you will see a "?" then keys being echoed.
+
+If not:
+1. Try switching the pin connections in *registers.S*, you might have them reversed
+2. If garbage characters appear, OSCCAL might need to be adjusted. Switch to the *osccal* folder, and repeat steps 2-3 above. In the tio screen, you will see:
+```bash
+������}u�z`���qrs
+������=5�: ���123
+OSCCAL=5D: ABC123
+OSCCAL=5E: ABC123
+OSCCAL=5F: ABC123
+OSCCAL=60: ABC123
+OSCCAL=61: ABC123
+OSCCAL=62: ABC123
+OSCCAL=63: ABC123
+OSCCAL=64: ABC123
+�����̽�M'
+```
+
+Pick the value of OSCCAL which is in the middle of the legible lines, in this example *OSCCAL=60: ABC123*. Your value might be different. Use that value in registers.S: *#define TRIM         0x60 ;*
+
+Then try re-running *softserial*.
+
+## Background 
+
+The software serial port is now implemented in **AVR assembly** (`Library/serial.S`), exposed to C through `Library/serial_asm.h`, and runs **rock-solid at 9600 baud** (8-N-1) on the 1.2 MHz internal RC oscillator. The earlier pure-C approaches on this page (busy-wait `_delay_us`, Timer0 delay helpers, dropping to 1200 baud) are **deprecated** — kept below only as background on *why* a bit-banged UART is hard on this chip.
 
 Two things made the assembly version reliable:
 
-1. **Cycle-exact bit periods.** Each bit is timed by the `delay_8` macro in
-   `Library/registers.S` (a counted `dec`/`brne` loop), not by compiler-emitted
-   delay code whose length varies with optimization level.
-2. **The `ror` instruction.** Receiving shifts each sampled bit (carry) straight
-   into the result register with a single `ror` — exactly matching the
-   LSB-first serial format, with no `1<<i` mask computed on a chip that has no
-   barrel shifter.
-
-The `OSCCAL` calibration story below is still relevant: use `examples/osccal/`
-to find your chip's trim value, then set it as `TRIM` in `Library/serial.S`
-(default `0x60`), where `init_serial` applies it.
+1. **Cycle-exact bit periods.** Each bit is timed by the `delay_8` macro in `Library/registers.S` (a counted `dec`/`brne` loop), not by compiler-emitted delay code whose length varies with optimization level.
+2. **The `ror` instruction.** Receiving shifts each sampled bit (carry) straight into the result register with a single `ror` — exactly matching the LSB-first serial format, with no `1<<i` mask computed on a chip that has no barrel shifter.
 
 ## The current implementation
 
@@ -153,7 +166,7 @@ shared `serial.S` into either a C or an assembly example, see
 
 ---
 
-## Background: why a software UART is hard here
+### Why a software UART is hard here (*from Claude*)
 
 The remaining sections explain the timing problems that drove the move to
 assembly. They are still useful for understanding the design, but the code
@@ -212,8 +225,8 @@ Tips:
 
 ### References
 
-[^1]: [ATtiny Oscillator Calibration — Instructables](https://www.instructables.com/ATtiny-Oscillator-Calibration/)
-[^2]: [`<util/delay.h>` — avr-libc](https://www.nongnu.org/avr-libc/user-manual/group__util__delay.html)
-[^3]: [ATtiny13A Data Sheet](https://www.farnell.com/datasheets/1714641.pdf)
-[^4]: [Serial Data ATtiny13A — Arduino Forum](https://forum.arduino.cc/t/serial-data-attiny13a/1094674)
+[^1]: [ATtiny Oscillator Calibration — Instructables](https://www.instructables.com/ATtiny-Oscillator-Calibration/)  
+[^2]: [`<util/delay.h>` — avr-libc](https://www.nongnu.org/avr-libc/user-manual/group__util__delay.html)  
+[^3]: [ATtiny13A Data Sheet](https://www.farnell.com/datasheets/1714641.pdf)  
+[^4]: [Serial Data ATtiny13A — Arduino Forum](https://forum.arduino.cc/t/serial-data-attiny13a/1094674)  
 [^5]: [ATtiny13 internal oscillator accuracy — Arduino Forum](https://forum.arduino.cc/t/attiny13-internal-oscillator-accurate-9-6mhz-but-inaccurate-4-8mhz/674396)

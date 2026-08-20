@@ -1,5 +1,93 @@
 # Software Serial on the ATtiny13A
 
+To test this software, you must have 1) a serial cable and 2) a serial program. 
+
+## 1. Serial Cable
+You will also need a *USB to serial* cable, which converts USB to signals from the ATtiny13A. There are many out there, I've used this one from [Adafruit](https://www.adafruit.com/product/954?gad_source=1) with great success.
+
+The connections would be:
+* Green TX -> PB01 Receive pin (**RX**) (*Confirm these port numbers in Library/registers*)
+* White RX -> PB02 Transmit pin (**TX**) (*Confirm these port numbers in Library/registers*)
+* Black Ground - Ground rail or pin 
+* RED Power - leave disconnected
+
+Be sure to use `tio -l` (*below*) to identify the correct serial port for communications. For example, in the example below, */dev/ttyUSB0* is the port for *tio*, while the other port is used by *bloom* to communicate with the *SNAP*:
+
+```bash
+Device            TID     Uptime [s] Driver           Description
+----------------- ---- ------------- ---------------- --------------------------
+/dev/ttyUSB0      khhE       526.385 cp210x           CP2102 USB to UART Bridge Controller
+/dev/ttyACM0      D4kU       256.721 cdc_acm          USB2.0 Hub
+```
+
+## 2. Serial program
+The one I believe works the best in a CLI environment, is [**tio**](https://github.com/tio/tio). 
+
+### tio configuration
+
+For *tio* to work properly, it must have a *.tioconfig* file in your home folder. This allows you to `tio acm` if you wish to use the */dev/ttyACM0* port to connect with an ATmega328P running at 250,000 baud. In this case (*ATtiny13A*), there are two configurations, cna and cnh. The former is for ASCII communications at 9600 baud, while the latter is for binary.
+
+Copy the text below and paste into the file *~/.tioconfig*:
+
+```bash
+[default]
+baudrate = 250000
+databits = 8
+parity = none
+stopbits = 1
+local-echo = false
+color = 1
+
+[acm]
+device = /dev/ttyACM0
+color = 12
+
+[usb]
+device = /dev/ttyUSB0
+color = 3
+
+[usb-devices]
+pattern = ^usb([0-9]*)
+device = /dev/ttyUSB%m1
+color = 3
+
+[cna]
+device = /dev/ttyACM0
+color = 12
+baudrate = 9600
+
+[cnh]
+device = /dev/ttyACM0
+color = 12
+baudrate = 9600
+output-mode = hex
+```
+
+Test using the command `tio -l`, you will get something like:
+
+```bash
+$ tio -l
+Device            TID     Uptime [s] Driver           Description
+----------------- ---- ------------- ---------------- --------------------------
+/dev/ttyACM0      C4kU      1633.534 cdc_acm          USB2.0 Hub
+
+By-id
+--------------------------------------------------------------------------------
+/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_7513533363635141E001-if00
+
+By-path
+--------------------------------------------------------------------------------
+/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usbv2-0:1.2:1.0
+/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.2:1.0
+
+Configuration profiles (/home/lkoepsel/.tioconfig)
+--------------------------------------------------------------------------------
+acm                 usb                 usb-devices         cna
+cnh
+```
+
+From this you can see the serial port name */dev/ttyACM0* along with the possible configuration profiles.
+
 ## Status
 
 The software serial port is now implemented in **AVR assembly**
@@ -34,13 +122,20 @@ to find your chip's trim value, then set it as `TRIM` in `Library/serial.S`
 | Assembly example | `examples/asm_softserial/` (`main.S`) |
 | Calibration helper | `examples/osccal/` |
 
-Pins (from `Library/registers.S`): **TX = PB1**, **RX = PB2** (input pull-up),
-LED = PB0. Bit timing constants in `Library/serial.S`:
+### Serial constants in *Library/registers.S*:
 
 ```asm
-#define period       37      ; ticks for 1 bit period (9600 baud @ 1.2 MHz)
-#define half_period  20      ; ticks for a 0.5 bit period
-#define TRIM         0x60    ; OSCCAL trim (use examples/osccal to determine)
+; ---------- Serial Communications ----------
+; 1. Define the TX/RX pins
+; 2. Leave period/half-period alone, unless changing baud rate
+; 3. If communications are flaky, use examples/osccal to determine TRIM
+; 4. Default: 9600 baud, 8 data bits, 1 stop bit and 0 parity bits
+#define TX          PB2   ; transmit pin, output - goes to cable RX
+#define RX          PB1   ; receive pin, input pullup - goes to cable TX
+#define period       37   ; # of ticks for 1 bit period (9600 baud @ 1.2MHz)
+#define half_period  20   ; # of ticks for  a .5 bit period
+#define TRIM         0x60 ; OSCCAL trim value, use examples/osccal to determine
+#define no_bits     8     ; no of bits, typically 8
 ```
 
 From C, the whole port is four declarations in `serial_asm.h`:

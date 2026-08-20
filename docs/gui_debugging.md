@@ -136,7 +136,7 @@ Enable it per environment in `bloom.yaml`:
 
 ```yaml
 environments:
-  snap_13a:
+  default:
     # ...tool / target / server as in bloomandgdb.md...
     insight:
       activate_on_startup: true   # was false

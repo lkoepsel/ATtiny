@@ -529,28 +529,11 @@ end
 ```yaml
 environments:
   default:
-    shutdown_post_debug_session: true
+    shutdown_post_debug_session: false
 
     tool:
-      name: "xplained_mini"
- 
-    target:
-      name: "atmega328pb"
-      physical_interface: "debug_wire"
-      hardware_breakpoints: true
-      manage_dwen_fuse_bit: true
+      name: "snap"
 
-    server:
-      name: "avr_gdb_rsp"
-      ip_address: "127.0.0.1"
-      port: 1442
-
-  atmel_ice_13a:
-    shutdown_post_debug_session: true
-
-    tool:
-      name: "atmel_ice"
- 
     target:
       name: "attiny13a"
       physical_interface: "debug_wire"
@@ -562,12 +545,15 @@ environments:
       ip_address: "127.0.0.1"
       port: 1442
 
-  snap_13a:
+    insight:
+      activate_on_startup: false
+  
+  atmel_ice_13a:
     shutdown_post_debug_session: true
 
     tool:
-      name: "snap"
- 
+      name: "atmel_ice"
+
     target:
       name: "attiny13a"
       physical_interface: "debug_wire"
@@ -588,7 +574,7 @@ environments:
 1. In first window:
 ```bash
 cd ATtiny
-bloom snap_13a
+bloom
 # bloom will initialize then wait for gdb server
 ```
 2. In second window (remain in this window):

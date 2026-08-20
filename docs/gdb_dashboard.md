@@ -66,25 +66,8 @@ modules, everything else as GDB scripts.
 
 ```yaml
 environments:
-  atmel_ice_13a:
-    shutdown_post_debug_session: true
-
-    tool:
-      name: "atmel_ice"
-
-    target:
-      name: "attiny13a"
-      physical_interface: "debug_wire"
-      hardware_breakpoints: true
-      manage_dwen_fuse_bit: true
-
-    server:
-      name: "avr_gdb_rsp"
-      ip_address: "127.0.0.1"
-      port: 1442
-
-  snap_13a:
-    shutdown_post_debug_session: true
+  default:
+    shutdown_post_debug_session: false
 
     tool:
       name: "snap"
@@ -102,6 +85,23 @@ environments:
 
     insight:
       activate_on_startup: false
+  
+  atmel_ice_13a:
+    shutdown_post_debug_session: true
+
+    tool:
+      name: "atmel_ice"
+
+    target:
+      name: "attiny13a"
+      physical_interface: "debug_wire"
+      hardware_breakpoints: true
+      manage_dwen_fuse_bit: true
+
+    server:
+      name: "avr_gdb_rsp"
+      ip_address: "127.0.0.1"
+      port: 1442
 ```
 
 ## Use
@@ -110,7 +110,7 @@ Two terminals (or `bloom &`):
 
 ```sh
 # terminal 1 -- the GDB server
-cd ATtiny/examples/blink_asm && bloom snap_13a
+cd ATtiny/examples/blink_asm && bloom
 ```
 ```sh
 # terminal 2 -- the debugger (no banner, auto-connects, clean dashboard)
